@@ -1,0 +1,204 @@
+# VazhiSync local stack.
+#   Core:            docker compose up -d
+#   + Langfuse:      docker compose --profile observability up -d
+# Ollama runs natively on the host (not in compose); containers reach it via host.docker.internal.
+# Host ports bind to 127.0.0.1 only. Postgres uses host port 5434 (5432/5433 are taken locally).
+
+name: vazhisync
+
+x-backend: &backend
+  build: ./backend
+  image: vazhisync-backend:dev
+  env_file:
+    - path: .env
+      required: true
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}
+    REDIS_URL: redis://redis:6379/0
+    OLLAMA_URL: http://host.docker.internal:11434
+    LANGFUSE_HOST: http://langfuse-web:3000
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
+x-healthcheck-timing: &hc-timing
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 20s
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      <<: *hc-timing
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # noeviction: required by Langfuse's queue, and safe for ARQ jobs.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      <<: *hc-timing
+    restart: unless-stopped
+
+  api:
+    <<: *backend
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.healthcheck", "http", "http://localhost:8000/health"]
+      <<: *hc-timing
+
+  worker:
+    <<: *backend
+    command: ["arq", "app.workers.main.WorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "app.workers.main.WorkerSettings"]
+      <<: *hc-timing
+
+  avl-mcp:
+    <<: *backend
+    command: ["python", "-m", "mcp_servers.avl_mcp.server"]
+    ports:
+      - "127.0.0.1:8101:8101"
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.healthcheck", "http", "http://localhost:8101/health"]
+      <<: *hc-timing
+
+  demand-mcp:
+    <<: *backend
+    command: ["python", "-m", "mcp_servers.demand_mcp.server"]
+    ports:
+      - "127.0.0.1:8102:8102"
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.healthcheck", "http", "http://localhost:8102/health"]
+      <<: *hc-timing
+
+  sim-runner:
+    <<: *backend
+    command: ["python", "-m", "app.runner.main"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.healthcheck", "heartbeat", "vazhisync:heartbeat:sim-runner", "20"]
+      <<: *hc-timing
+
+  # ---------------- Langfuse v3 (profile: observability) ----------------
+  clickhouse:
+    profiles: ["observability"]
+    image: clickhouse/clickhouse-server:25.8
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping || exit 1"]
+      <<: *hc-timing
+    restart: unless-stopped
+
+  minio:
+    profiles: ["observability"]
+    image: cgr.dev/chainguard/minio
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      <<: *hc-timing
+    restart: unless-stopped
+
+  langfuse-worker: &langfuse
+    profiles: ["observability"]
+    image: langfuse/langfuse-worker:3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment: &langfuse-env
+      DATABASE_URL: postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/langfuse
+      SALT: ${LANGFUSE_SALT}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+      TELEMETRY_ENABLED: "false"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      REDIS_CONNECTION_STRING: redis://redis:6379/1
+      HOSTNAME: 0.0.0.0  # bind all interfaces, not just the container hostname
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3030/api/health || exit 1"]
+      <<: *hc-timing
+      start_period: 60s
+    restart: unless-stopped
+
+  langfuse-web:
+    <<: *langfuse
+    image: langfuse/langfuse:3
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      # Headless init: creates the org, project, API keys and admin user on first start.
+      LANGFUSE_INIT_ORG_ID: vazhisync
+      LANGFUSE_INIT_ORG_NAME: VazhiSync
+      LANGFUSE_INIT_PROJECT_ID: vazhisync
+      LANGFUSE_INIT_PROJECT_NAME: VazhiSync
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_ADMIN_EMAIL}
+      LANGFUSE_INIT_USER_NAME: Admin
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health || exit 1"]
+      <<: *hc-timing
+      start_period: 90s
+
+volumes:
+  pgdata:
+  redisdata:
+  clickhouse_data:
+  clickhouse_logs:
+  minio_data:

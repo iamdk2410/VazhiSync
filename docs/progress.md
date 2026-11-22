@@ -8,7 +8,7 @@ Frontend (B13–B16) after the backend. B20 last.
 - [x] Session 0 — environment and scaffolding (uv, Python 3.12, Ollama + qwen3:8b; repo skeleton; GTFS zip downloaded)
 
 ## Phase A: Foundation
-- [ ] B1. Project setup and infrastructure
+- [x] B1. Project setup and infrastructure — compose (PostGIS on host 5434, Redis, api, worker, avl-mcp, demand-mcp, sim-runner all healthy; Langfuse v3 behind `--profile observability`; native host Ollama), pydantic-settings config, async Alembic (0001 enables PostGIS), GitHub Actions CI (ruff, mypy, pytest). Acceptance: `uv run pytest -m integration`.
 - [ ] B2. Static data: Chennai GTFS import
 - [ ] B3. Database schema, login and roles
 

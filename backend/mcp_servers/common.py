@@ -1,0 +1,29 @@
+"""Shared bootstrap for the MCP servers: health route + streamable-HTTP run."""
+
+from mcp.server.mcpserver import MCPServer
+from mcp.server.transport_security import TransportSecuritySettings
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from app.observability.logging import configure_logging
+
+
+def add_health_route(server: MCPServer) -> None:
+    @server.custom_route("/health", methods=["GET"], include_in_schema=False)  # type: ignore[untyped-decorator]
+    async def health(request: Request) -> JSONResponse:
+        return JSONResponse({"status": "ok"})
+
+
+def serve(server: MCPServer, service_name: str, port: int) -> None:
+    """Run on 0.0.0.0 with DNS-rebinding protection limited to known host names."""
+    configure_logging(service_name)
+    security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=[f"{service_name}:*", "localhost:*", "127.0.0.1:*"],
+    )
+    server.run(
+        "streamable-http",
+        host="0.0.0.0",  # noqa: S104  (inside the container; port mapping controls exposure)
+        port=port,
+        transport_security=security,
+    )

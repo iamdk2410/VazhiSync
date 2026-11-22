@@ -1,0 +1,8 @@
+# Store text files with LF in the repo; check out with LF so files copied into Linux
+# containers (shell commands, SQL init scripts) work unchanged.
+* text=auto eol=lf
+
+*.zip binary
+*.png binary
+*.jpg binary
+*.ico binary

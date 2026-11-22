@@ -33,7 +33,10 @@ backend/
 │   ├── llm/        gateway: fallback chain, retries, token/cost logging
 │   ├── db/         SQLAlchemy models, migrations, seed scripts
 │   ├── observability/
+│   ├── runner/     live world sim-runner process (B6; heartbeat stub for now)
+│   ├── healthcheck.py  container health-check CLI (http / redis heartbeat)
 │   └── config.py   pydantic-settings
+├── docker/         compose support files (postgres-init SQL)
 ├── data/gtfs/      Chennai GTFS (raw zip not committed) + imported route
 └── tests/          unit/, integration/, edge_cases/
 ```
@@ -48,10 +51,12 @@ the workers and the tests).
 
 ## Commands (run from `backend/`)
 - Start services (from repo root): `docker compose up -d`
+  (+ Langfuse: `docker compose --profile observability up -d`; Ollama runs natively on the host)
 - Install: `uv sync`
 - Migrations: `uv run alembic upgrade head`
 - Run API locally: `uv run uvicorn app.main:app --reload`
-- Tests: `uv run pytest` (fast unit tests: `uv run pytest tests/unit`)
+- Tests: `uv run pytest` (fast unit tests: `uv run pytest tests/unit`; integration tests are
+  excluded by default — run them against the running stack with `uv run pytest -m integration`)
 - Lint/format/types: `uv run ruff check . && uv run ruff format . && uv run mypy .`
 - Seed users: `uv run python -m app.db.seed --role officer --email ... --password ...`
 
