@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 
@@ -13,7 +14,8 @@ from app.auth.security import (
 )
 from app.db.enums import Role
 
-SECRET = "unit-test-secret-at-least-16-chars"  # matches tests/conftest.py
+# The secret actually in use (tests/conftest.py default, or CI's JWT_SECRET).
+SECRET = os.environ["JWT_SECRET"]
 
 
 def test_password_hash_is_argon2_and_verifies() -> None:

@@ -68,6 +68,9 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # The postgis image may add `topology, tiger` to the database search_path; without
+        # this, autogenerate/check would treat the TIGER geocoder tables as ours to drop.
+        connect_args={"server_settings": {"search_path": "public"}},
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

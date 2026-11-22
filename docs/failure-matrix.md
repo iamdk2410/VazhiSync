@@ -23,3 +23,5 @@ One row per failure case. Add rows as each module is built.
 | Double-clicked Approve | `UNIQUE (recommendation_id)` on approvals | Second decision rejected by the database | `test_schema_guarantees.py::test_one_decision_per_recommendation` |
 | Invalid status/enum value written directly to the DB | CHECK constraints on every enum column | Write rejected | `test_schema_guarantees.py::test_unknown_enum_value_rejected_by_database` |
 | Models and migrations drift apart | `alembic check` in CI | CI fails | CI step "Migrations match the models" |
+| Database image adds extra schemas (postgis image installs `topology`/`tiger` and extends `search_path`), so drift checks see foreign tables | `alembic check` in CI against a fresh `postgis/postgis` container | Alembic connects with `search_path=public`; only our schema is compared | CI step "Migrations match the models" (reproduced locally on a fresh container) |
+| Test passes locally only because a local default matches a hard-coded value (e.g. JWT secret) | Running the suite with CI's environment | Tests read the configured value, never a copy of the default | `tests/unit/test_security.py` |
