@@ -23,7 +23,9 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     # Auth
-    jwt_secret: SecretStr = Field(min_length=16)
+    jwt_secret: SecretStr = Field(min_length=32)  # HS256 key: RFC 7518 recommends >= 32 bytes
+    jwt_expire_minutes: int = Field(default=60, ge=1, le=24 * 60)
+    auth_rate_limit_per_minute: int = Field(default=10, ge=1)
 
     # Bunching detection (rule 4: staleness threshold lives in config)
     stale_gps_seconds: int = Field(default=60, gt=0)

@@ -26,7 +26,8 @@ backend/
 │   ├── avl_mcp/    get_vehicle_positions, get_headways, route://{id}/shape resource
 │   └── demand_mcp/ get_boarding_estimates, send_driver_instruction
 ├── app/
-│   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + websocket
+│   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + websocket; schemas.py
+│   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor
 │   ├── graph/      LangGraph state, node wiring, routing, checkpointer
 │   ├── workers/    ARQ simulation jobs
@@ -55,10 +56,15 @@ the workers and the tests).
 - Install: `uv sync`
 - Migrations: `uv run alembic upgrade head`
 - Run API locally: `uv run uvicorn app.main:app --reload`
-- Tests: `uv run pytest` (fast unit tests: `uv run pytest tests/unit`; integration tests are
-  excluded by default — run them against the running stack with `uv run pytest -m integration`)
+- Tests: `uv run pytest` (fast unit tests: `uv run pytest tests/unit`).
+  `services`-marked tests use Postgres + Redis from compose, on a separate `<db>_test`
+  database that is created and migrated automatically (skipped if Postgres is down; CI sets
+  `REQUIRE_SERVICES=1`). `stack` tests need the whole compose stack and are excluded by
+  default: `uv run pytest -m stack`.
 - Lint/format/types: `uv run ruff check . && uv run ruff format . && uv run mypy .`
-- Seed users: `uv run python -m app.db.seed --role officer --email ... --password ...`
+- Seed users (officer/driver only): `SEED_PASSWORD=... uv run python -m app.db.seed --role officer --email ... [--name ...]`
+  (driver: add `--vehicle <fleet_number>`; inside compose: `docker compose exec -e SEED_PASSWORD=... api python -m app.db.seed ...`)
+- New migration: `uv run alembic revision --autogenerate --rev-id 000N -m "..."`, review it, then `uv run alembic check`
 
 ## Conventions
 - Small, typed, async functions; type hints everywhere; no bare `except`.

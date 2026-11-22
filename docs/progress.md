@@ -10,7 +10,7 @@ Frontend (B13–B16) after the backend. B20 last.
 ## Phase A: Foundation
 - [x] B1. Project setup and infrastructure — compose (PostGIS on host 5434, Redis, api, worker, avl-mcp, demand-mcp, sim-runner all healthy; Langfuse v3 behind `--profile observability`; native host Ollama), pydantic-settings config, async Alembic (0001 enables PostGIS), GitHub Actions CI (ruff, mypy, pytest). Acceptance: `uv run pytest -m integration`.
 - [ ] B2. Static data: Chennai GTFS import
-- [ ] B3. Database schema, login and roles
+- [x] B3. Database schema, login and roles — 17 tables (migration 0002; enums as VARCHAR+CHECK; unique `instruction_id`, one approval per recommendation, one open assignment per bus/driver), argon2 + JWT with role re-checked against the DB, `require_role` on every endpoint (enforced by test), register always creates a passenger, Redis rate limit on login/register, seed CLI for officers/drivers. Acceptance: `tests/integration/test_auth_roles.py`.
 
 ## Phase B: The simulated world
 - [ ] B4. Simulation engine

@@ -1,6 +1,6 @@
 """B1 acceptance: `docker compose up` starts all services and they pass health checks.
 
-Run after `docker compose up -d` (from the repo root):  uv run pytest -m integration
+Run after `docker compose up -d` (from the repo root):  uv run pytest -m stack
 """
 
 import json
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.stack
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_SERVICES = {"postgres", "redis", "api", "worker", "avl-mcp", "demand-mcp", "sim-runner"}
