@@ -1,8 +1,9 @@
 """Simulation parameters and scenario events (B5's Scenario schema maps onto these).
 
-Defaults are calibrated on route 32B (B4): with no control, 23/30 seeds first bunch between
-15 and 30 simulated minutes and all by 33 min; trips match the timetable; peak waits and
-crowding are high, as in a bunched Chennai peak. See docs/progress.md (B4).
+Defaults are calibrated on route 32B with OSRM road-time segment shares (B6 recalibration):
+with no control, 26/30 seeds first bunch between 15 and 30 simulated minutes and all by
+32 min; trips take 34.8 / 36.9 min vs the timetable's 35 / 37; peak waits and crowding are
+high, as in a bunched Chennai peak. See docs/progress.md (B4, B6).
 """
 
 from dataclasses import dataclass, field
@@ -78,9 +79,9 @@ class SimConfig:
     alight_s: float = 1.5
     min_layover_s: float = 180.0
     short_turn_s: float = 120.0  # time to turn the bus round
-    # Share of each timetabled segment time spent moving (the rest is dwell). Calibrated so
-    # simulated 32B trips match the timetable (35.2 / 38.8 min vs 35 / 37 min).
-    run_share: float = 0.70
+    # Share of the timetabled trip spent moving (the rest is dwell), spread over segments by
+    # road time. Calibrated so simulated 32B trips match the timetable (34.8 / 36.9 vs 35 / 37).
+    run_share: float = 0.68
     max_speed_mps: float = 12.5  # 45 km/h cap on free-flow running
     travel_noise_sigma: float = 0.10  # log-normal spread of segment travel times
     base_arrivals_per_min: float = 1.3  # per stop, per direction, at demand multiplier 1.0

@@ -3,6 +3,7 @@ import os
 from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 from dotenv import dotenv_values
@@ -45,6 +46,19 @@ def _test_database_url() -> str | None:
     return base.set(database=f"{base.database}_test").render_as_string(hide_password=False)
 
 
+# Tests use their own Redis database so the running stack (e.g. the live world runner
+# publishing frames) can't leak into them, and test keys never touch the dev data.
+TEST_REDIS_DB = 15
+
+
+def _test_redis_url() -> str | None:
+    if url := os.environ.get("TEST_REDIS_URL"):
+        return url
+    if not _dev_redis_url:
+        return None
+    return urlsplit(_dev_redis_url)._replace(path=f"/{TEST_REDIS_DB}").geturl()
+
+
 async def _ensure_database(url: str) -> None:
     target = make_url(url)
     admin = create_async_engine(target.set(database="postgres"), isolation_level="AUTOCOMMIT")
@@ -85,8 +99,8 @@ def database_url() -> str:
     from app.db.session import get_engine, get_sessionmaker
 
     os.environ["DATABASE_URL"] = url
-    if _dev_redis_url:
-        os.environ["REDIS_URL"] = _dev_redis_url
+    if redis_url := _test_redis_url():
+        os.environ["REDIS_URL"] = redis_url
     get_settings.cache_clear()
     get_engine.cache_clear()
     get_sessionmaker.cache_clear()

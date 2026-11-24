@@ -33,10 +33,20 @@ class DirectionModel:
     length_m: float
     scheduled_headway_s: int
     stops: tuple[StopModel, ...]
+    # Free-flow road time of each stop-to-stop segment (OSRM, B6). When present, running time
+    # is spread along the route in these proportions instead of the timetable's.
+    segment_road_s: tuple[float, ...] | None = None
 
     def __post_init__(self) -> None:
         if len(self.stops) < 2:
             raise RouteModelError(f"direction {self.direction_id}: needs at least two stops")
+        if self.segment_road_s is not None and (
+            len(self.segment_road_s) != len(self.stops) - 1
+            or any(t <= 0 for t in self.segment_road_s)
+        ):
+            raise RouteModelError(
+                f"direction {self.direction_id}: segment_road_s needs one positive time per segment"
+            )
         for a, b in zip(self.stops, self.stops[1:], strict=False):
             if b.distance_m <= a.distance_m:
                 raise RouteModelError(
@@ -61,6 +71,13 @@ class DirectionModel:
 
     def segment_scheduled_s(self, i: int) -> int:
         return self.stops[i + 1].scheduled_offset_s - self.stops[i].scheduled_offset_s
+
+    def segment_share(self, i: int) -> float:
+        """Segment i's share of the direction's running time (road times, else timetable)."""
+        if self.segment_road_s is not None:
+            return self.segment_road_s[i] / sum(self.segment_road_s)
+        run = self.scheduled_run_s
+        return self.segment_scheduled_s(i) / run if run > 0 else 1 / (self.n_stops - 1)
 
     def stop_index_at(self, distance_m: float) -> int:
         """Index of the last stop at or before `distance_m` (clamped to the route)."""
@@ -112,6 +129,11 @@ class RouteModel:
                         }
                         for s in d.stops
                     ],
+                    **(
+                        {"segment_road_s": list(d.segment_road_s)}
+                        if d.segment_road_s is not None
+                        else {}
+                    ),
                 }
                 for d in self.directions
             ],
@@ -136,6 +158,11 @@ class RouteModel:
                             scheduled_offset_s=int(s["scheduled_offset_s"]),
                         )
                         for s in d["stops"]
+                    ),
+                    segment_road_s=(
+                        tuple(float(t) for t in d["segment_road_s"])
+                        if d.get("segment_road_s") is not None
+                        else None
                     ),
                 )
                 for d in data["directions"]

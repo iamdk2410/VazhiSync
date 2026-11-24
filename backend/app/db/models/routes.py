@@ -63,6 +63,10 @@ class RouteDirectionStop(Base):
     __table_args__ = (
         CheckConstraint("sequence >= 1", name="sequence_positive"),
         CheckConstraint("distance_along_m >= 0", name="distance_non_negative"),
+        CheckConstraint(
+            "segment_duration_s IS NULL OR segment_duration_s > 0",
+            name="segment_duration_positive",
+        ),
     )
 
     route_direction_id: Mapped[int] = mapped_column(
@@ -73,3 +77,7 @@ class RouteDirectionStop(Base):
     distance_along_m: Mapped[float]  # stop projected onto the direction's geometry
     offset_from_shape_m: Mapped[float]  # how far the stop sits from the line
     scheduled_offset_seconds: Mapped[int]  # time from the first stop, per the timetable
+    # The road stretch from the previous stop (B6): OSRM free-flow duration and how the
+    # geometry was made (osrm-pair | waypoints | straight). NULL for the first stop.
+    segment_duration_s: Mapped[float | None]
+    segment_geometry_source: Mapped[str | None] = mapped_column(String(16))

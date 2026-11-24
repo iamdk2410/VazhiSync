@@ -87,6 +87,28 @@ class LineStringGeometry(_Strict):
     coordinates: Annotated[list[tuple[float, float]], Field(min_length=2)]
 
 
+GeometrySource = Literal["osrm", "osrm-pair", "waypoints", "straight"]
+
+
+class SegmentInfo(_Strict):
+    """One stop-to-stop stretch of a snapped shape (B6 geometry follow-up)."""
+
+    from_seq: Annotated[int, Field(ge=1)]
+    to_seq: Annotated[int, Field(ge=2)]
+    road_m: Annotated[float, Field(ge=0)]
+    duration_s: Annotated[float, Field(gt=0)]  # OSRM free-flow car time
+    straight_m: Annotated[float, Field(ge=0)]
+    ratio: Annotated[float, Field(ge=0)]  # road_m / straight_m
+    geometry_source: GeometrySource
+    flagged: bool  # road/straight ratio above the detour limit when routed
+
+    @model_validator(mode="after")
+    def _consecutive(self) -> "SegmentInfo":
+        if self.to_seq != self.from_seq + 1:
+            raise ValueError("a segment joins consecutive stops")
+        return self
+
+
 class ShapeProperties(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
 
@@ -96,6 +118,15 @@ class ShapeProperties(BaseModel):
     attribution: str
     license: str
     generated_at: datetime
+    segments: list[SegmentInfo] = []  # empty for shapes snapped before B6
+
+    @model_validator(mode="after")
+    def _one_segment_per_stop_pair(self) -> "ShapeProperties":
+        if self.segments and [s.from_seq for s in self.segments] != list(
+            range(1, len(self.stop_ids))
+        ):
+            raise ValueError("segments must cover every consecutive stop pair, in order")
+        return self
 
 
 class CachedShape(_Strict):
@@ -112,3 +143,34 @@ def load_cached_shape(path: Path) -> CachedShape | None:
         return CachedShape.model_validate(json.loads(path.read_text(encoding="utf-8")))
     except (ValidationError, json.JSONDecodeError) as exc:
         raise ConfigError(f"invalid cached shape {path.name}: {exc}") from None
+
+
+# ------------------------------------------------------------------ optional waypoints
+
+Coordinate = tuple[
+    Annotated[float, Field(ge=79.9, le=80.5)], Annotated[float, Field(ge=12.7, le=13.4)]
+]  # inside Chennai: a typo can't send the router across the country
+
+
+class Waypoints(_Strict):
+    """`<route>.waypoints.json`: via points that force a stop-to-stop stretch onto a road.
+
+    {"directions": {"0": {"3": [[80.27, 13.08]]}}}  ->  direction 0, stop 3 -> stop 4.
+    """
+
+    directions: dict[Literal["0", "1"], dict[str, Annotated[list[Coordinate], Field(min_length=1)]]]
+
+    def via(self, direction_id: int, from_seq: int) -> list[tuple[float, float]]:
+        key: Literal["0", "1"] = "1" if direction_id else "0"
+        return list(self.directions.get(key, {}).get(str(from_seq), []))
+
+
+def load_waypoints(route_id: str, routes_dir: Path = ROUTES_DIR) -> Waypoints:
+    """The route's waypoints file, or an empty set if there is none."""
+    path = routes_dir / f"{_validate_route_id(route_id)}.waypoints.json"
+    if not path.is_file():
+        return Waypoints(directions={})
+    try:
+        return Waypoints.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValidationError as exc:
+        raise ConfigError(f"invalid waypoints file {path.name}: {exc}") from None

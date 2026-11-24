@@ -213,7 +213,7 @@
    ],
    [
     80.274306,
-    13.060546
+    13.060547
    ],
    [
     80.274329,
@@ -1280,62 +1280,6 @@
     13.106269
    ],
    [
-    80.279948,
-    13.10653
-   ],
-   [
-    80.279946,
-    13.106616
-   ],
-   [
-    80.279975,
-    13.106787
-   ],
-   [
-    80.280023,
-    13.106964
-   ],
-   [
-    80.280289,
-    13.107711
-   ],
-   [
-    80.280001,
-    13.107791
-   ],
-   [
-    80.280072,
-    13.108012
-   ],
-   [
-    80.280361,
-    13.107947
-   ],
-   [
-    80.280289,
-    13.107711
-   ],
-   [
-    80.280023,
-    13.106964
-   ],
-   [
-    80.279975,
-    13.106787
-   ],
-   [
-    80.279946,
-    13.106616
-   ],
-   [
-    80.279948,
-    13.10653
-   ],
-   [
-    80.279922,
-    13.106269
-   ],
-   [
     80.279907,
     13.106123
    ],
@@ -1679,10 +1623,221 @@
    "MTC-6914",
    "MTC-6957"
   ],
-  "source": "OSRM driving route via https://router.project-osrm.org",
+  "source": "OSRM driving route per stop pair via https://router.project-osrm.org",
   "attribution": "Map data (c) OpenStreetMap contributors",
   "license": "ODbL-1.0",
-  "generated_at": "2026-11-22T12:22:56+00:00",
-  "patched_segments": []
+  "generated_at": "2026-11-24T09:45:31+00:00",
+  "segments": [
+   {
+    "from_seq": 1,
+    "to_seq": 2,
+    "road_m": 716.0,
+    "duration_s": 52.9,
+    "straight_m": 666.0,
+    "ratio": 1.08,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 2,
+    "to_seq": 3,
+    "road_m": 78.0,
+    "duration_s": 5.1,
+    "straight_m": 78.1,
+    "ratio": 1.0,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 3,
+    "to_seq": 4,
+    "road_m": 579.9,
+    "duration_s": 38.4,
+    "straight_m": 535.4,
+    "ratio": 1.08,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 4,
+    "to_seq": 5,
+    "road_m": 353.4,
+    "duration_s": 23.0,
+    "straight_m": 354.9,
+    "ratio": 1.0,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 5,
+    "to_seq": 6,
+    "road_m": 581.8,
+    "duration_s": 38.2,
+    "straight_m": 582.3,
+    "ratio": 1.0,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 6,
+    "to_seq": 7,
+    "road_m": 307.4,
+    "duration_s": 20.2,
+    "straight_m": 280.2,
+    "ratio": 1.1,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 7,
+    "to_seq": 8,
+    "road_m": 481.8,
+    "duration_s": 30.0,
+    "straight_m": 410.6,
+    "ratio": 1.17,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 8,
+    "to_seq": 9,
+    "road_m": 604.5,
+    "duration_s": 43.3,
+    "straight_m": 554.2,
+    "ratio": 1.09,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 9,
+    "to_seq": 10,
+    "road_m": 758.9,
+    "duration_s": 55.1,
+    "straight_m": 687.3,
+    "ratio": 1.1,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 10,
+    "to_seq": 11,
+    "road_m": 781.7,
+    "duration_s": 52.4,
+    "straight_m": 649.9,
+    "ratio": 1.2,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 11,
+    "to_seq": 12,
+    "road_m": 389.1,
+    "duration_s": 25.8,
+    "straight_m": 340.6,
+    "ratio": 1.14,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 12,
+    "to_seq": 13,
+    "road_m": 712.3,
+    "duration_s": 54.4,
+    "straight_m": 538.9,
+    "ratio": 1.32,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 13,
+    "to_seq": 14,
+    "road_m": 266.8,
+    "duration_s": 17.3,
+    "straight_m": 267.4,
+    "ratio": 1.0,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 14,
+    "to_seq": 15,
+    "road_m": 291.7,
+    "duration_s": 19.1,
+    "straight_m": 293.3,
+    "ratio": 0.99,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 15,
+    "to_seq": 16,
+    "road_m": 215.3,
+    "duration_s": 14.2,
+    "straight_m": 215.7,
+    "ratio": 1.0,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 16,
+    "to_seq": 17,
+    "road_m": 615.7,
+    "duration_s": 40.1,
+    "straight_m": 617.7,
+    "ratio": 1.0,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 17,
+    "to_seq": 18,
+    "road_m": 413.9,
+    "duration_s": 24.6,
+    "straight_m": 344.1,
+    "ratio": 1.2,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 18,
+    "to_seq": 19,
+    "road_m": 569.9,
+    "duration_s": 44.5,
+    "straight_m": 478.1,
+    "ratio": 1.19,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 19,
+    "to_seq": 20,
+    "road_m": 752.8,
+    "duration_s": 57.7,
+    "straight_m": 598.4,
+    "ratio": 1.26,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 20,
+    "to_seq": 21,
+    "road_m": 376.0,
+    "duration_s": 34.7,
+    "straight_m": 361.3,
+    "ratio": 1.04,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   },
+   {
+    "from_seq": 21,
+    "to_seq": 22,
+    "road_m": 243.9,
+    "duration_s": 22.0,
+    "straight_m": 245.4,
+    "ratio": 0.99,
+    "geometry_source": "osrm-pair",
+    "flagged": false
+   }
+  ]
  }
 }

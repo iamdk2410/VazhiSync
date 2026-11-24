@@ -57,6 +57,9 @@ class StopOnRoute:
     distance_along_m: float
     offset_from_shape_m: float
     scheduled_offset_seconds: int
+    # The road stretch from the previous stop (None for the first stop or unsnapped shapes).
+    segment_duration_s: float | None = None
+    segment_geometry_source: str | None = None
 
 
 @dataclass(frozen=True)
@@ -145,6 +148,8 @@ def _build_direction(
         raise RouteValidationError(["needs at least two stops"])
 
     line, source = _choose_shape(cfg, cached, pattern, points, warnings)
+    segments = cached.properties.segments if cached and source == SHAPE_SNAPPED else []
+    seg_by_to = {s.to_seq: s for s in segments}
     plane = LocalPlane.around(points)
     projections = project_in_order(line, points, plane)
     offsets = median_offsets([t.departures for t in pattern_trips])
@@ -171,6 +176,12 @@ def _build_direction(
                     distance_along_m=round(proj.distance_along_m, 1),
                     offset_from_shape_m=round(proj.offset_m, 1),
                     scheduled_offset_seconds=offsets[i],
+                    segment_duration_s=(
+                        seg_by_to[i + 1].duration_s if i + 1 in seg_by_to else None
+                    ),
+                    segment_geometry_source=(
+                        seg_by_to[i + 1].geometry_source if i + 1 in seg_by_to else None
+                    ),
                 )
                 for i, (stop, proj) in enumerate(zip(stops, projections, strict=True))
             ],

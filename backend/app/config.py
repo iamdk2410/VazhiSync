@@ -2,12 +2,20 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import BaseModel, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+class GpsDropout(BaseModel):
+    """A bus whose GPS goes silent for a while (simulated seconds from the world's start)."""
+
+    bus_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,32}$")]
+    start_s: int = Field(ge=0)
+    duration_s: int = Field(gt=0)
 
 
 class Settings(BaseSettings):
@@ -52,6 +60,15 @@ class Settings(BaseSettings):
     langfuse_public_key: str = ""
     langfuse_secret_key: SecretStr | None = None
     langfuse_host: str = "http://localhost:3000"
+
+    # Live world runner (B6)
+    world_route_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,32}$")] = "32B"
+    world_seed: int = 1
+    world_speed: Literal[1, 5, 10] = 1  # starting speed; officers change it at runtime
+    world_tick_seconds: float = Field(default=2.0, ge=1.0, le=5.0)  # real seconds per tick
+    world_queue_every_seconds: float = Field(default=10.0, ge=1.0)  # stop_queues write interval
+    world_retention_hours: float = Field(default=6.0, gt=0)  # older positions/queues are pruned
+    world_gps_dropouts: list[GpsDropout] = []  # JSON in the env, e.g. [{"bus_id": ...}]
 
     # API
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]

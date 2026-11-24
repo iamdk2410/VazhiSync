@@ -10,9 +10,16 @@ import json
 import sys
 from pathlib import Path
 
-from app.gtfs.builder import RouteImport
+from app.gtfs.builder import DirectionImport, RouteImport
 from app.gtfs.import_gtfs import prepare
 from simulator.model import DirectionModel, RouteModel, StopModel
+
+
+def _segment_road_s(d: DirectionImport) -> tuple[float, ...] | None:
+    times = [s.segment_duration_s for s in d.stops[1:]]
+    if any(t is None for t in times):
+        return None  # unsnapped shape: the simulator falls back to timetable proportions
+    return tuple(round(t, 1) for t in times if t is not None)
 
 
 def to_route_model(route: RouteImport) -> RouteModel:
@@ -33,6 +40,7 @@ def to_route_model(route: RouteImport) -> RouteModel:
                 )
                 for s in d.stops
             ),
+            segment_road_s=_segment_road_s(d),
         )
         for d in sorted(route.directions, key=lambda d: d.direction_id)
     )

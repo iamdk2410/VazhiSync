@@ -4,7 +4,7 @@
   {
    "direction_id": 0,
    "headsign": "Vivekananda House",
-   "length_m": 10172.9,
+   "length_m": 10100.9,
    "scheduled_headway_s": 300,
    "stops": [
     {
@@ -148,7 +148,7 @@
      "name": "Kelet High School",
      "lon": 80.27405,
      "lat": 13.0573,
-     "distance_m": 8781.7,
+     "distance_m": 8709.7,
      "scheduled_offset_s": 1800
     },
     {
@@ -156,7 +156,7 @@
      "name": "Ice House Police Station",
      "lon": 80.27371,
      "lat": 13.05281,
-     "distance_m": 9293.3,
+     "distance_m": 9221.2,
      "scheduled_offset_s": 1860
     },
     {
@@ -164,7 +164,7 @@
      "name": "N.K.T Girls High School",
      "lon": 80.27501,
      "lat": 13.05242,
-     "distance_m": 9440.5,
+     "distance_m": 9368.4,
      "scheduled_offset_s": 1920
     },
     {
@@ -172,15 +172,37 @@
      "name": "Vivekananda House",
      "lon": 80.28085,
      "lat": 13.05038,
-     "distance_m": 10172.9,
+     "distance_m": 10100.9,
      "scheduled_offset_s": 2100
     }
+   ],
+   "segment_road_s": [
+    20.5,
+    29.7,
+    62.7,
+    44.0,
+    25.9,
+    40.3,
+    30.4,
+    17.8,
+    64.5,
+    18.2,
+    41.8,
+    62.6,
+    41.1,
+    26.2,
+    23.9,
+    43.8,
+    30.7,
+    38.5,
+    9.6,
+    54.3
    ]
   },
   {
    "direction_id": 1,
    "headsign": "Korukkupet R.S",
-   "length_m": 10570.8,
+   "length_m": 10120.6,
    "scheduled_headway_s": 360,
    "stops": [
     {
@@ -340,7 +362,7 @@
      "name": "Pencil Factory",
      "lon": 80.27784,
      "lat": 13.11126,
-     "distance_m": 9948.1,
+     "distance_m": 9497.9,
      "scheduled_offset_s": 2100
     },
     {
@@ -348,7 +370,7 @@
      "name": "Kannan Street",
      "lon": 80.27702,
      "lat": 13.11441,
-     "distance_m": 10325.6,
+     "distance_m": 9875.4,
      "scheduled_offset_s": 2160
     },
     {
@@ -356,9 +378,32 @@
      "name": "Korukkupet Bus Stand",
      "lon": 80.2772,
      "lat": 13.11661,
-     "distance_m": 10570.8,
+     "distance_m": 10120.6,
      "scheduled_offset_s": 2220
     }
+   ],
+   "segment_road_s": [
+    52.9,
+    5.1,
+    38.4,
+    23.0,
+    38.2,
+    20.2,
+    30.0,
+    43.3,
+    55.1,
+    52.4,
+    25.8,
+    54.4,
+    17.3,
+    19.1,
+    14.2,
+    40.1,
+    24.6,
+    44.5,
+    57.7,
+    34.7,
+    22.0
    ]
   }
  ]

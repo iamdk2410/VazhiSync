@@ -382,10 +382,15 @@ class Simulation:
     # ------------------------------------------------------------------ helpers
 
     def _base_run_s(self, direction: DirectionModel, i: int) -> float:
-        """Free-flow running time for segment i (timetable share, capped by max speed)."""
-        scheduled = direction.segment_scheduled_s(i) * self.config.run_share
+        """Free-flow running time for segment i, capped by max speed.
+
+        The direction's total running time is `run_share` of the timetabled trip (the rest is
+        dwell); it is spread over segments by road time when known (OSRM), else by timetable.
+        """
+        running = direction.scheduled_run_s * self.config.run_share
+        planned = running * direction.segment_share(i)
         fastest = direction.segment_length_m(i) / self.config.max_speed_mps
-        return max(scheduled, fastest, 5.0)
+        return max(planned, fastest, 5.0)
 
     def _stream(self, name: str) -> random.Random:
         streams = self.state.streams
@@ -431,17 +436,14 @@ class Simulation:
         if kind == "layover":
             bus.layover_remaining_s = length - phase
             return bus
-        offset0 = direction.stops[0].scheduled_offset_s
-        i = 0
-        while (
-            i < direction.n_stops - 2
-            and direction.stops[i + 1].scheduled_offset_s - offset0 <= phase
-        ):
+        # Place the bus by the same per-segment shares it will run at, so a fresh world
+        # starts evenly spaced in time.
+        through = phase / max(length, 1.0)  # fraction of the trip done
+        i, before = 0, 0.0
+        while i < direction.n_stops - 2 and before + direction.segment_share(i) <= through:
+            before += direction.segment_share(i)
             i += 1
-        seg_sched = max(direction.segment_scheduled_s(i), 1)
-        frac = min(
-            max((phase - (direction.stops[i].scheduled_offset_s - offset0)) / seg_sched, 0.0), 0.99
-        )
+        frac = min(max((through - before) / max(direction.segment_share(i), 1e-9), 0.0), 0.99)
         bus.stop_index = i
         self._depart(bus)
         bus.segment_progress = frac

@@ -177,3 +177,20 @@ class RouteOut(RouteSummary):
 
 class RoutesResponse(BaseModel):
     routes: list[RouteSummary]
+
+
+# --- live world (B6) ---
+WorldSpeed = Literal[1, 5, 10]
+
+
+class WorldSpeedRequest(StrictModel):
+    speed: WorldSpeed
+
+
+class WorldStatus(BaseModel):
+    route_id: str | None  # None until the runner has published a frame
+    sim_time: str | None
+    speed: WorldSpeed | None  # the speed requested by officers (None: runner default)
+    vehicles: int
+    stale_vehicles: int
+    open_events: int

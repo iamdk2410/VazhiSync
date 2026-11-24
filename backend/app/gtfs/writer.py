@@ -79,6 +79,8 @@ async def write_route(session: AsyncSession, route: RouteImport) -> None:
                     distance_along_m=s.distance_along_m,
                     offset_from_shape_m=s.offset_from_shape_m,
                     scheduled_offset_seconds=s.scheduled_offset_seconds,
+                    segment_duration_s=s.segment_duration_s,
+                    segment_geometry_source=s.segment_geometry_source,
                 )
                 for s in d.stops
             )

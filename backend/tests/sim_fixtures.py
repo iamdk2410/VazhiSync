@@ -15,6 +15,7 @@ QUIET = SimConfig(
     travel_noise_sigma=0.0,
     initial_spacing_jitter_s=0.0,
     min_layover_s=60.0,
+    run_share=0.70,  # pinned so segment times below stay exact if the default is retuned
 )
 SEGMENT_S = 42
 

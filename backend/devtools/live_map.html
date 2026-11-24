@@ -1,0 +1,152 @@
+<!doctype html>
+<!--
+  B6 dev page: watch the live world on a map. Not part of the app (the real UI is B13+).
+
+  From backend/:  uv run python -m http.server 5173 --directory devtools
+  Then open:      http://localhost:5173/live_map.html   (5173 is the API's allowed CORS origin)
+
+  Log in as any role to see what that role receives over /ws/live.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VazhiSync — live world (dev)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+  html, body { margin: 0; height: 100%; font: 13px/1.4 system-ui, sans-serif; background: #0b0f17; color: #e8edf3; }
+  #map { position: absolute; inset: 0 320px 0 0; }
+  #side { position: absolute; top: 0; right: 0; bottom: 0; width: 320px; overflow: auto; padding: 12px;
+          box-sizing: border-box; background: #121826; border-left: 1px solid #22304a; }
+  h1 { font-size: 15px; margin: 0 0 8px; }
+  input, button { font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px solid #2c3b57;
+                  background: #0e1420; color: inherit; }
+  button { cursor: pointer; } button.on { background: #1f6feb; border-color: #1f6feb; }
+  .row { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+  .muted { color: #8b98ab; } .bad { color: #ff6b8b; } .warn { color: #ffcc66; } .ok { color: #59e3a7; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  td { padding: 2px 4px; border-bottom: 1px solid #1c2638; white-space: nowrap; }
+  #status { margin: 6px 0; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="side">
+  <h1>VazhiSync live world <span class="muted">(dev)</span></h1>
+  <form id="login" class="row">
+    <input id="api" value="http://localhost:8000" size="24" title="API base URL">
+    <input id="email" placeholder="email" autocomplete="username">
+    <input id="password" type="password" placeholder="password" autocomplete="current-password">
+    <button>Log in</button>
+  </form>
+  <div id="status" class="muted">Not connected.</div>
+  <div id="speed" class="row" hidden>
+    Speed: <button data-s="1">1×</button><button data-s="5">5×</button><button data-s="10">10×</button>
+  </div>
+  <div id="clock"></div>
+  <div id="events"></div>
+  <table id="buses"></table>
+  <p class="muted">Map data © OpenStreetMap contributors (ODbL), tiles by OpenFreeMap.</p>
+</div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let token = null, role = null, ws = null;
+
+const map = new maplibregl.Map({
+  container: "map", style: "https://tiles.openfreemap.org/styles/dark",
+  center: [80.282, 13.095], zoom: 12.6,
+});
+
+function text(el, value) { el.textContent = value; }  // feed data is untrusted: never innerHTML
+
+async function api(path, options = {}) {
+  const resp = await fetch($("api").value + path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+  });
+  if (!resp.ok) throw new Error(path + " -> " + resp.status);
+  return resp.json();
+}
+
+function addRoute(route) {
+  const colors = ["#3fb6ff", "#c084fc"];
+  route.directions.forEach((d, i) => {
+    map.addSource("line" + i, { type: "geojson", data: d.shape });
+    map.addLayer({ id: "line" + i, type: "line", source: "line" + i,
+      paint: { "line-color": colors[i], "line-width": 3, "line-opacity": 0.7, "line-offset": i ? -3 : 3 } });
+    map.addSource("stops" + i, { type: "geojson", data: d.stops });
+    map.addLayer({ id: "stops" + i, type: "circle", source: "stops" + i,
+      paint: { "circle-radius": 3, "circle-color": "#0b0f17", "circle-stroke-color": colors[i], "circle-stroke-width": 1.5 } });
+  });
+  map.addSource("buses", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  map.addLayer({ id: "buses", type: "circle", source: "buses", paint: {
+    "circle-radius": 7, "circle-stroke-width": 2, "circle-stroke-color": "#0b0f17",
+    "circle-color": ["case", ["get", "stale"], "#6b7280",
+      ["match", ["get", "crowding"], "high", "#ff6b8b", "medium", "#ffcc66", "#59e3a7"]],
+  } });
+  map.addLayer({ id: "bus-labels", type: "symbol", source: "buses", layout: {
+    "text-field": ["get", "label"], "text-size": 11, "text-offset": [0, 1.3],
+    "text-font": ["Noto Sans Regular"] }, paint: { "text-color": "#e8edf3", "text-halo-color": "#0b0f17", "text-halo-width": 1.5 } });
+}
+
+function render(frame) {
+  text($("clock"), "Sim clock " + frame.sim_time + " · speed " + frame.speed + "× · " + frame.vehicles.length + " buses");
+  map.getSource("buses")?.setData({ type: "FeatureCollection", features: frame.vehicles.map((v) => ({
+    type: "Feature", geometry: { type: "Point", coordinates: [v.lon, v.lat] },
+    properties: { label: v.fleet_number + (v.is_stale ? " (stale " + Math.round(v.age_seconds) + "s)" : ""),
+                  stale: v.is_stale, crowding: v.crowding },
+  })) });
+  const events = $("events"); events.replaceChildren();
+  for (const e of frame.events) {
+    const div = document.createElement("div"); div.className = "bad";
+    text(div, "Bunching: headway " + Math.round(e.headway_seconds) + " s (since " + new Date(e.detected_at).toLocaleTimeString() + ")");
+    events.append(div);
+  }
+  const fleet = Object.fromEntries(frame.vehicles.map((v) => [v.vehicle_id, v.fleet_number]));
+  const ahead = Object.fromEntries(frame.headways.map((h) => [h.follower_vehicle_id, h]));
+  const table = $("buses"); table.replaceChildren();
+  for (const v of frame.vehicles) {
+    const tr = document.createElement("tr");
+    const h = ahead[v.vehicle_id];
+    const cells = [v.fleet_number, "dir " + v.direction_id, v.load === null ? v.crowding : v.load + "/" + v.capacity,
+                   h ? Math.round(h.headway_seconds) + "s to " + fleet[h.leader_vehicle_id] : "", v.is_stale ? "STALE" : ""];
+    for (const c of cells) { const td = document.createElement("td"); text(td, c); tr.append(td); }
+    if (h) tr.children[3].className = { bunched: "bad", closing: "warn", stale: "muted", ok: "ok" }[h.status];
+    if (v.is_stale) tr.className = "muted";
+    table.append(tr);
+  }
+}
+
+function connect() {
+  const url = $("api").value.replace(/^http/, "ws") + "/ws/live";
+  ws = new WebSocket(url);
+  ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token }));  // token never in the URL
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.type === "ready") { role = data.role; text($("status"), "Live as " + role + "."); $("speed").hidden = role !== "officer"; }
+    else if (data.type === "frame") render(data);
+  };
+  ws.onclose = (e) => { text($("status"), "Disconnected (" + e.code + (e.reason ? " " + e.reason : "") + "). Retrying in 3 s…");
+                        if (e.code !== 4401) setTimeout(connect, 3000); };
+}
+
+$("login").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  try {
+    const body = await api("/auth/login", { method: "POST", body: JSON.stringify({ email: $("email").value, password: $("password").value }) });
+    token = body.access_token;
+    if (!map.getSource("buses")) addRoute(await api("/routes/32B"));
+    connect();
+  } catch (err) { text($("status"), String(err)); }
+});
+
+$("speed").addEventListener("click", async (ev) => {
+  const s = ev.target.dataset?.s; if (!s) return;
+  await api("/officer/world/speed", { method: "PUT", body: JSON.stringify({ speed: Number(s) }) });
+  for (const b of $("speed").querySelectorAll("button")) b.classList.toggle("on", b.dataset.s === s);
+});
+</script>
+</body>
+</html>

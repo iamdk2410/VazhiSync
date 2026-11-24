@@ -28,7 +28,8 @@ backend/
 │   ├── avl_mcp/    get_vehicle_positions, get_headways, route://{id}/shape resource
 │   └── demand_mcp/ get_boarding_estimates, send_driver_instruction
 ├── app/
-│   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + websocket; schemas.py
+│   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + /ws/live websocket; schemas.py
+│   ├── live/       live frame schemas + per-role filtering, headways, Redis channels, WebSocket hub
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
 │   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor (+ AgentSpecs)
@@ -40,10 +41,11 @@ backend/
 │   ├── llm/        gateway: fallback chain, retries, token/cost logging
 │   ├── db/         SQLAlchemy models, migrations, seed scripts
 │   ├── observability/
-│   ├── runner/     live world sim-runner process (B6; heartbeat stub for now)
+│   ├── runner/     live world sim-runner: world loop, GPS layer, bunching detector, route loader
 │   ├── healthcheck.py  container health-check CLI (http / redis heartbeat)
 │   └── config.py   pydantic-settings
 ├── docker/         compose support files (postgres-init SQL)
+├── devtools/       dev-only pages (live_map.html: watch /ws/live on a map)
 ├── data/gtfs/      Chennai GTFS zip (not committed) + routes/<id>.json config and snapped GeoJSON (committed); see its README
 └── tests/          unit/, integration/, edge_cases/
 ```
@@ -56,6 +58,8 @@ the workers and the tests).
 `MAX_GRAPH_STEPS`, `PRIMARY_MODEL`, `BACKUP_MODEL`, `LOCAL_MODEL`, `OLLAMA_URL`,
 `CORS_ORIGINS` (the frontend dev URL), provider API keys, Langfuse keys,
 `JEV_ENABLED=false`, `JEV_API_KEY` (optional Jev tier, off without a key).
+Live world (B6): `WORLD_ROUTE_ID`, `WORLD_SEED`, `WORLD_SPEED`, `WORLD_TICK_SECONDS`,
+`WORLD_QUEUE_EVERY_SECONDS`, `WORLD_RETENTION_HOURS`, `WORLD_GPS_DROPOUTS` (JSON list).
 
 ## Commands (run from `backend/`)
 - Start services (from repo root): `docker compose up -d`
@@ -72,7 +76,11 @@ the workers and the tests).
 - Seed users (officer/driver only): `SEED_PASSWORD=... uv run python -m app.db.seed --role officer --email ... [--name ...]`
   (driver: add `--vehicle <fleet_number>`; inside compose: `docker compose exec -e SEED_PASSWORD=... api python -m app.db.seed ...`)
 - Import the route (needs the GTFS zip, see data/gtfs/README.md): `uv run python -m app.gtfs.import_gtfs --route 32B [--dry-run]`
-- Re-snap route geometry (one-off, calls the public OSRM server): `uv run python -m app.gtfs.snap_shape --route 32B`
+- Re-snap route geometry (one-off, calls the public OSRM server; per stop pair, honours
+  `data/gtfs/routes/<id>.waypoints.json`, also writes `<id>.turns.geojson`):
+  `uv run python -m app.gtfs.snap_shape --route 32B`, then re-import and regenerate the fixture
+- Live map (dev): `uv run python -m http.server 5173 --directory devtools`, open
+  `http://localhost:5173/live_map.html` and log in (the API must be running)
 - Regenerate the simulator's 32B fixture after a re-import: `uv run python -m app.gtfs.sim_route --route 32B --out tests/fixtures/route_32b.json`
 - New migration: `uv run alembic revision --autogenerate --rev-id 000N -m "..."`, review it, then `uv run alembic check`
 
