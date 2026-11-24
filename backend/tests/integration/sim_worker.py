@@ -44,3 +44,34 @@ async def running_worker(
         if worker._pool is not None:
             await worker._pool.aclose()
         simulations.shutdown_pool()
+
+
+@contextlib.asynccontextmanager
+async def running_workflow_worker(ctx: dict[str, Any]) -> AsyncIterator[Worker]:
+    """The default-queue worker (resume / measure / ack-timeout jobs), in-process (B12)."""
+    from app.workers.workflows import driver_ack_timeout, measure_outcome, resume_workflow_job
+
+    worker = Worker(
+        functions=[
+            func(cast(Any, resume_workflow_job), name="resume_workflow"),
+            func(cast(Any, measure_outcome), name="measure_outcome"),
+            func(cast(Any, driver_ack_timeout), name="driver_ack_timeout"),
+        ],
+        redis_settings=arq_redis_settings(),
+        ctx=ctx,
+        max_jobs=4,
+        handle_signals=False,
+        poll_delay=0.05,
+        max_tries=1,
+    )
+    task = asyncio.create_task(worker.async_run())
+    try:
+        yield worker
+    finally:
+        for job_task in list(worker.tasks.values()):
+            job_task.cancel()
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+        if worker._pool is not None:
+            await worker._pool.aclose()

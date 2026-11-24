@@ -12,13 +12,20 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
 from app.db.session import get_sessionmaker
+from app.graph.checkpoint import postgres_checkpointer
 from app.harness.harness import ToolHarness
 from app.lab.library import sync_golden
 from app.observability.logging import configure_logging
 from app.runner.route_loader import RouteNotImported
 from app.workers.queue import arq_redis_settings
 from app.workers.scenarios import generate_scenario
-from app.workers.workflows import retry_open_events, run_workflow
+from app.workers.workflows import (
+    driver_ack_timeout,
+    measure_outcome,
+    resume_workflow_job,
+    retry_open_events,
+    run_workflow,
+)
 
 log = structlog.get_logger()
 
@@ -35,12 +42,19 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     log.info("worker_started")
     ctx["harness"] = ToolHarness.from_settings(get_settings(), get_sessionmaker())
     await ctx["harness"].discover()  # logged; a down server is just marked unavailable
+    ctx["checkpointer_cm"] = postgres_checkpointer(get_settings().database_url)
+    ctx["checkpointer"] = await ctx["checkpointer_cm"].__aenter__()  # graph state (B12)
     try:
         async with get_sessionmaker()() as session:
             await sync_golden(session, get_settings().world_route_id)
     except (RouteNotImported, SQLAlchemyError) as exc:
         # Not fatal: the worker still serves jobs; golden scenarios appear once possible.
         log.warning("golden_sync_skipped", error=str(exc))
+
+
+async def on_shutdown(ctx: dict[str, Any]) -> None:
+    if "checkpointer_cm" in ctx:
+        await ctx["checkpointer_cm"].__aexit__(None, None, None)
 
 
 class WorkerSettings:
@@ -55,9 +69,18 @@ class WorkerSettings:
             timeout=get_settings().run_time_limit_seconds + 60,
             max_tries=1,
         ),
+        func(
+            resume_workflow_job,
+            name="resume_workflow",
+            timeout=get_settings().run_time_limit_seconds + 60,
+            max_tries=1,
+        ),
+        func(measure_outcome, timeout=get_settings().run_time_limit_seconds + 60, max_tries=1),
+        func(driver_ack_timeout, timeout=get_settings().run_time_limit_seconds + 60, max_tries=1),
     ]
     cron_jobs: ClassVar[list[Any]] = [cron(retry_open_events, second={0}, run_at_startup=False)]
     on_startup = on_startup
+    on_shutdown = on_shutdown
     redis_settings = arq_redis_settings()
     max_jobs = get_settings().sim_concurrency
     health_check_interval = 10

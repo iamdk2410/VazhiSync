@@ -46,5 +46,7 @@ AGENT_TOOLS: dict[AgentName, frozenset[str]] = {
         {"get_vehicle_positions", "get_headways", "get_boarding_estimates"}
     ),
     "control_advisor": frozenset(),  # ranks simulator results; needs no tools
-    "dispatch": frozenset({"send_driver_instruction"}),  # rule 5: the only caller
+    # rule 5: the only caller of send; reads headways to re-validate right before sending and
+    # to measure the outcome afterwards (B12).
+    "dispatch": frozenset({"send_driver_instruction", "get_headways"}),
 }

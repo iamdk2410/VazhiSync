@@ -1,15 +1,23 @@
-"""The advisor workflow as one LangGraph graph, and how a run is started and finished.
+"""The advisor workflow as one LangGraph graph, and how a run is started, paused and resumed.
 
-    START -> headway_monitor --stale--------> END  (flagged; nobody instructed)
-                             --not_bunched--> END
-                             --generate-----> action_generator -> impact_simulator
-             impact_simulator --Send x N--> simulate (one branch per candidate, in parallel)
-             simulate -> control_advisor --recommend | escalate | do_nothing--> END
+    START -> headway_monitor --stale / not_bunched--> END
+                             --generate--> action_generator -> impact_simulator
+             impact_simulator --Send x N--> simulate -> control_advisor
+             control_advisor --do_nothing--> END
+                             --recommend / escalate--> await_officer (interrupt)
+             await_officer --approve--> dispatch --sent--> await_driver (interrupt)
+                           --edit--> apply_edit -> impact_simulator (re-simulate)
+                           --reject--> action_generator (next round)
+                           --replan--> headway_monitor (expired: fresh data)
+             await_driver --ack--> await_outcome (interrupt) -> measure -> END
+                          --replan--> headway_monitor (can't comply / no ack)
 
-Limits (rule 8): graph step budget, whole-run time limit, per-simulation timeout and a
-concurrency semaphore. One active run per bus pair; repeated events are deduplicated.
-Every node writes an agent_steps row and every line is logged with the run_id (rule 9).
-B12 adds the officer approval interrupt and dispatch after control_advisor.
+The graph is checkpointed in Postgres (thread id = run id): a paused run survives restarts of
+any process and is resumed by a worker job (`resume_workflow`). `workflow_runs.waiting_for`
+says which interrupt it waits on; a resume of the wrong kind, or a second concurrent resume,
+is refused under a row lock. Limits (rule 8): step budget and time limit per active segment,
+per-simulation timeout, semaphore; at most MAX_ROUNDS re-plans. Every node writes agent_steps
+and every log line carries the run_id (rule 9).
 """
 
 import asyncio
@@ -20,18 +28,27 @@ from typing import Any
 
 import structlog
 from arq import ArqRedis
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import Send
-from sqlalchemy import select
+from langgraph.types import Command, Send
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.agents.action_generator import action_generator
 from app.agents.control_advisor import control_advisor
+from app.agents.dispatch import (
+    apply_edit,
+    await_driver,
+    await_officer,
+    await_outcome,
+    dispatch,
+    measure,
+)
 from app.agents.headway_monitor import headway_monitor
 from app.agents.impact_simulator import impact_simulator, simulate
 from app.config import Settings
 from app.db.enums import BunchingEventStatus, WorkflowStatus
-from app.db.models import BunchingEvent, RouteDirection, WorkflowRun
+from app.db.models import AgentStep, BunchingEvent, Recommendation, RouteDirection, WorkflowRun
 from app.graph.deps import WorkflowDeps, recorded
 from app.graph.state import WorkflowState
 from app.harness.budget import RunBudget
@@ -41,15 +58,21 @@ from app.runner.route_loader import RouteNotImported, load_world_route
 
 log = structlog.get_logger()
 
-ACTIVE = (WorkflowStatus.RUNNING, WorkflowStatus.AWAITING_APPROVAL, WorkflowStatus.ESCALATED)
+ACTIVE = (
+    WorkflowStatus.RUNNING,
+    WorkflowStatus.AWAITING_APPROVAL,
+    WorkflowStatus.ESCALATED,
+    WorkflowStatus.DISPATCHED,
+)
 
-# end_reason -> (run status, event status)
-OUTCOMES: dict[str, tuple[WorkflowStatus, BunchingEventStatus]] = {
-    "recommended": (WorkflowStatus.AWAITING_APPROVAL, BunchingEventStatus.HANDLING),
-    "escalated": (WorkflowStatus.ESCALATED, BunchingEventStatus.HANDLING),
+# A run that ended: end_reason -> (run status, event status)
+ENDED: dict[str, tuple[WorkflowStatus, BunchingEventStatus]] = {
     "do_nothing_recommended": (WorkflowStatus.COMPLETED, BunchingEventStatus.HANDLING),
     "not_bunched": (WorkflowStatus.COMPLETED, BunchingEventStatus.RESOLVED),
     "stale_data": (WorkflowStatus.COMPLETED, BunchingEventStatus.OPEN),  # retried later
+    "outcome_measured": (WorkflowStatus.COMPLETED, BunchingEventStatus.RESOLVED),
+    "rejected": (WorkflowStatus.REJECTED, BunchingEventStatus.DISMISSED),  # the officer decided
+    "replans_exhausted": (WorkflowStatus.FAILED, BunchingEventStatus.DISMISSED),
 }
 
 
@@ -60,8 +83,8 @@ def _in(state: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     if "candidate" in state:
         out["candidate"] = state["candidate"].key
-    if "candidates" in state:
-        out["candidates"] = [c.key for c in state["candidates"]]
+    if "round" in state:
+        out["round"] = state["round"]
     if "sim_outcomes" in state:
         out["outcomes"] = len(state["sim_outcomes"])
     return out
@@ -99,10 +122,9 @@ def _out(result: dict[str, Any]) -> dict[str, Any]:
             "benefit": r.benefit_passenger_minutes,
             "near_tie": r.is_near_tie,
         }
-    if "end_reason" in result:
-        out["end_reason"] = result["end_reason"]
-    if result.get("degraded"):
-        out["degraded"] = result["degraded"]
+    for key in ("decision", "instruction", "driver_reply", "end_reason", "round", "degraded"):
+        if result.get(key):
+            out[key] = result[key]
     return out
 
 
@@ -110,31 +132,75 @@ def _out(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def fan_out(state: WorkflowState) -> list[Send]:
-    return [Send("simulate", {"candidate": c}) for c in state.get("candidates", [])]
+    round_ = state.get("round", 0)
+    return [
+        Send("simulate", {"candidate": c}) for c in state.get("candidates", []) if c.round == round_
+    ]
 
 
-def build_graph(deps: WorkflowDeps) -> Any:
+def _route(state: WorkflowState) -> str:
+    return state["route"]
+
+
+def build_graph(deps: WorkflowDeps, checkpointer: BaseCheckpointSaver[Any]) -> Any:
     g: StateGraph[WorkflowState] = StateGraph(WorkflowState)
 
     def node(name: str, fn: Any) -> None:
         g.add_node(name, recorded(name, fn, deps, _in, _out))  # type: ignore[call-overload]
 
-    node("headway_monitor", headway_monitor)
-    node("action_generator", action_generator)
-    node("impact_simulator", impact_simulator)
-    node("simulate", simulate)
-    node("control_advisor", control_advisor)
+    for name, fn in (
+        ("headway_monitor", headway_monitor),
+        ("action_generator", action_generator),
+        ("impact_simulator", impact_simulator),
+        ("simulate", simulate),
+        ("control_advisor", control_advisor),
+        ("await_officer", await_officer),
+        ("apply_edit", apply_edit),
+        ("dispatch", dispatch),
+        ("await_driver", await_driver),
+        ("await_outcome", await_outcome),
+        ("measure", measure),
+    ):
+        node(name, fn)
     g.add_edge(START, "headway_monitor")
     g.add_conditional_edges(
         "headway_monitor",
-        lambda s: s["route"],
+        _route,
         {"stale": END, "not_bunched": END, "generate": "action_generator"},
     )
     g.add_edge("action_generator", "impact_simulator")
     g.add_conditional_edges("impact_simulator", fan_out, ["simulate"])
     g.add_edge("simulate", "control_advisor")
-    g.add_edge("control_advisor", END)
-    return g.compile()
+    g.add_conditional_edges(
+        "control_advisor",
+        _route,
+        {"recommend": "await_officer", "escalate": "await_officer", "do_nothing": END},
+    )
+    g.add_conditional_edges(
+        "await_officer",
+        _route,
+        {
+            "approve": "dispatch",
+            "edit": "apply_edit",
+            "reject": "action_generator",
+            "replan": "headway_monitor",
+            "exhausted": END,
+        },
+    )
+    g.add_edge("apply_edit", "impact_simulator")
+    g.add_conditional_edges(
+        "dispatch",
+        _route,
+        {"sent": "await_driver", "resolved": END, "replan": "headway_monitor", "exhausted": END},
+    )
+    g.add_conditional_edges(
+        "await_driver",
+        _route,
+        {"ack": "await_outcome", "replan": "headway_monitor", "exhausted": END},
+    )
+    g.add_edge("await_outcome", "measure")
+    g.add_edge("measure", END)
+    return g.compile(checkpointer=checkpointer)
 
 
 # ------------------------------------------------------------------ runs
@@ -142,10 +208,11 @@ def build_graph(deps: WorkflowDeps) -> Any:
 
 @dataclass(frozen=True)
 class RunResult:
-    run_id: uuid.UUID | None  # None: not started (deduplicated / event not open)
+    run_id: uuid.UUID | None  # None: not started / not resumed
     status: str
     end_reason: str | None
     state: dict[str, Any] | None = None
+    waiting_for: str | None = None
 
 
 def _seconds(gtfs_time: str) -> int:
@@ -153,9 +220,33 @@ def _seconds(gtfs_time: str) -> int:
     return h * 3600 + m * 60 + s
 
 
-async def _claim(
+def _config(run_id: uuid.UUID, settings: Settings) -> dict[str, Any]:
+    return {
+        "configurable": {"thread_id": str(run_id)},
+        "recursion_limit": settings.max_graph_steps + 10,
+    }
+
+
+async def _superseded(session: AsyncSession, run: WorkflowRun) -> bool:
+    """A run still waiting for an officer whose recommendation has expired (or never had an
+    expiry) no longer describes the present: close it so a fresh run can take the pair.
+    Without this, an ignored recommendation would block its bus pair forever."""
+    if run.waiting_for != "officer":
+        return False
+    expires = await session.scalar(
+        select(func.max(Recommendation.expires_at)).where(Recommendation.run_id == run.id)
+    )
+    if expires is not None and expires > datetime.now(UTC):
+        return False
+    run.status, run.waiting_for = WorkflowStatus.COMPLETED, None
+    run.end_reason, run.finished_at = "superseded", datetime.now(UTC)
+    log.info("workflow_superseded", run_id=str(run.id))
+    return True
+
+
+async def _claim_start(
     sessionmaker: async_sessionmaker[AsyncSession], event_id: uuid.UUID
-) -> tuple[WorkflowRun, BunchingEvent] | str:
+) -> tuple[uuid.UUID, BunchingEvent] | str:
     """Create the run if the event is open and its bus pair has no active run (atomic)."""
     async with sessionmaker() as session, session.begin():
         event = await session.scalar(
@@ -165,144 +256,99 @@ async def _claim(
             return "event_not_found"
         if event.status != BunchingEventStatus.OPEN:
             return "event_not_open"
-        busy = await session.scalar(
-            select(WorkflowRun.id)
-            .join(BunchingEvent, BunchingEvent.id == WorkflowRun.bunching_event_id)
-            .where(
-                BunchingEvent.leader_vehicle_id == event.leader_vehicle_id,
-                BunchingEvent.follower_vehicle_id == event.follower_vehicle_id,
-                WorkflowRun.status.in_(ACTIVE),
+        active = (
+            await session.scalars(
+                select(WorkflowRun)
+                .join(BunchingEvent, BunchingEvent.id == WorkflowRun.bunching_event_id)
+                .where(
+                    BunchingEvent.leader_vehicle_id == event.leader_vehicle_id,
+                    BunchingEvent.follower_vehicle_id == event.follower_vehicle_id,
+                    WorkflowRun.status.in_(ACTIVE),
+                )
+                .with_for_update(of=WorkflowRun)
             )
-            .limit(1)
-        )
-        if busy is not None:
-            return "pair_already_handled"
+        ).all()
+        for other in active:
+            if not await _superseded(session, other):
+                return "pair_already_handled"
         run = WorkflowRun(bunching_event_id=event.id, status=WorkflowStatus.RUNNING)
         session.add(run)
         event.status = BunchingEventStatus.HANDLING
         await session.flush()
-        return run, event
+        return run.id, event
 
 
-async def _finish(
+async def _claim_resume(
+    sessionmaker: async_sessionmaker[AsyncSession], run_id: uuid.UUID, kind: str
+) -> tuple[BunchingEvent, int] | str:
+    """Take the paused run if it waits for exactly this kind of input (atomic)."""
+    async with sessionmaker() as session, session.begin():
+        run = await session.scalar(
+            select(WorkflowRun).where(WorkflowRun.id == run_id).with_for_update()
+        )
+        if run is None:
+            return "run_not_found"
+        if run.waiting_for != kind:
+            return f"not_waiting_for_{kind}"
+        run.status, run.waiting_for = WorkflowStatus.RUNNING, None
+        event = await session.get(BunchingEvent, run.bunching_event_id)
+        steps = await session.scalar(
+            select(func.coalesce(func.max(AgentStep.step_index), 0)).where(
+                AgentStep.run_id == run_id
+            )
+        )
+        if event is None:
+            return "event_not_found"
+        return event, int(steps or 0)
+
+
+async def _settle(
     sessionmaker: async_sessionmaker[AsyncSession],
     run_id: uuid.UUID,
     event_id: uuid.UUID,
-    status: WorkflowStatus,
-    event_status: BunchingEventStatus,
-    end_reason: str,
+    final: dict[str, Any],
     steps: int,
-    error: str | None = None,
-) -> None:
+) -> RunResult:
+    """Record where the graph stopped: paused at an interrupt, or ended."""
+    interrupts = final.get("__interrupt__") or []
+    end_reason = final.get("end_reason")
+    waiting: str | None = None
+    if interrupts:
+        waiting = str(interrupts[0].value["kind"])
+        if waiting == "officer":
+            escalated = (
+                final.get("recommendation") is not None and final["recommendation"].is_near_tie
+            )
+            status = WorkflowStatus.ESCALATED if escalated else WorkflowStatus.AWAITING_APPROVAL
+        else:
+            status = WorkflowStatus.DISPATCHED
+        event_status = BunchingEventStatus.HANDLING
+    else:
+        status, event_status = ENDED[end_reason or "not_bunched"]
     async with sessionmaker() as session, session.begin():
         run = await session.get(WorkflowRun, run_id)
         event = await session.get(BunchingEvent, event_id)
         if run is not None:
-            run.status, run.end_reason, run.error = status, end_reason, error
-            run.step_count, run.finished_at = steps, datetime.now(UTC)
-        if event is not None and event.status == BunchingEventStatus.HANDLING:
+            run.status, run.waiting_for, run.end_reason = status, waiting, end_reason
+            run.step_count = steps
+            run.regeneration_round = int(final.get("round", 0))
+            if waiting is None:
+                run.finished_at = datetime.now(UTC)
+        if event is not None and event.status in (
+            BunchingEventStatus.HANDLING,
+            BunchingEventStatus.OPEN,
+        ):
             event.status = event_status
             if event_status == BunchingEventStatus.RESOLVED:
                 event.resolved_at = datetime.now(UTC)
-
-
-async def start_workflow(
-    event_id: uuid.UUID,
-    harness: ToolHarness,
-    sessionmaker: async_sessionmaker[AsyncSession],
-    settings: Settings,
-    job_queue: ArqRedis,
-) -> RunResult:
-    claimed = await _claim(sessionmaker, event_id)
-    if isinstance(claimed, str):
-        log.info("workflow_skipped", event_id=str(event_id), reason=claimed)
-        return RunResult(None, "skipped", claimed)
-    run, event = claimed
-    run_id = run.id
-    with structlog.contextvars.bound_contextvars(run_id=str(run_id), event_id=str(event_id)):
-        log.info("workflow_started", route_id=event.route_id)
-        budget = RunBudget.from_settings(run_id, settings)
-        try:
-            async with sessionmaker() as session:
-                route = await load_world_route(session, event.route_id)
-                last = {
-                    d.direction_id: _seconds(d.last_departure)
-                    for d in await session.scalars(
-                        select(RouteDirection).where(RouteDirection.route_id == event.route_id)
-                    )
-                }
-            deps = WorkflowDeps(
-                run_id=str(run_id),
-                harness=harness,
-                budget=budget,
-                sessionmaker=sessionmaker,
-                settings=settings,
-                route=route,
-                last_departure_s=last,
-                sim_semaphore=asyncio.Semaphore(settings.sim_concurrency),
-                job_queue=job_queue,
-            )
-            initial: WorkflowState = {
-                "run_id": str(run_id),
-                "event_id": str(event_id),
-                "route_id": event.route_id,
-                "leader_vehicle_id": str(event.leader_vehicle_id),
-                "follower_vehicle_id": str(event.follower_vehicle_id),
-            }
-            final = await asyncio.wait_for(
-                build_graph(deps).ainvoke(
-                    initial, config={"recursion_limit": settings.max_graph_steps + 5}
-                ),
-                timeout=settings.run_time_limit_seconds,
-            )
-        except TimeoutError:
-            return await _failed(
-                sessionmaker,
-                run_id,
-                event_id,
-                WorkflowStatus.TIMED_OUT,
-                "run_time_limit",
-                budget.steps,
-            )
-        except BudgetExceeded as exc:
-            return await _failed(
-                sessionmaker,
-                run_id,
-                event_id,
-                WorkflowStatus.FAILED,
-                f"budget:{exc.code}",
-                budget.steps,
-                str(exc),
-            )
-        except HarnessError as exc:
-            return await _failed(
-                sessionmaker,
-                run_id,
-                event_id,
-                WorkflowStatus.FAILED,
-                f"tools:{exc.kind}:{exc.tool}",
-                budget.steps,
-                str(exc),
-            )
-        except RouteNotImported as exc:
-            return await _failed(
-                sessionmaker,
-                run_id,
-                event_id,
-                WorkflowStatus.FAILED,
-                "route_not_imported",
-                0,
-                str(exc),
-            )
-        end_reason = final.get("end_reason") or "not_bunched"
-        status, event_status = OUTCOMES[end_reason]
-        await _finish(
-            sessionmaker, run_id, event_id, status, event_status, end_reason, budget.steps
-        )
-        log.info(
-            "workflow_finished", status=status.value, end_reason=end_reason, steps=budget.steps
-        )
-        return RunResult(run_id, status.value, end_reason, dict(final))
+    log.info(
+        "workflow_paused" if waiting else "workflow_finished",
+        status=status.value,
+        end_reason=end_reason,
+        waiting_for=waiting,
+        steps=steps,
+    )
+    return RunResult(run_id, status.value, end_reason, final, waiting)
 
 
 async def _failed(
@@ -314,9 +360,143 @@ async def _failed(
     steps: int,
     error: str | None = None,
 ) -> RunResult:
-    # The event goes back to OPEN so a later run can try again.
-    await _finish(
-        sessionmaker, run_id, event_id, status, BunchingEventStatus.OPEN, reason, steps, error
-    )
+    """The event goes back to OPEN so a later run can try again."""
+    async with sessionmaker() as session, session.begin():
+        run = await session.get(WorkflowRun, run_id)
+        event = await session.get(BunchingEvent, event_id)
+        if run is not None:
+            run.status, run.end_reason, run.error = status, reason, error
+            run.waiting_for, run.step_count, run.finished_at = None, steps, datetime.now(UTC)
+        if event is not None and event.status == BunchingEventStatus.HANDLING:
+            event.status = BunchingEventStatus.OPEN
     log.warning("workflow_failed", status=status.value, end_reason=reason, error=error)
     return RunResult(run_id, status.value, reason)
+
+
+async def _execute(
+    run_id: uuid.UUID,
+    event: BunchingEvent,
+    graph_input: Any,
+    first_step: int,
+    harness: ToolHarness,
+    sessionmaker: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    job_queue: ArqRedis,
+    checkpointer: BaseCheckpointSaver[Any],
+) -> RunResult:
+    budget = RunBudget.from_settings(run_id, settings)  # limits apply to each active segment
+    budget.steps = first_step
+    try:
+        async with sessionmaker() as session:
+            route = await load_world_route(session, event.route_id)
+            last = {
+                d.direction_id: _seconds(d.last_departure)
+                for d in await session.scalars(
+                    select(RouteDirection).where(RouteDirection.route_id == event.route_id)
+                )
+            }
+        deps = WorkflowDeps(
+            run_id=str(run_id),
+            harness=harness,
+            budget=budget,
+            sessionmaker=sessionmaker,
+            settings=settings,
+            route=route,
+            last_departure_s=last,
+            sim_semaphore=asyncio.Semaphore(settings.sim_concurrency),
+            job_queue=job_queue,
+            first_step=first_step,
+        )
+        graph = build_graph(deps, checkpointer)
+        final = await asyncio.wait_for(
+            graph.ainvoke(graph_input, config=_config(run_id, settings)),
+            timeout=settings.run_time_limit_seconds,
+        )
+    except TimeoutError:
+        return await _failed(
+            sessionmaker, run_id, event.id, WorkflowStatus.TIMED_OUT, "run_time_limit", budget.steps
+        )
+    except BudgetExceeded as exc:
+        return await _failed(
+            sessionmaker,
+            run_id,
+            event.id,
+            WorkflowStatus.FAILED,
+            f"budget:{exc.code}",
+            budget.steps,
+            str(exc),
+        )
+    except HarnessError as exc:
+        return await _failed(
+            sessionmaker,
+            run_id,
+            event.id,
+            WorkflowStatus.FAILED,
+            f"tools:{exc.kind}:{exc.tool}",
+            budget.steps,
+            str(exc),
+        )
+    except RouteNotImported as exc:
+        return await _failed(
+            sessionmaker, run_id, event.id, WorkflowStatus.FAILED, "route_not_imported", 0, str(exc)
+        )
+    return await _settle(sessionmaker, run_id, event.id, dict(final), budget.steps)
+
+
+async def start_workflow(
+    event_id: uuid.UUID,
+    harness: ToolHarness,
+    sessionmaker: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    job_queue: ArqRedis,
+    checkpointer: BaseCheckpointSaver[Any],
+) -> RunResult:
+    claimed = await _claim_start(sessionmaker, event_id)
+    if isinstance(claimed, str):
+        log.info("workflow_skipped", event_id=str(event_id), reason=claimed)
+        return RunResult(None, "skipped", claimed)
+    run_id, event = claimed
+    with structlog.contextvars.bound_contextvars(run_id=str(run_id), event_id=str(event_id)):
+        log.info("workflow_started", route_id=event.route_id)
+        initial: WorkflowState = {
+            "run_id": str(run_id),
+            "event_id": str(event_id),
+            "route_id": event.route_id,
+            "leader_vehicle_id": str(event.leader_vehicle_id),
+            "follower_vehicle_id": str(event.follower_vehicle_id),
+            "round": 0,
+        }
+        return await _execute(
+            run_id, event, initial, 0, harness, sessionmaker, settings, job_queue, checkpointer
+        )
+
+
+async def resume_workflow(
+    run_id: uuid.UUID,
+    kind: str,
+    value: dict[str, Any],
+    harness: ToolHarness,
+    sessionmaker: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    job_queue: ArqRedis,
+    checkpointer: BaseCheckpointSaver[Any],
+) -> RunResult:
+    """Continue a paused run with the officer's decision / driver's reply / outcome due."""
+    claimed = await _claim_resume(sessionmaker, run_id, kind)
+    if isinstance(claimed, str):
+        log.info("workflow_resume_skipped", run_id=str(run_id), reason=claimed)
+        return RunResult(None, "skipped", claimed)
+    event, steps = claimed
+    with structlog.contextvars.bound_contextvars(run_id=str(run_id), event_id=str(event.id)):
+        log.info("workflow_resumed", kind=kind)
+        return await _execute(
+            run_id,
+            event,
+            Command(resume=value),
+            steps,
+            harness,
+            sessionmaker,
+            settings,
+            job_queue,
+            checkpointer,
+        )

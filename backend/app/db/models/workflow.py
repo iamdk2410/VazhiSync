@@ -59,6 +59,8 @@ class WorkflowRun(Base):
     )
     step_count: Mapped[int] = mapped_column(server_default=text("0"))
     regeneration_round: Mapped[int] = mapped_column(server_default=text("0"))
+    # B12: which interrupt the paused graph waits on: officer | driver | outcome (None: not paused)
+    waiting_for: Mapped[str | None] = mapped_column(String(16))
     end_reason: Mapped[str | None] = mapped_column(Text)
     error: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime] = utc_now_column()
@@ -121,6 +123,8 @@ class Recommendation(Base):
     is_near_tie: Mapped[bool] = mapped_column(server_default=text("false"))
     regeneration_round: Mapped[int] = mapped_column(server_default=text("0"))
     created_at: Mapped[datetime] = utc_now_column()
+    # B12: a recommendation is only valid for a short while; after this it is re-planned.
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Approval(Base):
@@ -143,6 +147,11 @@ class Approval(Base):
 
 class DriverInstruction(Base):
     __tablename__ = "driver_instructions"
+    __table_args__ = (
+        CheckConstraint(
+            "status <> 'cant_comply' OR cancel_reason IS NOT NULL", name="cant_comply_has_reason"
+        ),
+    )
 
     id: Mapped[uuid.UUID] = uuid_pk()
     instruction_id: Mapped[str] = mapped_column(String(64), unique=True)  # idempotency key
@@ -158,6 +167,9 @@ class DriverInstruction(Base):
     sent_at: Mapped[datetime] = utc_now_column()
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # B12: why the instruction ended without being carried out (driver's quick reply).
+    cancel_reason: Mapped[str | None] = mapped_column(String(32))
+    cancel_note: Mapped[str | None] = mapped_column(Text)
 
 
 class InterventionOutcome(Base):
@@ -176,4 +188,7 @@ class InterventionOutcome(Base):
     avg_wait_minutes_before: Mapped[float | None]
     avg_wait_minutes_after: Mapped[float | None]
     bunching_resolved: Mapped[bool | None]
+    # B12: what the simulator predicted vs what was observed (passenger-minutes saved).
+    predicted_benefit_passenger_minutes: Mapped[float | None]
+    actual_benefit_passenger_minutes: Mapped[float | None]
     metrics: Mapped[Json] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))

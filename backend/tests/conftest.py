@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,15 @@ _dev_redis_url = os.environ.get("REDIS_URL") or dotenv_values(REPO_ROOT / ".env"
 # Unit tests must not depend on a developer's .env: provide the required settings up front.
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5434/test")
 os.environ.setdefault("JWT_SECRET", "unit-test-secret-at-least-16-chars")
+
+
+@pytest.fixture(scope="session")
+def event_loop_policy() -> asyncio.AbstractEventLoopPolicy:
+    """psycopg's async mode (the LangGraph checkpointer, B12) can't run on Windows' default
+    Proactor loop; tests use the Selector loop there. Containers run Linux: unaffected."""
+    if sys.platform == "win32":
+        return asyncio.WindowsSelectorEventLoopPolicy()  # type: ignore[attr-defined,unused-ignore]
+    return asyncio.DefaultEventLoopPolicy()
 
 
 @pytest.fixture(autouse=True)

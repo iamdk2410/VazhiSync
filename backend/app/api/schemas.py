@@ -8,11 +8,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
 from app.auth.security import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 from app.db.enums import (
+    ActionType,
     BunchingEventStatus,
     BunchingSeverity,
+    CantComplyReason,
+    InstructionStatus,
     Role,
     ScenarioSource,
     ScenarioStatus,
+    WorkflowStatus,
 )
 from scenario_gen.preview import Preview
 from scenario_gen.schema import ScenarioPlan
@@ -237,3 +241,82 @@ class ScenarioList(BaseModel):
 class WorldScenarioOut(BaseModel):
     scenario_id: uuid.UUID | None  # None: a normal day
     name: str | None
+
+
+# --- approval, dispatch and driver feedback (B12) ---
+MAX_HOLD_SECONDS = 180  # rulebook R1 (docs/rulebook.md)
+
+
+class ActionParams(BaseModel):
+    seconds: int | None = None  # hold
+    stop_ids: list[str] | None = None  # skip_stop
+    at_stop_id: str | None = None  # short_turn
+
+
+class RankedOut(BaseModel):
+    candidate_key: str
+    benefit_passenger_minutes: float
+    benefit_low: float
+    benefit_high: float
+    bad_case_benefit: float
+    passenger_wait_minutes: float
+    bunching_count: float
+    rejected_reason: str | None = None
+
+
+class RecommendationOut(BaseModel):
+    id: uuid.UUID
+    run_id: uuid.UUID
+    run_status: WorkflowStatus
+    round: int
+    action_type: ActionType
+    vehicle_id: uuid.UUID | None
+    fleet_number: str | None
+    params: ActionParams
+    benefit_passenger_minutes: float
+    explanation: str
+    is_near_tie: bool
+    ranking: list[RankedOut]
+    created_at: datetime
+    expires_at: datetime | None
+
+
+class RecommendationsResponse(BaseModel):
+    recommendations: list[RecommendationOut]
+
+
+class DecisionRequest(StrictModel):
+    decision: Literal["approve", "edit", "reject"]
+    seconds: Annotated[int, Field(ge=1, le=MAX_HOLD_SECONDS)] | None = None  # edit: hold length
+    reason: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=300)]
+        | None
+    ) = None
+
+
+class DecisionResponse(BaseModel):
+    status: Literal["accepted", "already_decided"]
+    approval_id: uuid.UUID
+    run_id: uuid.UUID
+
+
+class InstructionOut(BaseModel):
+    id: uuid.UUID
+    instruction_id: str
+    vehicle_id: uuid.UUID
+    action_type: ActionType
+    params: ActionParams
+    status: InstructionStatus
+    sent_at: datetime
+    acknowledged_at: datetime | None
+    done_at: datetime | None
+    cancel_reason: str | None
+
+
+class CurrentInstructionResponse(BaseModel):
+    instruction: InstructionOut | None
+
+
+class CantComplyRequest(StrictModel):
+    reason: CantComplyReason
+    note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)] | None = None

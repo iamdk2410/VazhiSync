@@ -11,12 +11,13 @@ Each tick:
 Staleness is computed here, server-side, from the fix age in real time (rule 4).
 """
 
+import json
 import math
 import uuid
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal, cast
 
 import structlog
 from geoalchemy2 import WKTElement
@@ -37,6 +38,7 @@ from app.live.channels import (
     LIVE_CHANNEL,
     SCENARIO_KEY,
     SPEED_KEY,
+    WORLD_ACTIONS_KEY,
 )
 from app.live.headways import Fix, Headway, compute_headways
 from app.live.schemas import (
@@ -53,13 +55,14 @@ from app.runner.bunching import BunchingTracker
 from app.runner.route_loader import WorldRoute
 from scenario_gen.checks import ScenarioContext, to_sim_config
 from scenario_gen.checks import dropouts as scenario_dropouts
-from simulator import SimConfig, Simulation
+from simulator import Action, ActionError, Hold, ShortTurn, SimConfig, Simulation, SkipStops
 
 log = structlog.get_logger()
 
 Speed = Literal[1, 5, 10]
 SPEEDS: tuple[Speed, ...] = (1, 5, 10)
 PRUNE_EVERY = timedelta(minutes=1)
+MAX_ACTIONS_PER_TICK = 20
 Clock = Callable[[], datetime]
 
 
@@ -220,6 +223,7 @@ class WorldRunner:
     async def tick(self, real_dt_s: float) -> LiveFrame:
         await self._refresh_scenario()
         await self._refresh_speed()
+        await self._apply_acknowledged()
         self._pending_s += real_dt_s * self.speed
         whole = math.floor(self._pending_s)
         self._pending_s -= whole
@@ -419,6 +423,50 @@ class WorldRunner:
             ],
             events=sorted(self.events.values(), key=lambda e: e.detected_at),
         )
+
+    # ------------------------------------------------------------------ driver actions (B12)
+
+    async def _apply_acknowledged(self) -> None:
+        """Instructions a driver acknowledged are carried out by the world's bus."""
+        for _ in range(MAX_ACTIONS_PER_TICK):
+            try:
+                raw = await cast(Awaitable[Any], self._redis.lpop(WORLD_ACTIONS_KEY))
+            except RedisError as exc:
+                log.warning("world_actions_unavailable", error=repr(exc))
+                return
+            if raw is None:
+                return
+            self.apply_instruction(json.loads(raw))
+
+    def apply_instruction(self, item: dict[str, Any]) -> bool:
+        fleet = str(item.get("fleet_number"))
+        bus = next((b for b in self.sim.state.buses if b.bus_id == fleet), None)
+        if bus is None:
+            log.warning("world_action_unknown_bus", fleet=fleet)
+            return False
+        direction = self.route.model.direction(bus.direction)
+        index = {s.stop_id: i for i, s in enumerate(direction.stops)}
+        params = item.get("params") or {}
+        kind = item.get("action_type")
+        try:
+            action: Action
+            if kind == "hold":
+                action = Hold(fleet, int(params["seconds"]))
+            elif kind == "skip_stop":
+                action = SkipStops(fleet, tuple(index[s] for s in params["stop_ids"]))
+            elif kind == "short_turn":
+                action = ShortTurn(fleet, index[params["at_stop_id"]])
+            else:
+                return False
+            self.sim.apply(action)
+        except (ActionError, KeyError, ValueError) as exc:
+            # The bus moved on between dispatch and acknowledgement; the outcome shows it.
+            log.warning("world_action_rejected", fleet=fleet, action=kind, error=str(exc))
+            return False
+        log.info(
+            "world_action_applied", fleet=fleet, action=kind, instruction=item.get("instruction_id")
+        )
+        return True
 
     # ------------------------------------------------------------------ scenarios
 

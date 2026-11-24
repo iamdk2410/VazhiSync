@@ -172,6 +172,7 @@ async def test_bunching_event_to_ranked_recommendation(
     bunched: tuple[WorldRunner, list[uuid.UUID]],
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     _, queued = bunched
     event = await only_event()
@@ -179,7 +180,7 @@ async def test_bunching_event_to_ranked_recommendation(
     settings = get_settings()
 
     result = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
 
     assert result.run_id is not None
@@ -202,14 +203,21 @@ async def test_bunching_event_to_ranked_recommendation(
     recorded = await steps(result.run_id)
     nodes = [s.node for s in recorded]
     assert nodes[:3] == ["headway_monitor", "action_generator", "impact_simulator"]
-    assert nodes[-1] == "control_advisor"
+    if result.end_reason == "do_nothing_recommended":
+        assert nodes[-1] == "control_advisor"  # nothing to approve: the run ends
+    else:  # paused for the officer (B12): recorded as a pause, not an error
+        assert nodes[-2:] == ["control_advisor", "await_officer"]
+        assert recorded[-1].status == StepStatus.SKIPPED
+        assert recorded[-1].routing_decision == "interrupt"
+        assert result.waiting_for == "officer"
+    advisor = next(s for s in recorded if s.node == "control_advisor")
     n_candidates = len(state_of(result)["candidates"])
     assert nodes.count("simulate") == n_candidates >= 3
     assert [s.step_index for s in recorded] == list(range(1, len(recorded) + 1))
-    assert all(s.status == StepStatus.OK for s in recorded)
+    assert all(s.status == StepStatus.OK for s in recorded if s.node != "await_officer")
     assert recorded[0].routing_decision == "generate"
     assert summary_of(recorded[0])["pair"]["follower"] == "T1-02"
-    assert summary_of(recorded[-1])["recommendation"]["candidate"] == recommendation.candidate_key
+    assert summary_of(advisor)["recommendation"]["candidate"] == recommendation.candidate_key
 
     async with get_sessionmaker()() as session:
         run = await session.get(WorkflowRun, result.run_id)
@@ -222,7 +230,10 @@ async def test_bunching_event_to_ranked_recommendation(
             )
         ).all()
         event_after = await session.get(BunchingEvent, event.id)
-    assert run is not None and run.step_count == len(recorded) and run.finished_at is not None
+    assert run is not None and run.step_count == len(recorded)
+    paused = result.waiting_for is not None
+    assert (run.finished_at is None) == paused  # a paused run isn't finished
+    assert run.waiting_for == result.waiting_for
     assert run.status in {
         WorkflowStatus.AWAITING_APPROVAL,
         WorkflowStatus.ESCALATED,
@@ -238,16 +249,19 @@ async def test_bunching_event_to_ranked_recommendation(
 
 
 async def test_same_pair_is_handled_once(
-    bunched: tuple[WorldRunner, list[uuid.UUID]], sim_worker: Worker, job_queue: ArqRedis
+    bunched: tuple[WorldRunner, list[uuid.UUID]],
+    sim_worker: Worker,
+    job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
     settings = get_settings()
     first = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     assert first.run_id is not None
     again = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     assert again.run_id is None and again.end_reason == "event_not_open"
 
@@ -265,7 +279,7 @@ async def test_same_pair_is_handled_once(
         await session.commit()
     if first.status in {"awaiting_approval", "escalated"}:
         third = await start_workflow(
-            dup.id, harness(settings), get_sessionmaker(), settings, job_queue
+            dup.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
         )
         assert third.run_id is None and third.end_reason == "pair_already_handled"
 
@@ -277,13 +291,14 @@ async def test_stale_data_flags_and_ends_without_candidates(
     bunched: tuple[WorldRunner, list[uuid.UUID]],
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
     clock: FakeClock,
 ) -> None:
     event = await only_event()
     clock.advance(61)  # no GPS for a minute
     settings = get_settings()
     result = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     assert result.end_reason == "stale_data"
     recorded = await steps(result.run_id)  # type: ignore[arg-type]
@@ -296,6 +311,7 @@ async def test_pair_no_longer_adjacent_ends_and_resolves(
     bunched: tuple[WorldRunner, list[uuid.UUID]],
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     runner, _ = bunched
     async with get_sessionmaker()() as session:  # 01 and 03 have 02 between them
@@ -311,7 +327,7 @@ async def test_pair_no_longer_adjacent_ends_and_resolves(
         await session.commit()
     settings = get_settings()
     result = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     assert result.end_reason == "not_bunched"
     async with get_sessionmaker()() as session:
@@ -319,12 +335,20 @@ async def test_pair_no_longer_adjacent_ends_and_resolves(
 
 
 async def test_demand_data_down_runs_degraded(
-    bunched: tuple[WorldRunner, list[uuid.UUID]], sim_worker: Worker, job_queue: ArqRedis
+    bunched: tuple[WorldRunner, list[uuid.UUID]],
+    sim_worker: Worker,
+    job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
     settings = get_settings()
     result = await start_workflow(
-        event.id, harness(settings, down=["demand"]), get_sessionmaker(), settings, job_queue
+        event.id,
+        harness(settings, down=["demand"]),
+        get_sessionmaker(),
+        settings,
+        job_queue,
+        checkpointer,
     )
     assert result.end_reason in {"recommended", "escalated", "do_nothing_recommended"}
     kinds = {c.action_type for c in state_of(result)["candidates"]}
@@ -334,12 +358,15 @@ async def test_demand_data_down_runs_degraded(
 
 
 async def test_simulation_timeouts_escalate(
-    bunched: tuple[WorldRunner, list[uuid.UUID]], sim_worker: Worker, job_queue: ArqRedis
+    bunched: tuple[WorldRunner, list[uuid.UUID]],
+    sim_worker: Worker,
+    job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
     settings = get_settings().model_copy(update={"sim_timeout_seconds": 0.0001})
     result = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     assert result.end_reason == "escalated"  # no baseline: the officer decides
     outcomes = state_of(result)["sim_outcomes"]
@@ -350,11 +377,12 @@ async def test_step_budget_fails_the_run_cleanly(
     bunched: tuple[WorldRunner, list[uuid.UUID]],
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
     settings = get_settings().model_copy(update={"max_graph_steps": 2})
     result = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     assert result.status == "failed" and result.end_reason == "budget:steps"
     assert (await only_event()).status == BunchingEventStatus.OPEN
@@ -364,11 +392,17 @@ async def test_avl_down_fails_the_run_and_reopens_the_event(
     bunched: tuple[WorldRunner, list[uuid.UUID]],
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
     settings = get_settings()
     result = await start_workflow(
-        event.id, harness(settings, down=["avl"]), get_sessionmaker(), settings, job_queue
+        event.id,
+        harness(settings, down=["avl"]),
+        get_sessionmaker(),
+        settings,
+        job_queue,
+        checkpointer,
     )
     assert result.status == "failed" and result.end_reason.startswith("tools:unavailable")  # type: ignore[union-attr]
     assert (await only_event()).status == BunchingEventStatus.OPEN
@@ -378,6 +412,7 @@ async def test_open_events_without_a_run_are_retried(
     bunched: tuple[WorldRunner, list[uuid.UUID]],
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
 

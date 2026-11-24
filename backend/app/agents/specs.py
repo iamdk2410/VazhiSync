@@ -60,10 +60,10 @@ AGENTS: dict[AgentName, AgentSpec] = {
         ),
         AgentSpec(
             name="dispatch",
-            role="Sends the officer-approved instruction to the driver (B12).",
+            role="Re-validates, then sends the officer-approved instruction; measures the result.",
             objective="Deliver exactly what was approved, once, to a bus with fresh GPS.",
-            inputs=("approval",),
-            outputs=("driver instruction",),
+            inputs=("approval", "fresh headways"),
+            outputs=("driver instruction", "intervention outcome (predicted vs actual)"),
             uses_llm=False,
         ),
     )

@@ -42,7 +42,8 @@ backend/
 │   │               budget.py (step/time; tokens in B9), harness.py; context builder, rules later
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
-│   │               workflow.py (graph, run claim/finish, limits); checkpointer in B12
+│   │               workflow.py (graph, start/resume claims, limits), checkpoint.py (Postgres
+│   │               checkpointer, own `langgraph` schema), control.py (API side of resumes)
 │   ├── workers/    ARQ jobs: scenario generation (B5), run_workflow + open-event sweep (B10);
 │   │               simulations.py: simulation jobs on their own queue/worker (sim-worker, B11)
 │   ├── llm/        Ollama client (B5); gateway: fallback chain, retries, token/cost logging (B9)

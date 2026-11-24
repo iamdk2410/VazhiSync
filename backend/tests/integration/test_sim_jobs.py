@@ -47,12 +47,13 @@ async def test_four_candidates_finish_in_parallel_quickly(
     bunched: tuple[WorldRunner, list[uuid.UUID]],  # noqa: F811
     sim_worker: Worker,
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     event = await only_event()
     settings = get_settings()
     t0 = time.monotonic()
     result = await start_workflow(
-        event.id, harness(settings), get_sessionmaker(), settings, job_queue
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
     )
     elapsed = time.monotonic() - t0
     state = state_of(result)
@@ -82,6 +83,7 @@ async def test_four_candidates_finish_in_parallel_quickly(
 async def test_slow_job_times_out_without_blocking_the_rest(
     bunched: tuple[WorldRunner, list[uuid.UUID]],  # noqa: F811
     job_queue: ArqRedis,
+    checkpointer: Any,
 ) -> None:
     async def slow_for_the_short_hold(
         ctx: dict[str, Any], payload: dict[str, Any]
@@ -96,7 +98,7 @@ async def test_slow_job_times_out_without_blocking_the_rest(
     async with running_worker(slow_for_the_short_hold) as worker:
         t0 = time.monotonic()
         result = await start_workflow(
-            event.id, harness(settings), get_sessionmaker(), settings, job_queue
+            event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
         )
         elapsed = time.monotonic() - t0
         state = state_of(result)

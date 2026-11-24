@@ -213,7 +213,12 @@ async def action_generator(state: WorkflowState, deps: WorkflowDeps) -> dict[str
     )
     estimates = optional.value if isinstance(optional.value, BoardingEstimates) else None
     snapshot = snapshot.model_copy(update={"estimates": estimates})
-    proposed = propose(snapshot, deps.route.model, estimates)
+    round_ = state.get("round", 0)
+    proposed = [
+        c.model_copy(update={"round": round_})
+        for c in propose(snapshot, deps.route.model, estimates)
+    ]
+    rejected = set(state.get("rejected_keys", []))
 
     ids = [str(snapshot.pair.leader_vehicle_id), str(snapshot.pair.follower_vehicle_id)]
     ctx = await _rule_context(deps, snapshot, ids)
@@ -222,6 +227,8 @@ async def action_generator(state: WorkflowState, deps: WorkflowDeps) -> dict[str
     dropped: list[DroppedCandidate] = []
     for c in proposed:
         reasons = violations(c, ctx, snapshot.pair.direction_id)
+        if c.key in rejected:
+            reasons.append("rejected by the officer in an earlier round")
         if c.action_type in poor:
             reasons.append(f"past outcomes: {c.action_type} has made waits worse here")
         if reasons:
@@ -238,6 +245,7 @@ async def action_generator(state: WorkflowState, deps: WorkflowDeps) -> dict[str
                 params=c.params,
                 source=CandidateSource.RULE,
                 rationale=c.rationale,
+                regeneration_round=round_,
             )
             for c in kept
         ]

@@ -19,7 +19,11 @@ EndReason = Literal[
     "recommended",  # a ranked recommendation awaits the officer
     "escalated",  # near-tie or no usable baseline: the officer decides
     "do_nothing_recommended",  # every action was worse than waiting
+    "rejected",  # the officer rejected every round (B12)
+    "replans_exhausted",  # expired / can't comply / invalid at send too many times (B12)
+    "outcome_measured",  # dispatched, carried out and measured (B12)
 ]
+MAX_ROUNDS = 2  # regeneration rounds after the first recommendation (reject, re-plan)
 
 
 class _Model(BaseModel):
@@ -44,6 +48,7 @@ class Candidate(_Model):
     params: dict[str, Any]  # canonical params: {"seconds"} / {"stop_ids"} / {"at_stop_id"}
     rationale: str
     db_id: uuid.UUID | None = None  # candidate_actions row
+    round: int = 0  # regeneration round it belongs to (B12)
 
 
 class DroppedCandidate(_Model):
@@ -66,6 +71,7 @@ class SimOutcome(_Model):
     headway_cv: float | None = None
     error: str | None = None
     duration_ms: int = 0
+    round: int = 0
 
 
 class RankedCandidate(_Model):
@@ -87,6 +93,7 @@ class RecommendationResult(_Model):
     is_near_tie: bool
     end_reason: EndReason
     safest_candidate_key: str | None = None  # best bad case, when it differs from the winner
+    recommendation_id: uuid.UUID | None = None  # recommendations row (what the officer decides on)
 
 
 class WorkflowState(TypedDict, total=False):
@@ -104,3 +111,37 @@ class WorkflowState(TypedDict, total=False):
     end_reason: EndReason
     route: str  # the last routing decision (also stored in agent_steps)
     candidate: Candidate  # payload of a simulate branch (Send)
+    round: int  # 0 for the first recommendation, +1 per reject / edit / re-plan (B12)
+    decision: dict[str, Any]  # the officer's decision (resume value of await_officer)
+    rejected_keys: Annotated[list[str], operator.add]  # candidates the officer rejected
+    instruction: dict[str, Any]  # the dispatched instruction (InstructionSent as JSON)
+    driver_reply: dict[str, Any]  # resume value of await_driver
+    acked_world_time_s: float  # the world's clock when the driver acknowledged
+
+
+# ------------------------------------------------------------------ resume values (B12)
+
+
+class OfficerDecision(_Model):
+    """What resumes `await_officer`. `expired`: the recommendation went stale before a decision."""
+
+    decision: Literal["approve", "edit", "reject", "expired"]
+    approval_id: uuid.UUID | None = None
+    officer_id: uuid.UUID | None = None
+    params: dict[str, Any] | None = None  # edit: the officer's parameters (e.g. {"seconds": 90})
+    reason: str | None = None  # reject: required
+
+
+class DriverReply(_Model):
+    """What resumes `await_driver`."""
+
+    kind: Literal["ack", "cant_comply", "timeout"]
+    instruction_id: str
+    world_time_s: float | None = None  # ack: the world's clock when acknowledged
+    reason: str | None = None  # cant_comply: blocking_traffic | bus_full | other
+
+
+class OutcomeDue(_Model):
+    """What resumes `await_outcome` once ~15 world-minutes have passed since the ack."""
+
+    kind: Literal["measure"] = "measure"

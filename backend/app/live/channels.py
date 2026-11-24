@@ -7,3 +7,5 @@ SPEED_KEY = "vazhisync:world:speed"  # 1, 5 or 10; set by officers, read by the 
 BUNCHING_CHANNEL = "vazhisync:events:bunching"  # pub/sub: a BunchingRaised per new event
 SCENARIO_KEY = "vazhisync:world:scenario"  # WorldScenario JSON; a new token resets the world
 INSTRUCTION_CHANNEL = "vazhisync:instructions"  # pub/sub: an InstructionSent per new instruction
+WORLD_ACTIONS_KEY = "vazhisync:world:actions"  # list: acknowledged instructions the world applies
+ALERT_CHANNEL = "vazhisync:alerts"  # pub/sub: officer alerts (e.g. a driver can't comply)

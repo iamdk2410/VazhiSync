@@ -65,6 +65,13 @@ class InstructionStatus(StrEnum):
     DONE = "done"
     EXPIRED = "expired"
     CANCELLED = "cancelled"
+    CANT_COMPLY = "cant_comply"  # the driver replied they can't (B12): reason required
+
+
+class CantComplyReason(StrEnum):
+    BLOCKING_TRAFFIC = "blocking_traffic"
+    BUS_FULL = "bus_full"
+    OTHER = "other"
 
 
 class NotificationKind(StrEnum):

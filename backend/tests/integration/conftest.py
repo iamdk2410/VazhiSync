@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from typing import Any
 
 import pytest
 from arq import ArqRedis, create_pool
@@ -6,6 +7,7 @@ from arq.worker import Worker
 from httpx import ASGITransport, AsyncClient
 
 from app.auth.rate_limit import MemoryRateLimiter, get_rate_limiter
+from app.graph.checkpoint import postgres_checkpointer
 from app.main import create_app
 from app.workers.queue import arq_redis_settings
 from tests.conftest import Account
@@ -47,3 +49,10 @@ async def job_queue(database_url: str) -> AsyncIterator[ArqRedis]:
     pool = await create_pool(arq_redis_settings())
     yield pool
     await pool.aclose()
+
+
+@pytest.fixture
+async def checkpointer(database_url: str) -> AsyncIterator[Any]:
+    """The real Postgres checkpointer (B12), on the test database."""
+    async with postgres_checkpointer(database_url) as saver:
+        yield saver

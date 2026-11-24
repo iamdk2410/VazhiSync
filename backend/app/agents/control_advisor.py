@@ -11,6 +11,7 @@ them, from these same numbers).
 
 import math
 import statistics
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.db.models import Recommendation
@@ -167,23 +168,41 @@ def rank(
     )
 
 
+RECOMMENDATION_TTL = timedelta(seconds=90)  # B12: re-plan if the officer decides later
+
+
 async def control_advisor(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
-    candidates = state.get("candidates", [])
-    result = rank(state.get("sim_outcomes", []), candidates, deps.horizon_min)
+    round_ = state.get("round", 0)
+    candidates = [c for c in state.get("candidates", []) if c.round == round_]
+    outcomes = [o for o in state.get("sim_outcomes", []) if o.round == round_]
+    result = rank(outcomes, candidates, deps.horizon_min)
+    if result.end_reason == "do_nothing_recommended" and any(
+        c.key.startswith("edit:") for c in candidates
+    ):
+        # The officer asked for this action: show them the result instead of ending silently.
+        result = result.model_copy(
+            update={
+                "end_reason": "escalated",
+                "explanation": "The officer's edit does not beat doing nothing. "
+                + result.explanation,
+            }
+        )
     chosen = next((c for c in candidates if c.key == result.candidate_key), None)
     if chosen is not None and chosen.db_id is not None:
         async with deps.sessionmaker() as session:
-            session.add(
-                Recommendation(
-                    run_id=deps.run_id,
-                    candidate_id=chosen.db_id,
-                    ranking=[r.model_dump() for r in result.ranking],
-                    benefit_passenger_minutes=result.benefit_passenger_minutes,
-                    explanation=result.explanation,
-                    is_near_tie=result.is_near_tie,
-                )
+            row = Recommendation(
+                run_id=deps.run_id,
+                candidate_id=chosen.db_id,
+                ranking=[r.model_dump() for r in result.ranking],
+                benefit_passenger_minutes=result.benefit_passenger_minutes,
+                explanation=result.explanation,
+                is_near_tie=result.is_near_tie,
+                regeneration_round=round_,
+                expires_at=datetime.now(UTC) + RECOMMENDATION_TTL,
             )
+            session.add(row)
             await session.commit()
+            result = result.model_copy(update={"recommendation_id": row.id})
     routes = {"recommended": "recommend", "escalated": "escalate"}
     return {
         "recommendation": result,

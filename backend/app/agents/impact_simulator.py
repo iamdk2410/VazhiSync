@@ -244,25 +244,29 @@ async def simulate(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
             task = asyncio.create_task(_abort(job))  # free the worker slot; don't wait for it
             _background.add(task)
             task.add_done_callback(_background.discard)
-        return {"sim_outcomes": [_failed(candidate.key, seeds, "timed_out", error, t0)]}
+        return {"sim_outcomes": [_failed(candidate, seeds, "timed_out", error, t0)]}
     except (RedisError, OSError, RuntimeError) as exc:
         error = f"simulation queue unavailable: {exc!r}"
         await _set_status(deps, job_id, JobStatus.FAILED, error)
-        return {"sim_outcomes": [_failed(candidate.key, seeds, "failed", error, t0)]}
+        return {"sim_outcomes": [_failed(candidate, seeds, "failed", error, t0)]}
 
     if result.get("status") != "completed":
-        return {
-            "sim_outcomes": [_failed(candidate.key, seeds, "failed", str(result.get("error")), t0)]
-        }
+        return {"sim_outcomes": [_failed(candidate, seeds, "failed", str(result.get("error")), t0)]}
     ms = round((time.monotonic() - t0) * 1000)
-    return {"sim_outcomes": [summarize(candidate.key, seeds, result["runs"], ms)]}
+    outcome = summarize(candidate.key, seeds, result["runs"], ms)
+    return {"sim_outcomes": [outcome.model_copy(update={"round": candidate.round})]}
 
 
 def _failed(
-    key: str, seeds: list[int], status: Literal["failed", "timed_out"], error: str, t0: float
+    candidate: Candidate,
+    seeds: list[int],
+    status: Literal["failed", "timed_out"],
+    error: str,
+    t0: float,
 ) -> SimOutcome:
     return SimOutcome(
-        candidate_key=key,
+        candidate_key=candidate.key,
+        round=candidate.round,
         status=status,
         seeds=seeds,
         error=error,

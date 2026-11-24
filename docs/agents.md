@@ -11,9 +11,18 @@ START -> Headway Monitor --stale--------> END   (flagged; nobody instructed)
                          --not_bunched--> END   (event resolved)
                          --generate-----> Action Generator -> Impact Simulator
          Impact Simulator --Send, one branch per candidate--> simulate (parallel)
-         simulate -> Control Advisor --recommend | escalate | do_nothing--> END
-                                      (B12: officer approval interrupt -> Dispatch)
+         simulate -> Control Advisor --do_nothing--> END
+                                      --recommend | escalate--> await_officer (pause)
+         await_officer --approve--> Dispatch (re-validate, send) --> await_driver (pause)
+                       --edit--> re-simulate --> await_officer
+                       --reject--> Action Generator (next round, max 2)
+                       --expired--> Headway Monitor (fresh data)
+         await_driver --ack--> await_outcome (pause, ~15 world-min) --> measure --> END
+                      --can't comply / no ack--> Headway Monitor (re-plan)
 ```
+
+Pauses are LangGraph interrupts checkpointed in Postgres; the API records the human's decision
+and a worker resumes the run (B12).
 
 | Agent | Role | Objective | Tools | Inputs | Outputs |
 |---|---|---|---|---|---|

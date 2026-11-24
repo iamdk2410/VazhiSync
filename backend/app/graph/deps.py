@@ -9,6 +9,7 @@ from typing import Any, TypeVar
 
 import structlog
 from arq import ArqRedis
+from langgraph.errors import GraphInterrupt
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -44,7 +45,11 @@ class WorkflowDeps:
     observations: Observations | None = None  # built once by the Impact Simulator
     job_queue: ArqRedis | None = None  # simulation jobs (B11)
     sim_queue: str = "vazhisync:sims"
+    first_step: int = 0  # steps already recorded for this run (a resumed run continues the count)
     _step: int = field(default=0, init=False)
+
+    def __post_init__(self) -> None:
+        self._step = self.first_step
 
     async def tool(self, agent: str, tool: str, args: dict[str, Any], expect: type[T]) -> T:
         result = await self.harness.call(self.budget, agent, tool, args)
@@ -116,6 +121,21 @@ def recorded(
         inputs = summarize_in(state)
         try:
             out = await fn(state, deps)
+        except GraphInterrupt:
+            # The graph paused here (officer / driver / outcome); it resumes later from a
+            # checkpoint and this node runs again from the top. Recorded as a pause, not an error.
+            await deps.record(
+                index,
+                name,
+                StepStatus.SKIPPED,
+                routing="interrupt",
+                inputs=inputs,
+                outputs=None,
+                error=None,
+                started_at=started_at,
+                duration_ms=round((time.monotonic() - t0) * 1000),
+            )
+            raise
         except Exception as exc:
             await deps.record(
                 index,
