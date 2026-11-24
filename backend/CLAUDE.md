@@ -35,13 +35,16 @@ backend/
 │   ├── live/       live frame schemas + per-role filtering, headways, Redis channels, WebSocket hub
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
-│   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor (+ AgentSpecs)
+│   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor,
+│   │               specs.py (AgentSpecs, docs/agents.md), rulebook.py (docs/rulebook.md)
 │   ├── harness/    the only way agents call tools: specs.py (tools + per-agent allowlists),
 │   │               client.py (MCP client, availability circuit), hooks.py (send guard),
 │   │               budget.py (step/time; tokens in B9), harness.py; context builder, rules later
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
-│   ├── graph/      LangGraph state, node wiring, routing, checkpointer
-│   ├── workers/    ARQ jobs: scenario generation (B5), simulation jobs (B11)
+│   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
+│   │               workflow.py (graph, run claim/finish, limits); checkpointer in B12
+│   ├── workers/    ARQ jobs: scenario generation (B5), run_workflow + open-event sweep (B10),
+│   │               simulation jobs (B11)
 │   ├── llm/        Ollama client (B5); gateway: fallback chain, retries, token/cost logging (B9)
 │   ├── lab/        Simulation Lab: scenario library (golden sync, route context)
 │   ├── db/         SQLAlchemy models, migrations, seed scripts

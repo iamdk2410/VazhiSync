@@ -13,7 +13,7 @@ Staleness is computed here, server-side, from the fix age in real time (rule 4).
 
 import math
 import uuid
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Literal
@@ -115,7 +115,9 @@ class WorldRunner:
         dropouts: Sequence[GpsDropout] = (),
         clock: Clock = utc_now,
         sim_config: SimConfig | None = None,
+        enqueue: Callable[[uuid.UUID], Awaitable[None]] | None = None,
     ) -> None:
+        self._enqueue = enqueue  # starts an advisor workflow run for a new bunching event
         self.route = route
         self._sessionmaker = sessionmaker
         self._redis = redis
@@ -151,6 +153,7 @@ class WorldRunner:
         redis: Redis,
         settings: Settings,
         clock: Clock = utc_now,
+        enqueue: Callable[[uuid.UUID], Awaitable[None]] | None = None,
     ) -> "WorldRunner":
         return cls(
             route,
@@ -165,6 +168,7 @@ class WorldRunner:
             retention=timedelta(hours=settings.world_retention_hours),
             dropouts=settings.world_gps_dropouts,
             clock=clock,
+            enqueue=enqueue,
         )
 
     # ------------------------------------------------------------------ setup
@@ -256,6 +260,8 @@ class WorldRunner:
             log.info("bunching_resolved", event_id=str(event_id))
         frame = self._frame(now, headways)
         await self._publish(frame, raised)
+        for event in raised:
+            await self._start_workflow(event.event_id)
         return frame
 
     def _age(self, fix: GpsFix, now: datetime) -> float:
@@ -491,6 +497,15 @@ class WorldRunner:
         if speed is not None and speed != self.speed:
             log.info("world_speed_changed", speed=speed)
             self.speed = speed
+
+    async def _start_workflow(self, event_id: uuid.UUID) -> None:
+        """Best effort: if the queue is down, the worker's minute sweep picks the event up."""
+        if self._enqueue is None:
+            return
+        try:
+            await self._enqueue(event_id)
+        except (RedisError, OSError) as exc:
+            log.warning("workflow_enqueue_failed", event_id=str(event_id), error=repr(exc))
 
     async def _publish(self, frame: LiveFrame, raised: list[BunchingRaised]) -> None:
         """Best effort: the database already has the data, so a Redis outage only pauses the

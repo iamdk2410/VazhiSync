@@ -8,8 +8,11 @@ loop keeps retrying through database/Redis hiccups instead of crashing.
 import asyncio
 import contextlib
 import time
+import uuid
 
 import structlog
+from arq import create_pool
+from arq.connections import RedisSettings
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
@@ -41,6 +44,11 @@ async def heartbeat(redis: Redis) -> None:
 async def world_loop(redis: Redis) -> None:
     settings = get_settings()
     sessionmaker = get_sessionmaker()
+    queue = await create_pool(RedisSettings.from_dsn(settings.redis_url))
+
+    async def enqueue(event_id: uuid.UUID) -> None:
+        await queue.enqueue_job("run_workflow", str(event_id), _job_id=f"workflow:{event_id}")
+
     runner: WorldRunner | None = None
     failures = 0
     loop = asyncio.get_running_loop()
@@ -50,7 +58,9 @@ async def world_loop(redis: Redis) -> None:
             if runner is None:
                 async with sessionmaker() as session:
                     route = await load_world_route(session, settings.world_route_id)
-                runner = WorldRunner.from_settings(route, sessionmaker, redis, settings)
+                runner = WorldRunner.from_settings(
+                    route, sessionmaker, redis, settings, enqueue=enqueue
+                )
                 await runner.setup()
             await runner.tick(settings.world_tick_seconds)
             failures = 0

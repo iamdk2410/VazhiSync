@@ -29,7 +29,7 @@ Names from `docs/build-plan.md`. Tick a module when its "Done when" test passes,
 
 ## Phase D: The brain
 - [ ] B9. LLM gateway and agentic harness (part 2)
-- [ ] B10. Agent workflow with LangGraph
+- [x] B10. Agent workflow with LangGraph (rules only) — one graph (`app/graph/workflow.py`): Headway Monitor (freshness + still bunched, via avl-mcp) → Action Generator (hold the follower for the deficit and half of it, leader skips its quietest stops when demand data is up, short-turn when the other direction has a ≥1.5× gap; rulebook R1–R6 and past outcomes filter) → Impact Simulator (`from_observations` from tool results only, `Send` fan-out one branch per candidate, 3 seeds with common random numbers, per-sim timeout + semaphore) → Control Advisor (simulator benefit vs do nothing, R7 rejects added bunching, do-nothing can win, near-ties escalate). Conditional ends: stale → flagged (event reopened for retry), not bunched → resolved. One active run per bus pair (row-locked claim), repeated events deduplicated; runner queues `run_workflow` on the ARQ worker when it opens an event, a minute sweep retries open events with no active run. Step budget, run time limit, typed failures (tools down / budget / timeout → run failed, event reopened). Every node → `agent_steps`; `candidate_actions` and `recommendations` stored. AgentSpecs in code and `docs/agents.md`; hard rules in `docs/rulebook.md`. Acceptance: `tests/integration/test_workflow.py` (runner-detected event → ranked recommendation through the real MCP servers; e.g. hold 180 s vs skip 2 stops within the near-tie margin → escalated).
 - [ ] B11. Counterfactual simulation workers
 
 ## Phase E: Human control
