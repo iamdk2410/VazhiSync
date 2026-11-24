@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.db.enums import BunchingSeverity, Role
 from app.live.headways import HeadwayStatus
+from scenario_gen.schema import ScenarioPlan
 
 Crowding = Literal["low", "medium", "high"]
 DirectionId = Annotated[int, Field(ge=0, le=1)]
@@ -70,11 +71,25 @@ class LiveFrame(_Frozen):
     sim_time: str  # "08:12:30" on the simulated clock
     sim_elapsed_s: float
     speed: Literal[1, 5, 10]
+    scenario: str | None = None  # name of the scenario loaded into the world, if any
     generated_at: datetime
     vehicles: list[LiveVehicle]
     queues: list[LiveQueue]
     headways: list[LiveHeadway]
     events: list[LiveEvent]
+
+
+class WorldScenario(_Frozen):
+    """What the live world should run (set by `POST /lab/scenarios/{id}/apply`).
+
+    The runner restarts the world whenever `token` changes; `plan` None means a normal day.
+    """
+
+    token: Annotated[str, Field(min_length=1, max_length=64)]
+    scenario_id: uuid.UUID | None = None
+    name: str | None = None
+    seed: int | None = None
+    plan: ScenarioPlan | None = None
 
 
 class BunchingRaised(_Frozen):

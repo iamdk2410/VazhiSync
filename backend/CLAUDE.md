@@ -23,7 +23,8 @@ backend/
 ├── alembic.ini
 ├── Dockerfile
 ├── simulator/      world model: step, snapshot, from_observations, fast_forward (pure Python, no I/O)
-├── scenario_gen/   local-LLM scenario director (Ollama) + scenario library + golden scenarios
+├── scenario_gen/   scenario schema, plausibility checks, prompt, director (LLM injected), preview,
+│                   golden/ scenarios with expected outcomes (pure: never imports app/)
 ├── mcp_servers/
 │   ├── avl_mcp/    get_vehicle_positions, get_headways, route://{id}/shape resource
 │   └── demand_mcp/ get_boarding_estimates, send_driver_instruction
@@ -37,8 +38,9 @@ backend/
 │   │               context builder, rulebook constraints
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      LangGraph state, node wiring, routing, checkpointer
-│   ├── workers/    ARQ simulation jobs
-│   ├── llm/        gateway: fallback chain, retries, token/cost logging
+│   ├── workers/    ARQ jobs: scenario generation (B5), simulation jobs (B11)
+│   ├── llm/        Ollama client (B5); gateway: fallback chain, retries, token/cost logging (B9)
+│   ├── lab/        Simulation Lab: scenario library (golden sync, route context)
 │   ├── db/         SQLAlchemy models, migrations, seed scripts
 │   ├── observability/
 │   ├── runner/     live world sim-runner: world loop, GPS layer, bunching detector, route loader
@@ -49,8 +51,8 @@ backend/
 ├── data/gtfs/      Chennai GTFS zip (not committed) + routes/<id>.json config and snapped GeoJSON (committed); see its README
 └── tests/          unit/, integration/, edge_cases/
 ```
-`simulator/` must not import from `app/` (it stays pure and reusable by the world runner,
-the workers and the tests).
+`simulator/` and `scenario_gen/` must not import from `app/` (they stay pure and reusable by the
+world runner, the workers and the tests; enforced by `tests/unit/test_layering.py`).
 
 ## Config (`../.env`, loaded via pydantic-settings)
 `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `STALE_GPS_SECONDS=60`,
@@ -71,7 +73,8 @@ Live world (B6): `WORLD_ROUTE_ID`, `WORLD_SEED`, `WORLD_SPEED`, `WORLD_TICK_SECO
   `services`-marked tests use Postgres + Redis from compose, on a separate `<db>_test`
   database that is created and migrated automatically (skipped if Postgres is down; CI sets
   `REQUIRE_SERVICES=1`). `stack` tests need the whole compose stack and are excluded by
-  default: `uv run pytest -m stack`.
+  default: `uv run pytest -m stack`. `ollama` tests call the real local LLM (B5 acceptance):
+  `uv run pytest -m ollama -s` (needs Ollama + qwen3:8b on the host and enough free RAM).
 - Lint/format/types: `uv run ruff check . && uv run ruff format . && uv run mypy .`
 - Seed users (officer/driver only): `SEED_PASSWORD=... uv run python -m app.db.seed --role officer --email ... [--name ...]`
   (driver: add `--vehicle <fleet_number>`; inside compose: `docker compose exec -e SEED_PASSWORD=... api python -m app.db.seed ...`)

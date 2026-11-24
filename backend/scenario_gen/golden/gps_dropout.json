@@ -1,0 +1,35 @@
+{
+  "key": "gps_dropout",
+  "description": "Two buses lose GPS for a while in the morning peak. The buses keep running; only the data goes quiet.",
+  "route_id": "32B",
+  "seed": 6,
+  "plan": {
+    "name": "GPS dropouts",
+    "summary": "32B-05 loses GPS from 08:05 for 20 minutes and 32B-09 from 08:30 for 10 minutes.",
+    "start_time": "08:00",
+    "duration_min": 60,
+    "demand_multiplier": 1.0,
+    "gps_dropouts": [
+      {
+        "bus_number": 5,
+        "at_min": 5,
+        "duration_min": 20
+      },
+      {
+        "bus_number": 9,
+        "at_min": 30,
+        "duration_min": 10
+      }
+    ]
+  },
+  "expected": [
+    {
+      "metric": "avg_wait_s",
+      "relation": "same"
+    },
+    {
+      "metric": "bunching_count",
+      "relation": "same"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_redis
 from app.api.schemas import (
     AlertsResponse,
     BunchingEventOut,
@@ -14,7 +15,6 @@ from app.api.schemas import (
     WorldStatus,
 )
 from app.auth.deps import require_role
-from app.config import get_settings
 from app.db.enums import BunchingEventStatus, Role
 from app.db.models import BunchingEvent, User
 from app.db.session import get_session
@@ -41,15 +41,6 @@ async def list_alerts(
         .limit(100)
     )
     return AlertsResponse(alerts=[BunchingEventOut.model_validate(r) for r in rows])
-
-
-def get_redis(request: Request) -> Redis:
-    """The app's shared Redis client (created on first use)."""
-    redis: Redis | None = getattr(request.app.state, "redis", None)
-    if redis is None:
-        redis = Redis.from_url(get_settings().redis_url)
-        request.app.state.redis = redis
-    return redis
 
 
 _LIVE_UNAVAILABLE = HTTPException(

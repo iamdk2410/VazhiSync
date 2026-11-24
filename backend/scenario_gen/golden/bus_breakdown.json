@@ -1,0 +1,34 @@
+{
+  "key": "bus_breakdown",
+  "description": "Bus 3 breaks down ten minutes into the morning peak and is stuck for 25 minutes, leaving a big gap and a crowd behind it.",
+  "route_id": "32B",
+  "seed": 6,
+  "plan": {
+    "name": "Morning breakdown",
+    "summary": "32B-03 breaks down at 08:10 and is stuck for 25 minutes.",
+    "start_time": "08:00",
+    "duration_min": 60,
+    "demand_multiplier": 1.0,
+    "breakdowns": [
+      {
+        "bus_number": 3,
+        "at_min": 10,
+        "duration_min": 25
+      }
+    ]
+  },
+  "expected": [
+    {
+      "metric": "avg_wait_s",
+      "relation": "higher"
+    },
+    {
+      "metric": "headway_cv",
+      "relation": "higher"
+    },
+    {
+      "metric": "bunching_count",
+      "relation": "higher"
+    }
+  ]
+}

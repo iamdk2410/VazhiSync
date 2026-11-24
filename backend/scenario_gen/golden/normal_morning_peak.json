@@ -1,0 +1,26 @@
+{
+  "key": "normal_morning_peak",
+  "description": "An ordinary weekday morning peak on 32B: no incidents. Uncontrolled, buses bunch by themselves within 15-30 minutes.",
+  "route_id": "32B",
+  "seed": 6,
+  "plan": {
+    "name": "Normal weekday morning peak",
+    "summary": "A typical weekday 08:00-09:00 with normal demand and dry roads.",
+    "start_time": "08:00",
+    "duration_min": 60,
+    "demand_multiplier": 1.0
+  },
+  "expected": [
+    {
+      "metric": "avg_wait_s",
+      "relation": "same"
+    },
+    {
+      "metric": "first_bunching_min",
+      "between": [
+        15,
+        30
+      ]
+    }
+  ]
+}

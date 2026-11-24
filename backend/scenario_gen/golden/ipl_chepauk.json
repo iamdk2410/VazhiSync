@@ -1,0 +1,54 @@
+{
+  "key": "ipl_chepauk",
+  "description": "An afternoon IPL match at Chepauk ends around 19:00; the crowd floods the stops near the stadium in both directions.",
+  "route_id": "32B",
+  "seed": 8,
+  "plan": {
+    "name": "IPL match ends at Chepauk",
+    "summary": "Match crowd at D1 Police Station, Adham Market and Triplicane Post Office from 18:45 for an hour, heading both north (Central) and south (Marina).",
+    "start_time": "18:30",
+    "duration_min": 90,
+    "demand_multiplier": 1.0,
+    "surges": [
+      {
+        "direction_id": 0,
+        "stop_ids": [
+          "MTC-1091",
+          "MTC-9547",
+          "MTC-9511"
+        ],
+        "start_min": 15,
+        "end_min": 75,
+        "multiplier": 5.0,
+        "reason": "Match crowd heading to the beach side"
+      },
+      {
+        "direction_id": 1,
+        "stop_ids": [
+          "MTC-1090",
+          "MTC-9553",
+          "MTC-9512"
+        ],
+        "start_min": 15,
+        "end_min": 75,
+        "multiplier": 5.0,
+        "reason": "Match crowd heading to Central station"
+      }
+    ]
+  },
+  "expected": [
+    {
+      "metric": "boarded",
+      "relation": "higher",
+      "min_ratio": 1.2
+    },
+    {
+      "metric": "left_behind",
+      "relation": "higher"
+    },
+    {
+      "metric": "avg_wait_s",
+      "relation": "higher"
+    }
+  ]
+}

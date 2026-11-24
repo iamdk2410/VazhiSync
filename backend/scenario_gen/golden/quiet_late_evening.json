@@ -1,0 +1,27 @@
+{
+  "key": "quiet_late_evening",
+  "description": "A quiet late evening after a holiday: fewer riders than usual, so buses run light.",
+  "route_id": "32B",
+  "seed": 4,
+  "plan": {
+    "name": "Quiet late evening",
+    "summary": "21:30 on a holiday evening; demand well below normal.",
+    "start_time": "21:30",
+    "duration_min": 60,
+    "demand_multiplier": 0.6
+  },
+  "expected": [
+    {
+      "metric": "boarded",
+      "relation": "lower",
+      "min_ratio": 0.75
+    },
+    {
+      "metric": "left_behind",
+      "between": [
+        0,
+        0
+      ]
+    }
+  ]
+}

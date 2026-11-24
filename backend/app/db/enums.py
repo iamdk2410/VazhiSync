@@ -78,3 +78,15 @@ class StepStatus(StrEnum):
     OK = "ok"
     ERROR = "error"
     SKIPPED = "skipped"
+
+
+class ScenarioSource(StrEnum):
+    GOLDEN = "golden"
+    GENERATED = "generated"
+
+
+class ScenarioStatus(StrEnum):
+    PENDING = "pending"
+    GENERATING = "generating"
+    READY = "ready"
+    FAILED = "failed"

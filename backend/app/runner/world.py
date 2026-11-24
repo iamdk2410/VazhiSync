@@ -20,6 +20,7 @@ from typing import Literal
 
 import structlog
 from geoalchemy2 import WKTElement
+from pydantic import ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import delete, select, update
@@ -34,6 +35,7 @@ from app.live.channels import (
     LAST_FRAME_KEY,
     LAST_FRAME_TTL_SECONDS,
     LIVE_CHANNEL,
+    SCENARIO_KEY,
     SPEED_KEY,
 )
 from app.live.headways import Fix, Headway, compute_headways
@@ -44,10 +46,13 @@ from app.live.schemas import (
     LiveHeadway,
     LiveQueue,
     LiveVehicle,
+    WorldScenario,
     crowding,
 )
 from app.runner.bunching import BunchingTracker
 from app.runner.route_loader import WorldRoute
+from scenario_gen.checks import ScenarioContext, to_sim_config
+from scenario_gen.checks import dropouts as scenario_dropouts
 from simulator import SimConfig, Simulation
 
 log = structlog.get_logger()
@@ -116,6 +121,10 @@ class WorldRunner:
         self._redis = redis
         config = sim_config or SimConfig(bunching_ratio=bunching_ratio, closing_ratio=closing_ratio)
         self.sim = Simulation.new(route.model, config, seed)
+        # The normal day, restored when an officer clears a scenario.
+        self._normal = (config, seed, tuple(dropouts))
+        self._scenario_token: str | None = None
+        self.scenario_name: str | None = None
         self.speed: Speed = speed
         self._stale_after_s = stale_after_s
         self._bunching_ratio = bunching_ratio
@@ -205,6 +214,7 @@ class WorldRunner:
     # ------------------------------------------------------------------ tick
 
     async def tick(self, real_dt_s: float) -> LiveFrame:
+        await self._refresh_scenario()
         await self._refresh_speed()
         self._pending_s += real_dt_s * self.speed
         whole = math.floor(self._pending_s)
@@ -377,6 +387,7 @@ class WorldRunner:
             sim_time=clock_time(self.sim.state.time_s),
             sim_elapsed_s=self.sim.state.elapsed_s,
             speed=self.speed,
+            scenario=self.scenario_name,
             generated_at=now,
             vehicles=vehicles,
             queues=self._queues(),
@@ -394,6 +405,72 @@ class WorldRunner:
                 for h in headways
             ],
             events=sorted(self.events.values(), key=lambda e: e.detected_at),
+        )
+
+    # ------------------------------------------------------------------ scenarios
+
+    async def _refresh_scenario(self) -> None:
+        """Restart the world when an officer loads (or clears) a scenario."""
+        try:
+            raw = await self._redis.get(SCENARIO_KEY)
+        except RedisError as exc:
+            log.warning("scenario_unavailable", error=repr(exc))
+            return
+        if raw is None:
+            return
+        try:
+            wanted = WorldScenario.model_validate_json(raw)
+        except ValidationError as exc:
+            log.warning("scenario_invalid", error=str(exc)[:300])
+            return
+        if wanted.token != self._scenario_token:
+            await self.reset(wanted)
+
+    async def reset(self, wanted: WorldScenario) -> None:
+        """Start the world again from the scenario's start (or a normal day).
+
+        Open bunching events describe a world that no longer exists: they are dismissed.
+        """
+        config, seed, dropouts_ = self._normal
+        name: str | None = None
+        if wanted.plan is not None:
+            ctx = ScenarioContext(self.route.model, fleet_size=len(self.sim.state.buses))
+            config = to_sim_config(wanted.plan, ctx, self._normal[0])
+            seed = wanted.seed if wanted.seed is not None else seed
+            dropouts_ = tuple(
+                GpsDropout(bus_id=d.bus_id, start_s=d.start_s, duration_s=d.duration_s)
+                for d in scenario_dropouts(wanted.plan, ctx)
+            )
+            name = wanted.name or wanted.plan.name
+        self.sim = Simulation.new(self.route.model, config, seed)
+        self._dropouts = dropouts_
+        self._pending_s = 0.0
+        self._prev_distance.clear()
+        self.fixes.clear()
+        self._last_queue_write = None
+        dismissed = list(self.events)
+        self.events.clear()
+        self.tracker.open_events.clear()
+        self._scenario_token = wanted.token
+        self.scenario_name = name
+        now = self._clock()
+        if dismissed:
+            async with self._sessionmaker() as session, session.begin():
+                await session.execute(
+                    update(BunchingEvent)
+                    .where(
+                        BunchingEvent.id.in_(dismissed),
+                        BunchingEvent.status == BunchingEventStatus.OPEN,
+                    )
+                    .values(status=BunchingEventStatus.DISMISSED, resolved_at=now)
+                )
+        log.info(
+            "world_reset",
+            scenario=name or "normal day",
+            scenario_id=str(wanted.scenario_id) if wanted.scenario_id else None,
+            seed=seed,
+            start=clock_time(config.start_time_s),
+            dismissed_events=len(dismissed),
         )
 
     # ------------------------------------------------------------------ redis

@@ -7,7 +7,15 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
 from app.auth.security import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
-from app.db.enums import BunchingEventStatus, BunchingSeverity, Role
+from app.db.enums import (
+    BunchingEventStatus,
+    BunchingSeverity,
+    Role,
+    ScenarioSource,
+    ScenarioStatus,
+)
+from scenario_gen.preview import Preview
+from scenario_gen.schema import ScenarioPlan
 
 Password = Annotated[str, Field(min_length=PASSWORD_MIN_LENGTH, max_length=PASSWORD_MAX_LENGTH)]
 DisplayName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
@@ -194,3 +202,38 @@ class WorldStatus(BaseModel):
     vehicles: int
     stale_vehicles: int
     open_events: int
+
+
+# --- simulation lab (B5) ---
+class ScenarioCreate(StrictModel):
+    description: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=5, max_length=500)
+    ]
+
+
+class ScenarioOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    route_id: str
+    source: ScenarioSource
+    golden_key: str | None
+    description: str
+    status: ScenarioStatus
+    seed: int
+    plan: ScenarioPlan | None
+    preview: Preview | None  # simulator: this scenario vs a normal day (rule 2)
+    attempts: int
+    problems: list[str] | None
+    error: str | None
+    created_at: datetime
+    completed_at: datetime | None
+
+
+class ScenarioList(BaseModel):
+    scenarios: list[ScenarioOut]
+
+
+class WorldScenarioOut(BaseModel):
+    scenario_id: uuid.UUID | None  # None: a normal day
+    name: str | None

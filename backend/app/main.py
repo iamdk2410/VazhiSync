@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
-from app.api import auth, driver, live, officer, passenger, routes
+from app.api import auth, driver, lab, live, officer, passenger, routes
 from app.api.health import router as health_router
 from app.auth.rate_limit import RedisRateLimiter
 from app.config import get_settings
@@ -25,6 +25,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
     await app.state.live_hub.stop()
     await redis.aclose()
+    job_queue = getattr(app.state, "job_queue", None)
+    if job_queue is not None:
+        await job_queue.aclose()
     limiter = getattr(app.state, "rate_limiter", None)
     if isinstance(limiter, RedisRateLimiter):
         await limiter.aclose()
@@ -49,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(passenger.router)
     app.include_router(routes.router)
     app.include_router(live.router)
+    app.include_router(lab.router)
     return app
 
 

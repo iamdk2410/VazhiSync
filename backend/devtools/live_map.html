@@ -92,7 +92,8 @@ function addRoute(route) {
 }
 
 function render(frame) {
-  text($("clock"), "Sim clock " + frame.sim_time + " · speed " + frame.speed + "× · " + frame.vehicles.length + " buses");
+  text($("clock"), "Sim clock " + frame.sim_time + " · speed " + frame.speed + "× · " + frame.vehicles.length + " buses"
+                   + (frame.scenario ? " · scenario: " + frame.scenario : ""));
   map.getSource("buses")?.setData({ type: "FeatureCollection", features: frame.vehicles.map((v) => ({
     type: "Feature", geometry: { type: "Point", coordinates: [v.lon, v.lat] },
     properties: { label: v.fleet_number + (v.is_stale ? " (stale " + Math.round(v.age_seconds) + "s)" : ""),

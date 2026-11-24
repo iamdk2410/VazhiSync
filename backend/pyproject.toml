@@ -10,6 +10,7 @@ dependencies = [
     "email-validator>=2.4.0",
     "fastapi>=0.165.0",
     "geoalchemy2>=0.21.0",
+    "httpx>=0.28.1",
     "mcp>=2.3.0",
     "pwdlib[argon2]>=0.4.2",
     "pydantic>=2.14.4",
@@ -47,13 +48,14 @@ pythonpath = ["."]
 testpaths = ["tests"]
 # `stack` tests need the full compose stack: run them with `uv run pytest -m stack`.
 # `services` tests need Postgres + Redis; they skip if unreachable (CI sets REQUIRE_SERVICES=1).
-addopts = "-m 'not stack'"
+addopts = "-m 'not stack and not ollama'"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 markers = [
     "stack: needs the full docker compose stack running (not run in CI)",
     "services: needs Postgres + Redis (uses a separate *_test database)",
+    "ollama: calls the real local LLM (Ollama + qwen3:8b on the host; not run in CI)",
 ]
 
 [dependency-groups]

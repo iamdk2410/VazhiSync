@@ -3,6 +3,7 @@
 from app.db.models.fleet import DriverAssignment, StopQueue, Vehicle, VehiclePosition
 from app.db.models.notifications import Notification
 from app.db.models.routes import Route, RouteDirection, RouteDirectionStop, Stop
+from app.db.models.scenarios import ScenarioRecord
 from app.db.models.telemetry import AgentStep, LlmUsage
 from app.db.models.users import FavouriteStop, User
 from app.db.models.workflow import (
@@ -31,6 +32,7 @@ __all__ = [
     "Route",
     "RouteDirection",
     "RouteDirectionStop",
+    "ScenarioRecord",
     "SimulationJob",
     "Stop",
     "StopQueue",
