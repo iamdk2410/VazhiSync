@@ -43,9 +43,17 @@ async def list_routes(_: AnyUser, session: Session) -> RoutesResponse:
 
 @router.get("/{route_id}", response_model=RouteOut)
 async def get_route(route_id: RouteIdPath, _: AnyUser, session: Session) -> RouteOut:
-    route = await session.get(Route, route_id)
+    route = await load_route_out(session, route_id)
     if route is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Route not found")
+    return route
+
+
+async def load_route_out(session: AsyncSession, route_id: str) -> RouteOut | None:
+    """The route as GeoJSON (also served by avl-mcp's `route://{id}/shape` resource)."""
+    route = await session.get(Route, route_id)
+    if route is None:
+        return None
 
     directions = (
         await session.execute(

@@ -27,7 +27,8 @@ backend/
 │                   golden/ scenarios with expected outcomes (pure: never imports app/)
 ├── mcp_servers/
 │   ├── avl_mcp/    get_vehicle_positions, get_headways, route://{id}/shape resource
-│   └── demand_mcp/ get_boarding_estimates, send_driver_instruction
+│   ├── demand_mcp/ get_boarding_estimates, send_driver_instruction (guards in dispatch.py)
+│   └── schemas.py  tool input/output models (shared with the B8 client), errors.py (JSON errors)
 ├── app/
 │   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + /ws/live websocket; schemas.py
 │   ├── live/       live frame schemas + per-role filtering, headways, Redis channels, WebSocket hub
@@ -76,6 +77,10 @@ Live world (B6): `WORLD_ROUTE_ID`, `WORLD_SEED`, `WORLD_SPEED`, `WORLD_TICK_SECO
   default: `uv run pytest -m stack`. `ollama` tests call the real local LLM (B5 acceptance):
   `uv run pytest -m ollama -s` (needs Ollama + qwen3:8b on the host and enough free RAM).
 - Lint/format/types: `uv run ruff check . && uv run ruff format . && uv run mypy .`
+- MCP servers: run in compose (avl-mcp :8101, demand-mcp :8102, endpoint `/mcp`, streamable HTTP).
+  Inspect: `npx @modelcontextprotocol/inspector`, transport "Streamable HTTP",
+  URL `http://localhost:8101/mcp` (or 8102). Locally without compose:
+  `uv run python -m mcp_servers.avl_mcp.server`.
 - Seed users (officer/driver only): `SEED_PASSWORD=... uv run python -m app.db.seed --role officer --email ... [--name ...]`
   (driver: add `--vehicle <fleet_number>`; inside compose: `docker compose exec -e SEED_PASSWORD=... api python -m app.db.seed ...`)
 - Import the route (needs the GTFS zip, see data/gtfs/README.md): `uv run python -m app.gtfs.import_gtfs --route 32B [--dry-run]`

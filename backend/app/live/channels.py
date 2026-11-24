@@ -6,3 +6,4 @@ LAST_FRAME_TTL_SECONDS = 60
 SPEED_KEY = "vazhisync:world:speed"  # 1, 5 or 10; set by officers, read by the runner
 BUNCHING_CHANNEL = "vazhisync:events:bunching"  # pub/sub: a BunchingRaised per new event
 SCENARIO_KEY = "vazhisync:world:scenario"  # WorldScenario JSON; a new token resets the world
+INSTRUCTION_CHANNEL = "vazhisync:instructions"  # pub/sub: an InstructionSent per new instruction

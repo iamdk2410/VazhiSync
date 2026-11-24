@@ -52,12 +52,17 @@ class VehiclePosition(Base):
     __tablename__ = "vehicle_positions"
     __table_args__ = (
         Index("ix_vehicle_positions_vehicle_recorded", "vehicle_id", text("recorded_at DESC")),
+        CheckConstraint("direction_id IN (0, 1)", name="direction_0_or_1"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     vehicle_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("vehicles.id", ondelete="CASCADE"))
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # GPS fix time
     received_at: Mapped[datetime] = utc_now_column()
+    # The world's clock (seconds since midnight) at the fix: what the what-if model starts
+    # from. Differs from recorded_at when the world runs at 5x/10x or a scenario sets the time.
+    sim_time_s: Mapped[float | None]
+    direction_id: Mapped[int | None]  # the trip's direction, as an AVL feed reports it
     geom: Mapped[WKBElement] = mapped_column(Geometry("POINT", srid=4326, spatial_index=True))
     distance_along_m: Mapped[float | None]
     speed_mps: Mapped[float | None]
@@ -70,10 +75,14 @@ class StopQueue(Base):
     __table_args__ = (
         Index("ix_stop_queues_stop_recorded", "stop_id", text("recorded_at DESC")),
         CheckConstraint("waiting_count >= 0", name="waiting_non_negative"),
+        CheckConstraint("direction_id IN (0, 1)", name="direction_0_or_1"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     route_id: Mapped[str] = mapped_column(ForeignKey("routes.id"))
     stop_id: Mapped[str] = mapped_column(ForeignKey("stops.id"))
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    sim_time_s: Mapped[float | None]  # the world's clock at the count (see VehiclePosition)
+    # A stop served in both directions (e.g. a terminal) has a separate queue per direction.
+    direction_id: Mapped[int | None]
     waiting_count: Mapped[int]

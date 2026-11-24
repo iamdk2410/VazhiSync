@@ -146,7 +146,8 @@ class DriverInstruction(Base):
 
     id: Mapped[uuid.UUID] = uuid_pk()
     instruction_id: Mapped[str] = mapped_column(String(64), unique=True)  # idempotency key
-    approval_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("approvals.id"), index=True)
+    # One instruction per approval (B7): a replayed or double-clicked dispatch can't send twice.
+    approval_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("approvals.id"), unique=True)
     vehicle_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("vehicles.id"), index=True)
     driver_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), index=True)
     action_type: Mapped[ActionType] = mapped_column(str_enum(ActionType, "action_type"))

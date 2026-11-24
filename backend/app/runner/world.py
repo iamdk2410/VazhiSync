@@ -297,6 +297,8 @@ class WorldRunner:
                 recorded_at=f.recorded_at,
                 geom=WKTElement(f"POINT({f.lon} {f.lat})", srid=4326),
                 distance_along_m=f.distance_m,
+                sim_time_s=self.sim.state.time_s,
+                direction_id=f.direction_id,
                 speed_mps=f.speed_mps,
                 heading_deg=f.heading_deg,
                 load_count=f.load,
@@ -316,7 +318,12 @@ class WorldRunner:
         route_id = self.route.model.route_id
         return [
             StopQueue(
-                route_id=route_id, stop_id=q.stop_id, recorded_at=now, waiting_count=q.waiting
+                route_id=route_id,
+                stop_id=q.stop_id,
+                recorded_at=now,
+                sim_time_s=self.sim.state.time_s,
+                direction_id=q.direction_id,
+                waiting_count=q.waiting,
             )
             for q in self._queues()
         ]

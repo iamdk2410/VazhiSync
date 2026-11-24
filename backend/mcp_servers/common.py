@@ -20,6 +20,9 @@ def serve(server: MCPServer, service_name: str, port: int) -> None:
     security = TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
         allowed_hosts=[f"{service_name}:*", "localhost:*", "127.0.0.1:*"],
+        # Browser tools on this machine (MCP Inspector, dev pages); foreign origins - the
+        # DNS-rebinding attack - stay blocked. Requests without an Origin are not affected.
+        allowed_origins=["http://localhost:*", "http://127.0.0.1:*"],
     )
     server.run(
         "streamable-http",
