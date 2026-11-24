@@ -13,7 +13,7 @@ Frontend (B13–B16) after the backend. B20 last.
 - [x] B3. Database schema, login and roles — 17 tables (migration 0002; enums as VARCHAR+CHECK; unique `instruction_id`, one approval per recommendation, one open assignment per bus/driver), argon2 + JWT with role re-checked against the DB, `require_role` on every endpoint (enforced by test), register always creates a passenger, Redis rate limit on login/register, seed CLI for officers/drivers. Acceptance: `tests/integration/test_auth_roles.py`.
 
 ## Phase B: The simulated world
-- [ ] B4. Simulation engine
+- [x] B4. Simulation engine — pure-Python `simulator/` (no I/O, no `app` imports): 14 buses cycling 32B with layovers and no terminal headway control; Poisson demand with a time-of-day profile; dwell `10 + 2.5·board + 1.5·alight` with boarding during the dwell (the bunching feedback); capacity 80 / left-behind; log-normal travel noise; weather, slowdown, demand-surge and breakdown events; hold / skip-stop / short-turn validated against bus position; `step`, `snapshot`, `from_observations` (observable fields only, rule 1), `fast_forward`; named RNG streams per stop/bus (deterministic, common random numbers). Calibrated: trips 35.2/38.8 min vs timetable 35/37; 23/30 seeds first bunch in 15–30 min, all by 33. Acceptance: `tests/unit/test_simulator_acceptance.py`.
 - [ ] B5. Scenario generator with a local LLM
 - [ ] B6. Live world runner and streaming
 

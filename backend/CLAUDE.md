@@ -67,6 +67,7 @@ the workers and the tests).
   (driver: add `--vehicle <fleet_number>`; inside compose: `docker compose exec -e SEED_PASSWORD=... api python -m app.db.seed ...`)
 - Import the route (needs the GTFS zip, see data/gtfs/README.md): `uv run python -m app.gtfs.import_gtfs --route 32B [--dry-run]`
 - Re-snap route geometry (one-off, calls the public OSRM server): `uv run python -m app.gtfs.snap_shape --route 32B`
+- Regenerate the simulator's 32B fixture after a re-import: `uv run python -m app.gtfs.sim_route --route 32B --out tests/fixtures/route_32b.json`
 - New migration: `uv run alembic revision --autogenerate --rev-id 000N -m "..."`, review it, then `uv run alembic check`
 
 ## Conventions
