@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import Any, TypeVar
 
 import structlog
+from arq import ArqRedis
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -23,7 +24,8 @@ log = structlog.get_logger()
 
 T = TypeVar("T", bound=BaseModel)
 
-SIM_SEEDS = (11, 22, 33)  # common random numbers: every candidate sees the same seeds
+# Common random numbers: every candidate sees the same seeds, so per-seed differences are fair.
+SIM_SEEDS = (11, 22, 33, 44, 55)
 SIM_HORIZON_MIN = 15.0
 
 
@@ -40,6 +42,8 @@ class WorkflowDeps:
     seeds: tuple[int, ...] = SIM_SEEDS
     horizon_min: float = SIM_HORIZON_MIN
     observations: Observations | None = None  # built once by the Impact Simulator
+    job_queue: ArqRedis | None = None  # simulation jobs (B11)
+    sim_queue: str = "vazhisync:sims"
     _step: int = field(default=0, init=False)
 
     async def tool(self, agent: str, tool: str, args: dict[str, Any], expect: type[T]) -> T:

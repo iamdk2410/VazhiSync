@@ -12,7 +12,7 @@ Design decisions: `docs/decisions.md`.
 ```
 vazhisync/
 ├── CLAUDE.md            this file — shared context and rules
-├── docker-compose.yml   all services (postgres, redis, ollama, langfuse, api, worker, mcp servers, sim-runner, web)
+├── docker-compose.yml   all services (postgres, redis, langfuse, api, worker, sim-worker, mcp servers, sim-runner, web; Ollama runs on the host)
 ├── .env.example
 ├── docs/                build-plan.md, progress.md, failure-matrix.md, decisions.md, agents.md, rulebook.md, architecture
 ├── backend/             Python: API, agents, simulator, MCP servers  → see backend/CLAUDE.md

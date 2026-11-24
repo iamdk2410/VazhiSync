@@ -15,7 +15,16 @@ import pytest
 pytestmark = pytest.mark.stack
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CORE_SERVICES = {"postgres", "redis", "api", "worker", "avl-mcp", "demand-mcp", "sim-runner"}
+CORE_SERVICES = {
+    "postgres",
+    "redis",
+    "api",
+    "worker",
+    "sim-worker",
+    "avl-mcp",
+    "demand-mcp",
+    "sim-runner",
+}
 WAIT_SECONDS = 120
 
 

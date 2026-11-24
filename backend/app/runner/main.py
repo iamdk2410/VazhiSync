@@ -12,7 +12,6 @@ import uuid
 
 import structlog
 from arq import create_pool
-from arq.connections import RedisSettings
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,6 +21,7 @@ from app.db.session import get_sessionmaker
 from app.observability.logging import configure_logging
 from app.runner.route_loader import RouteNotImported, load_world_route
 from app.runner.world import WorldRunner
+from app.workers.queue import arq_redis_settings
 
 log = structlog.get_logger()
 
@@ -44,7 +44,7 @@ async def heartbeat(redis: Redis) -> None:
 async def world_loop(redis: Redis) -> None:
     settings = get_settings()
     sessionmaker = get_sessionmaker()
-    queue = await create_pool(RedisSettings.from_dsn(settings.redis_url))
+    queue = await create_pool(arq_redis_settings())
 
     async def enqueue(event_id: uuid.UUID) -> None:
         await queue.enqueue_job("run_workflow", str(event_id), _job_id=f"workflow:{event_id}")

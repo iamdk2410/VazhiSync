@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import structlog
+from arq import ArqRedis
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from sqlalchemy import select
@@ -210,6 +211,7 @@ async def start_workflow(
     harness: ToolHarness,
     sessionmaker: async_sessionmaker[AsyncSession],
     settings: Settings,
+    job_queue: ArqRedis,
 ) -> RunResult:
     claimed = await _claim(sessionmaker, event_id)
     if isinstance(claimed, str):
@@ -238,6 +240,7 @@ async def start_workflow(
                 route=route,
                 last_departure_s=last,
                 sim_semaphore=asyncio.Semaphore(settings.sim_concurrency),
+                job_queue=job_queue,
             )
             initial: WorkflowState = {
                 "run_id": str(run_id),

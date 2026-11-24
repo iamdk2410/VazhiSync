@@ -1,12 +1,16 @@
 """Control Advisor: ranks the simulated options and explains the winner.
 
-The ranking comes from the simulator's numbers only (rule 2): benefit = passenger-minutes of
-waiting saved versus doing nothing, over the same horizon and seeds. R7: a fix that creates
-more bunching than doing nothing is rejected. "Do nothing" wins when nothing beats it; a
-near-tie between the top two is escalated to the officer. Explanations are a template for
-now (B9: the LLM writes them, from these same numbers).
+The ranking comes from the simulator's numbers only (rule 2). Every candidate ran on the same
+seeds as "do nothing", so each seed gives a paired benefit (passenger-minutes of waiting saved);
+from those: the mean with a 95 % confidence range, and a bad case (10th percentile) for the
+"safest option". R7 rejects a fix that creates more bunching than doing nothing. "Do nothing"
+wins when no mean benefit is positive. If the top two confidence ranges overlap it is a
+near-tie, escalated to the officer. Explanations are a template for now (B9: the LLM writes
+them, from these same numbers).
 """
 
+import math
+import statistics
 from typing import Any
 
 from app.db.models import Recommendation
@@ -19,8 +23,9 @@ from app.graph.state import (
     WorkflowState,
 )
 
-NEAR_TIE_MIN_PAX_MIN = 20.0
-NEAR_TIE_SHARE = 0.10  # top two within 10 % of the best benefit
+# Two-sided 95 % Student-t critical values by degrees of freedom (n - 1).
+T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262}
+BAD_CASE_QUANTILE = 0.10
 
 
 def describe(c: Candidate) -> str:
@@ -33,6 +38,43 @@ def describe(c: Candidate) -> str:
     return "Do nothing"
 
 
+def quantile(values: list[float], q: float) -> float:
+    """Linear-interpolation quantile (like numpy's default)."""
+    ordered = sorted(values)
+    pos = (len(ordered) - 1) * q
+    lo, hi = math.floor(pos), math.ceil(pos)
+    return ordered[lo] + (ordered[hi] - ordered[lo]) * (pos - lo)
+
+
+def paired_benefits(baseline: SimOutcome, outcome: SimOutcome) -> list[float]:
+    """Per-seed benefit (same seed for both: common random numbers), else the mean only."""
+    same_seeds = baseline.seeds == outcome.seeds
+    if same_seeds and len(baseline.per_seed_wait) == len(outcome.per_seed_wait) > 0:
+        return [b - c for b, c in zip(baseline.per_seed_wait, outcome.per_seed_wait, strict=True)]
+    return [(baseline.passenger_wait_minutes or 0.0) - (outcome.passenger_wait_minutes or 0.0)]
+
+
+def interval(values: list[float]) -> tuple[float, float, float]:
+    """(mean, low, high): a 95 % confidence range of the mean."""
+    mean = statistics.fmean(values)
+    if len(values) < 2:
+        return mean, mean, mean
+    half = T95.get(len(values) - 1, 1.96) * statistics.stdev(values) / math.sqrt(len(values))
+    return mean, mean - half, mean + half
+
+
+def _escalate_no_baseline() -> RecommendationResult:
+    return RecommendationResult(
+        candidate_key="do_nothing",
+        benefit_passenger_minutes=0.0,
+        ranking=[],
+        explanation="The do-nothing baseline could not be simulated, so the options can't be "
+        "compared. Escalated to the officer.",
+        is_near_tie=False,
+        end_reason="escalated",
+    )
+
+
 def rank(
     outcomes: list[SimOutcome], candidates: list[Candidate], horizon_min: float
 ) -> RecommendationResult:
@@ -40,30 +82,26 @@ def rank(
     baseline = next(
         (o for o in outcomes if o.candidate_key == "do_nothing" and o.status == "completed"), None
     )
-    failed = sorted(o.candidate_key for o in outcomes if o.status != "completed")
     if baseline is None or baseline.passenger_wait_minutes is None:
-        return RecommendationResult(
-            candidate_key="do_nothing",
-            benefit_passenger_minutes=0.0,
-            ranking=[],
-            explanation="The do-nothing baseline could not be simulated, so the options can't "
-            "be compared. Escalated to the officer.",
-            is_near_tie=False,
-            end_reason="escalated",
-        )
+        return _escalate_no_baseline()
+    failed = sorted(o.candidate_key for o in outcomes if o.status != "completed")
     base_wait = baseline.passenger_wait_minutes
     base_bunch = baseline.bunching_count or 0.0
     ranking: list[RankedCandidate] = []
     for o in outcomes:
         if o.status != "completed" or o.candidate_key == "do_nothing":
             continue
-        wait = o.passenger_wait_minutes or 0.0
+        benefits = paired_benefits(baseline, o)
+        mean, low, high = interval(benefits)
         bunch = o.bunching_count or 0.0
         ranking.append(
             RankedCandidate(
                 candidate_key=o.candidate_key,
-                benefit_passenger_minutes=round(base_wait - wait, 1),
-                passenger_wait_minutes=wait,
+                benefit_passenger_minutes=round(mean, 1),
+                benefit_low=round(low, 1),
+                benefit_high=round(high, 1),
+                bad_case_benefit=round(quantile(benefits, BAD_CASE_QUANTILE), 1),
+                passenger_wait_minutes=o.passenger_wait_minutes or 0.0,
                 bunching_count=bunch,
                 rejected_reason=(
                     "R7: creates more bunching than doing nothing" if bunch > base_bunch else None
@@ -75,6 +113,9 @@ def rank(
         RankedCandidate(
             candidate_key="do_nothing",
             benefit_passenger_minutes=0.0,
+            benefit_low=0.0,
+            benefit_high=0.0,
+            bad_case_benefit=0.0,
             passenger_wait_minutes=base_wait,
             bunching_count=base_bunch,
         )
@@ -93,21 +134,27 @@ def rank(
         )
     best = viable[0]
     runner_up = viable[1] if len(viable) > 1 else None
-    margin = max(NEAR_TIE_MIN_PAX_MIN, NEAR_TIE_SHARE * best.benefit_passenger_minutes)
-    near_tie = runner_up is not None and (
-        best.benefit_passenger_minutes - runner_up.benefit_passenger_minutes < margin
-    )
+    near_tie = runner_up is not None and runner_up.benefit_high >= best.benefit_low
+    safest = max(viable, key=lambda r: r.bad_case_benefit)
     c = by_key[best.candidate_key]
+    spread = (best.benefit_high - best.benefit_low) / 2
     explanation = (
-        f"{describe(c)}: saves about {best.benefit_passenger_minutes:.0f} passenger-minutes of "
-        f"waiting over the next {horizon_min:.0f} minutes versus doing nothing "
-        f"({best.passenger_wait_minutes:.0f} vs {base_wait:.0f}), with "
-        f"{best.bunching_count:.1f} bunching episodes vs {base_bunch:.1f}. {c.rationale}"
+        f"{describe(c)}: saves about {best.benefit_passenger_minutes:.0f} ± {spread:.0f} "
+        f"passenger-minutes of waiting over the next {horizon_min:.0f} minutes versus doing "
+        f"nothing (worst case {best.bad_case_benefit:.0f}), with {best.bunching_count:.1f} "
+        f"bunching episodes vs {base_bunch:.1f}. {c.rationale}"
     )
+    safest_key = safest.candidate_key if safest.candidate_key != best.candidate_key else None
+    if safest_key is not None:
+        explanation += (
+            f" Safest option (best worst case, {safest.bad_case_benefit:.0f}): "
+            f"'{describe(by_key[safest_key])}'."
+        )
     if near_tie and runner_up is not None:
         explanation += (
-            f" Near-tie with '{describe(by_key[runner_up.candidate_key])}' "
-            f"({runner_up.benefit_passenger_minutes:.0f}): the officer should choose."
+            f" Near-tie: '{describe(by_key[runner_up.candidate_key])}' saves "
+            f"{runner_up.benefit_passenger_minutes:.0f} and the ranges overlap - the officer "
+            "should choose."
         )
     return RecommendationResult(
         candidate_key=best.candidate_key,
@@ -116,6 +163,7 @@ def rank(
         explanation=explanation + note,
         is_near_tie=near_tie,
         end_reason="escalated" if near_tie else "recommended",
+        safest_candidate_key=safest_key,
     )
 
 
@@ -136,7 +184,9 @@ async def control_advisor(state: WorkflowState, deps: WorkflowDeps) -> dict[str,
                 )
             )
             await session.commit()
-    route = {"recommended": "recommend", "escalated": "escalate"}.get(
-        result.end_reason, "do_nothing"
-    )
-    return {"recommendation": result, "end_reason": result.end_reason, "route": route}
+    routes = {"recommended": "recommend", "escalated": "escalate"}
+    return {
+        "recommendation": result,
+        "end_reason": result.end_reason,
+        "route": routes.get(result.end_reason, "do_nothing"),
+    }

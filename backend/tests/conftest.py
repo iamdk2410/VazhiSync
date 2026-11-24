@@ -43,6 +43,9 @@ def _test_database_url() -> str | None:
     if not _dev_database_url:
         return None
     base = make_url(_dev_database_url)
+    # 127.0.0.1, not localhost: on Windows "localhost" tries IPv6 first (~2 s per new connection).
+    if base.host == "localhost":
+        base = base.set(host="127.0.0.1")
     return base.set(database=f"{base.database}_test").render_as_string(hide_password=False)
 
 
@@ -56,7 +59,11 @@ def _test_redis_url() -> str | None:
         return url
     if not _dev_redis_url:
         return None
-    return urlsplit(_dev_redis_url)._replace(path=f"/{TEST_REDIS_DB}").geturl()
+    parts = urlsplit(_dev_redis_url)._replace(path=f"/{TEST_REDIS_DB}")
+    # 127.0.0.1, not localhost: on Windows "localhost" tries IPv6 first (seconds per connect).
+    if parts.hostname == "localhost":
+        parts = parts._replace(netloc=parts.netloc.replace("localhost", "127.0.0.1"))
+    return parts.geturl()
 
 
 async def _ensure_database(url: str) -> None:

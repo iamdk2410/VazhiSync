@@ -1,11 +1,15 @@
 from collections.abc import AsyncIterator
 
 import pytest
+from arq import ArqRedis, create_pool
+from arq.worker import Worker
 from httpx import ASGITransport, AsyncClient
 
 from app.auth.rate_limit import MemoryRateLimiter, get_rate_limiter
 from app.main import create_app
+from app.workers.queue import arq_redis_settings
 from tests.conftest import Account
+from tests.integration.sim_worker import running_worker
 
 
 @pytest.fixture
@@ -29,3 +33,17 @@ async def login(client: AsyncClient, account: Account) -> str:
 
 def bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+# Simulation jobs (B11): a real ARQ sim-worker in-process, and a queue to submit to.
+@pytest.fixture
+async def sim_worker(database_url: str) -> AsyncIterator[Worker]:
+    async with running_worker() as worker:
+        yield worker
+
+
+@pytest.fixture
+async def job_queue(database_url: str) -> AsyncIterator[ArqRedis]:
+    pool = await create_pool(arq_redis_settings())
+    yield pool
+    await pool.aclose()

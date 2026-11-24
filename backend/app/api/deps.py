@@ -1,11 +1,11 @@
 """Shared clients for API routes (created on first use, closed in the app lifespan)."""
 
 from arq import ArqRedis, create_pool
-from arq.connections import RedisSettings
 from fastapi import Request
 from redis.asyncio import Redis
 
 from app.config import get_settings
+from app.workers.queue import arq_redis_settings
 
 
 def get_redis(request: Request) -> Redis:
@@ -21,6 +21,6 @@ async def get_job_queue(request: Request) -> ArqRedis:
     """ARQ pool for enqueueing background jobs on the worker."""
     pool: ArqRedis | None = getattr(request.app.state, "job_queue", None)
     if pool is None:
-        pool = await create_pool(RedisSettings.from_dsn(get_settings().redis_url))
+        pool = await create_pool(arq_redis_settings())
         request.app.state.job_queue = pool
     return pool

@@ -27,7 +27,7 @@ RETRY_AFTER = timedelta(seconds=60)  # since the event opened / its last run fin
 
 async def run_workflow(ctx: dict[str, Any], event_id: str) -> str:
     result = await start_workflow(
-        uuid.UUID(event_id), ctx["harness"], get_sessionmaker(), get_settings()
+        uuid.UUID(event_id), ctx["harness"], get_sessionmaker(), get_settings(), ctx["redis"]
     )
     return f"{result.status}:{result.end_reason}"
 

@@ -8,7 +8,6 @@ from typing import Any, ClassVar
 
 import structlog
 from arq import cron, func
-from arq.connections import RedisSettings
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
@@ -17,6 +16,7 @@ from app.harness.harness import ToolHarness
 from app.lab.library import sync_golden
 from app.observability.logging import configure_logging
 from app.runner.route_loader import RouteNotImported
+from app.workers.queue import arq_redis_settings
 from app.workers.scenarios import generate_scenario
 from app.workers.workflows import retry_open_events, run_workflow
 
@@ -58,6 +58,6 @@ class WorkerSettings:
     ]
     cron_jobs: ClassVar[list[Any]] = [cron(retry_open_events, second={0}, run_at_startup=False)]
     on_startup = on_startup
-    redis_settings = RedisSettings.from_dsn(get_settings().redis_url)
+    redis_settings = arq_redis_settings()
     max_jobs = get_settings().sim_concurrency
     health_check_interval = 10

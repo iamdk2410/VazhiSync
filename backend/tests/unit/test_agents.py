@@ -231,14 +231,24 @@ def test_without_demand_data_or_opposite_gap_fewer_options() -> None:
 # ------------------------------------------------------------------ ranking
 
 
+SEEDS = [11, 22, 33, 44, 55]
+
+
 def outcome(
-    key: str, wait: float | None, bunch: float = 1.0, status: str = "completed"
+    key: str,
+    wait: float | None,
+    bunch: float = 1.0,
+    status: str = "completed",
+    spread: list[float] | None = None,
 ) -> SimOutcome:
+    """Per-seed waits = wait + spread (common seeds, so benefits are paired)."""
+    per_seed = [] if wait is None else [wait + d for d in (spread or [0, 0, 0, 0, 0])]
     return SimOutcome(
         candidate_key=key,
         status=status,
-        seeds=[1, 2, 3],
+        seeds=SEEDS,
         passenger_wait_minutes=wait,
+        per_seed_wait=per_seed,
         bunching_count=bunch if wait else None,
     )
 
@@ -256,24 +266,44 @@ CANDS = [
     ),
 ]
 A, B = CANDS[0].key, CANDS[1].key
+NOISE = [-20.0, -10.0, 0.0, 10.0, 20.0]
 
 
-def test_best_saving_is_recommended() -> None:
-    r = rank([outcome("do_nothing", 1000), outcome(A, 700), outcome(B, 900)], CANDS, 15)
+def test_best_saving_is_recommended_with_a_confidence_range() -> None:
+    base = outcome("do_nothing", 1000, spread=NOISE)
+    a = outcome(A, 700, spread=[-30, -10, 0, 10, 30])  # paired benefits 290..310
+    r = rank([base, a, outcome(B, 900, spread=NOISE)], CANDS, 15)
     assert r.candidate_key == A and r.benefit_passenger_minutes == 300
     assert r.end_reason == "recommended" and not r.is_near_tie
+    best = r.ranking[0]
+    assert best.benefit_low < 300 < best.benefit_high  # 95 % range of the mean
+    assert best.bad_case_benefit == pytest.approx(294.0)  # 10th percentile of 290,300,300,300,310
     assert [x.candidate_key for x in r.ranking] == [A, B, "do_nothing"]
-    assert "300 passenger-minutes" in r.explanation
+    assert "300 ±" in r.explanation and "worst case" in r.explanation
+
+
+def test_overlapping_ranges_are_a_near_tie() -> None:
+    base = outcome("do_nothing", 1000)
+    a = outcome(A, 700, spread=[-60, -30, 0, 30, 60])
+    b = outcome(B, 720, spread=[-50, -25, 0, 25, 50])
+    r = rank([base, a, b], CANDS, 15)
+    assert r.end_reason == "escalated" and r.is_near_tie and r.candidate_key == A
+    apart = rank([base, outcome(A, 700, spread=NOISE), outcome(B, 900, spread=NOISE)], CANDS, 15)
+    assert not apart.is_near_tie  # narrow, separated ranges: no tie
+
+
+def test_safest_option_is_named_when_it_differs() -> None:
+    base = outcome("do_nothing", 1000)
+    risky = outcome(A, 680, spread=[-200, -100, 0, 100, 250])  # best mean, a bad seed
+    steady = outcome(B, 740, spread=[-5, -2, 0, 2, 5])  # a little less, every time
+    r = rank([base, risky, steady], CANDS, 15)
+    assert r.candidate_key == A and r.safest_candidate_key == B
+    assert "Safest option" in r.explanation
 
 
 def test_do_nothing_wins_when_nothing_helps() -> None:
     r = rank([outcome("do_nothing", 1000), outcome(A, 1050), outcome(B, 1200)], CANDS, 15)
     assert r.candidate_key == "do_nothing" and r.end_reason == "do_nothing_recommended"
-
-
-def test_near_tie_is_escalated() -> None:
-    r = rank([outcome("do_nothing", 1000), outcome(A, 700), outcome(B, 710)], CANDS, 15)
-    assert r.end_reason == "escalated" and r.is_near_tie and r.candidate_key == A
 
 
 def test_fix_that_creates_new_bunching_is_rejected() -> None:

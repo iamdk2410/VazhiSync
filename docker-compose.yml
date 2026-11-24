@@ -80,6 +80,15 @@ services:
       test: ["CMD", "arq", "--check", "app.workers.main.WorkerSettings"]
       <<: *hc-timing
 
+  # Counterfactual simulation jobs (B11), on their own queue so workflow runs waiting for
+  # their simulations can never take all the worker slots.
+  sim-worker:
+    <<: *backend
+    command: ["arq", "app.workers.simulations.SimWorkerSettings"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "app.workers.simulations.SimWorkerSettings"]
+      <<: *hc-timing
+
   avl-mcp:
     <<: *backend
     command: ["python", "-m", "mcp_servers.avl_mcp.server"]

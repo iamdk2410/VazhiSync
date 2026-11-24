@@ -1,22 +1,30 @@
 """Passenger Impact Simulator: each candidate simulated from the observations (rule 1).
 
-The what-if model is built once with `from_observations` from what the MCP tools reported
-(positions, loads, staleness, waiting counts, world clock) — never from the world simulator.
-The graph then fans out with `Send`, one branch per candidate. Each branch runs the same seeds
-(common random numbers), under a per-simulation timeout and a concurrency semaphore (rule 8).
-B11 moves the runs onto ARQ workers.
+The what-if model is built from what the MCP tools reported (positions, loads, staleness,
+waiting counts, world clock) - never from the world simulator. The graph fans out with `Send`,
+one branch per candidate; each branch submits exactly ONE simulation job to the sim-worker
+queue (B11) and awaits it with a timeout (rule 8) - no nested parallelism. Every job runs the
+same seeds (common random numbers), so per-seed differences between candidates are fair.
+A job that doesn't finish in time is aborted and reported; the advisor ranks the rest.
 """
 
 import asyncio
 import statistics
 import time
-from typing import Any
+import uuid
+from dataclasses import dataclass
+from typing import Any, Literal
 
+import structlog
+from arq.jobs import Job
+from redis.exceptions import RedisError
+
+from app.db.enums import JobStatus
+from app.db.models import SimulationJob
 from app.graph.deps import WorkflowDeps
 from app.graph.state import Candidate, SimOutcome, Snapshot, WorkflowState
 from simulator import (
     Action,
-    ActionError,
     DoNothing,
     Hold,
     Metrics,
@@ -29,6 +37,11 @@ from simulator import (
     fast_forward,
     from_observations,
 )
+
+log = structlog.get_logger()
+
+POLL_S = 0.1  # how often a branch checks its job's result
+_background: set[asyncio.Task[None]] = set()  # abort tasks still running (kept referenced)
 
 
 def build_observations(snapshot: Snapshot, route: RouteModel) -> Observations:
@@ -75,81 +88,190 @@ def run_seeds(
     seeds: tuple[int, ...],
     minutes: float,
 ) -> list[Metrics]:
-    """CPU-bound: runs in a worker thread."""
+    """CPU-bound; runs on the sim-worker (in a thread)."""
     return [
         fast_forward(from_observations(route, observations, config, seed), action, minutes)
         for seed in seeds
     ]
 
 
-def summarize(
-    candidate_key: str, seeds: tuple[int, ...], runs: list[Metrics], ms: int
-) -> SimOutcome:
-    def mean(values: list[float]) -> float:
-        return round(statistics.fmean(values), 2)
+# ------------------------------------------------------------------ job payload (JSON-safe)
 
-    cvs = [m.headway_cv for m in runs if m.headway_cv is not None]
+
+@dataclass(frozen=True)
+class SimJobSpec:
+    job_id: uuid.UUID
+    run_id: str
+    route_id: str
+    candidate_key: str
+    observations: Observations
+    config: SimConfig
+    action: Action
+    seeds: tuple[int, ...]
+    minutes: float
+
+
+def job_payload(
+    job_id: uuid.UUID,
+    deps: WorkflowDeps,
+    candidate: Candidate,
+    observations: Observations,
+) -> dict[str, Any]:
+    return {
+        "job_id": str(job_id),
+        "run_id": deps.run_id,
+        "route_id": deps.route.model.route_id,
+        "candidate": candidate.model_dump(mode="json"),
+        "observations": {
+            "time_s": observations.time_s,
+            "vehicles": [
+                [v.vehicle_id, v.direction, v.distance_m, v.load, v.stale]
+                for v in observations.vehicles
+            ],
+            "waiting": [[d, i, n] for (d, i), n in observations.waiting.items()],
+        },
+        "bunching_ratio": deps.settings.bunching_ratio,
+        "closing_ratio": deps.settings.closing_ratio,
+        "seeds": list(deps.seeds),
+        "minutes": deps.horizon_min,
+    }
+
+
+def payload_to_job(payload: dict[str, Any], route: RouteModel) -> SimJobSpec:
+    obs = payload["observations"]
+    observations = Observations(
+        time_s=float(obs["time_s"]),
+        vehicles=tuple(
+            VehicleObservation(str(v), int(d), float(dist), load, bool(stale))
+            for v, d, dist, load, stale in obs["vehicles"]
+        ),
+        waiting={(int(d), int(i)): int(n) for d, i, n in obs["waiting"]},
+    )
+    candidate = Candidate.model_validate(payload["candidate"])
+    direction_of = {v.vehicle_id: v.direction for v in observations.vehicles}
+    return SimJobSpec(
+        job_id=uuid.UUID(payload["job_id"]),
+        run_id=str(payload["run_id"]),
+        route_id=str(payload["route_id"]),
+        candidate_key=candidate.key,
+        observations=observations,
+        config=SimConfig(
+            bunching_ratio=float(payload["bunching_ratio"]),
+            closing_ratio=float(payload["closing_ratio"]),
+        ),
+        action=to_action(candidate, route, direction_of),
+        seeds=tuple(int(s) for s in payload["seeds"]),
+        minutes=float(payload["minutes"]),
+    )
+
+
+# ------------------------------------------------------------------ results
+
+
+def summarize(
+    candidate_key: str, seeds: list[int], runs: list[dict[str, Any]], ms: int
+) -> SimOutcome:
+    def mean(key: str) -> float:
+        return round(statistics.fmean(float(r[key]) for r in runs), 2)
+
+    cvs = [float(r["headway_cv"]) for r in runs if r.get("headway_cv") is not None]
     return SimOutcome(
         candidate_key=candidate_key,
         status="completed",
-        seeds=list(seeds),
-        passenger_wait_minutes=mean([m.passenger_wait_minutes for m in runs]),
-        per_seed_wait=[round(m.passenger_wait_minutes, 1) for m in runs],
-        bunching_count=mean([float(m.bunching_count) for m in runs]),
-        left_behind=mean([float(m.left_behind) for m in runs]),
-        overcarried=mean([float(m.overcarried) for m in runs]),
-        displaced=mean([float(m.displaced) for m in runs]),
-        headway_cv=mean(cvs) if cvs else None,
+        seeds=seeds,
+        passenger_wait_minutes=mean("passenger_wait_minutes"),
+        per_seed_wait=[round(float(r["passenger_wait_minutes"]), 1) for r in runs],
+        bunching_count=mean("bunching_count"),
+        left_behind=mean("left_behind"),
+        overcarried=mean("overcarried"),
+        displaced=mean("displaced"),
+        headway_cv=round(statistics.fmean(cvs), 3) if cvs else None,
         duration_ms=ms,
     )
 
 
+# ------------------------------------------------------------------ graph nodes
+
+
 async def impact_simulator(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
-    """Prepare the what-if model; the graph then fans out one `simulate` branch per candidate."""
+    """Build the what-if inputs once; the graph then fans out one `simulate` branch each."""
     deps.observations = build_observations(state["snapshot"], deps.route.model)
     return {"route": "fan_out"}
 
 
+async def _set_status(deps: WorkflowDeps, job_id: uuid.UUID, status: JobStatus, error: str) -> None:
+    async with deps.sessionmaker() as session:
+        row = await session.get(SimulationJob, job_id)
+        if row is not None and row.status in (JobStatus.PENDING, JobStatus.RUNNING):
+            row.status, row.error = status, error
+            await session.commit()
+
+
 async def simulate(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
+    """One branch = one candidate = exactly one simulation job, awaited with a timeout."""
     candidate = state["candidate"]
-    if deps.observations is None:
-        raise RuntimeError("impact_simulator must run before simulate")
-    direction_of = {v.vehicle_id: v.direction for v in deps.observations.vehicles}
-    config = SimConfig(
-        bunching_ratio=deps.settings.bunching_ratio, closing_ratio=deps.settings.closing_ratio
-    )
+    if deps.observations is None or deps.job_queue is None:
+        raise RuntimeError("impact_simulator must run first, with a job queue")
+    seeds = list(deps.seeds)
+    job_id = uuid.uuid4()
+    async with deps.sessionmaker() as session:
+        session.add(
+            SimulationJob(id=job_id, run_id=deps.run_id, candidate_id=candidate.db_id, seeds=seeds)
+        )
+        await session.commit()
+
     t0 = time.monotonic()
+    timeout = min(deps.settings.sim_timeout_seconds, max(deps.budget.remaining_s, 0.1))
+    job: Job | None = None
     try:
-        action = to_action(candidate, deps.route.model, direction_of)
         async with deps.sim_semaphore:
-            runs = await asyncio.wait_for(
-                asyncio.to_thread(
-                    run_seeds,
-                    deps.route.model,
-                    deps.observations,
-                    config,
-                    action,
-                    deps.seeds,
-                    deps.horizon_min,
-                ),
-                timeout=deps.settings.sim_timeout_seconds,
+            job = await deps.job_queue.enqueue_job(
+                "simulate_candidate",
+                job_payload(job_id, deps, candidate, deps.observations),
+                _job_id=f"sim:{job_id}",
+                _queue_name=deps.sim_queue,
+            )
+            if job is None:
+                raise RuntimeError("job was not queued")
+            # A hard wall-clock limit: arq's own timeout is only checked between polls.
+            result: dict[str, Any] = await asyncio.wait_for(
+                job.result(poll_delay=POLL_S), timeout=timeout
             )
     except TimeoutError:
-        outcome = SimOutcome(
-            candidate_key=candidate.key,
-            status="timed_out",
-            seeds=list(deps.seeds),
-            error=f"exceeded {deps.settings.sim_timeout_seconds:g} s",
-            duration_ms=round((time.monotonic() - t0) * 1000),
-        )
-    except (ActionError, KeyError) as exc:
-        outcome = SimOutcome(
-            candidate_key=candidate.key,
-            status="failed",
-            seeds=list(deps.seeds),
-            error=f"{type(exc).__name__}: {exc}",
-            duration_ms=round((time.monotonic() - t0) * 1000),
-        )
-    else:
-        outcome = summarize(candidate.key, deps.seeds, runs, round((time.monotonic() - t0) * 1000))
-    return {"sim_outcomes": [outcome]}
+        error = f"exceeded {timeout:g} s"
+        await _set_status(deps, job_id, JobStatus.TIMED_OUT, error)
+        if job is not None:
+            task = asyncio.create_task(_abort(job))  # free the worker slot; don't wait for it
+            _background.add(task)
+            task.add_done_callback(_background.discard)
+        return {"sim_outcomes": [_failed(candidate.key, seeds, "timed_out", error, t0)]}
+    except (RedisError, OSError, RuntimeError) as exc:
+        error = f"simulation queue unavailable: {exc!r}"
+        await _set_status(deps, job_id, JobStatus.FAILED, error)
+        return {"sim_outcomes": [_failed(candidate.key, seeds, "failed", error, t0)]}
+
+    if result.get("status") != "completed":
+        return {
+            "sim_outcomes": [_failed(candidate.key, seeds, "failed", str(result.get("error")), t0)]
+        }
+    ms = round((time.monotonic() - t0) * 1000)
+    return {"sim_outcomes": [summarize(candidate.key, seeds, result["runs"], ms)]}
+
+
+def _failed(
+    key: str, seeds: list[int], status: Literal["failed", "timed_out"], error: str, t0: float
+) -> SimOutcome:
+    return SimOutcome(
+        candidate_key=key,
+        status=status,
+        seeds=seeds,
+        error=error,
+        duration_ms=round((time.monotonic() - t0) * 1000),
+    )
+
+
+async def _abort(job: Job) -> None:
+    try:
+        await job.abort(timeout=5, poll_delay=0.5)
+    except (RedisError, OSError, TimeoutError) as exc:
+        log.info("sim_job_abort_failed", job_id=job.job_id, error=repr(exc))

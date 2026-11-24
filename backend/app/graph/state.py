@@ -70,7 +70,10 @@ class SimOutcome(_Model):
 
 class RankedCandidate(_Model):
     candidate_key: str
-    benefit_passenger_minutes: float  # vs do nothing (positive = better), from the simulator
+    benefit_passenger_minutes: float  # mean vs do nothing (positive = better), from the simulator
+    benefit_low: float  # 95 % confidence range of the mean benefit across seeds
+    benefit_high: float
+    bad_case_benefit: float  # 10th percentile of the per-seed benefits (the "safest" measure)
     passenger_wait_minutes: float
     bunching_count: float
     rejected_reason: str | None = None
@@ -83,6 +86,7 @@ class RecommendationResult(_Model):
     explanation: str
     is_near_tie: bool
     end_reason: EndReason
+    safest_candidate_key: str | None = None  # best bad case, when it differs from the winner
 
 
 class WorkflowState(TypedDict, total=False):

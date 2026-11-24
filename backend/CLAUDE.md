@@ -43,8 +43,8 @@ backend/
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
 │   │               workflow.py (graph, run claim/finish, limits); checkpointer in B12
-│   ├── workers/    ARQ jobs: scenario generation (B5), run_workflow + open-event sweep (B10),
-│   │               simulation jobs (B11)
+│   ├── workers/    ARQ jobs: scenario generation (B5), run_workflow + open-event sweep (B10);
+│   │               simulations.py: simulation jobs on their own queue/worker (sim-worker, B11)
 │   ├── llm/        Ollama client (B5); gateway: fallback chain, retries, token/cost logging (B9)
 │   ├── lab/        Simulation Lab: scenario library (golden sync, route context)
 │   ├── db/         SQLAlchemy models, migrations, seed scripts
