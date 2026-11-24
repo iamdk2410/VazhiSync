@@ -40,7 +40,7 @@ async def test_seed_refuses_passengers(db: None) -> None:
         )
 
 
-async def test_seed_driver_with_vehicle_assignment(db: None) -> None:
+async def test_seed_driver_with_vehicle_assignment(network: None) -> None:
     async with get_sessionmaker()() as session:
         session.add(Vehicle(fleet_number="TN01AN9999", route_id="R21G"))
         await session.commit()

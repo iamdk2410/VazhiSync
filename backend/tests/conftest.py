@@ -137,3 +137,24 @@ async def accounts(db: None) -> dict[str, Account]:
             )
             created[role.value] = account
     return created
+
+
+@pytest.fixture
+async def network(db: None) -> None:
+    """A minimal route + stops, for tests that need valid route_id/stop_id foreign keys."""
+    from geoalchemy2 import WKTElement
+
+    from app.db.models import Route, Stop
+    from app.db.session import get_sessionmaker
+
+    async with get_sessionmaker()() as session:
+        session.add(Route(id="R21G", short_name="21G", long_name="Test", agency="MTC", source={}))
+        session.add_all(
+            Stop(
+                id=f"STOP_{i}",
+                name=f"Stop {i}",
+                geom=WKTElement(f"POINT(80.25 13.0{i})", srid=4326),
+            )
+            for i in range(1, 4)
+        )
+        await session.commit()

@@ -20,8 +20,8 @@ class Notification(Base):
 
     id: Mapped[uuid.UUID] = uuid_pk()
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    route_id: Mapped[str | None] = mapped_column(String(64))
-    stop_id: Mapped[str | None] = mapped_column(String(64))
+    route_id: Mapped[str | None] = mapped_column(ForeignKey("routes.id"))
+    stop_id: Mapped[str | None] = mapped_column(ForeignKey("stops.id"))
     driver_instruction_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("driver_instructions.id", ondelete="SET NULL")
     )

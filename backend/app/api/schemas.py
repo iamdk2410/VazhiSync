@@ -95,3 +95,85 @@ class FavouriteStopOut(BaseModel):
 
 class FavouritesResponse(BaseModel):
     favourites: list[FavouriteStopOut]
+
+
+# --- routes (GeoJSON) ---
+class PointGeometry(BaseModel):
+    type: Literal["Point"] = "Point"
+    coordinates: tuple[float, float]  # [lon, lat]
+
+
+class LineStringGeometry(BaseModel):
+    type: Literal["LineString"] = "LineString"
+    coordinates: list[tuple[float, float]]
+
+
+class StopProperties(BaseModel):
+    stop_id: str
+    name: str
+    sequence: int
+    distance_along_m: float
+    scheduled_offset_seconds: int
+
+
+class StopFeature(BaseModel):
+    type: Literal["Feature"] = "Feature"
+    id: str
+    geometry: PointGeometry
+    properties: StopProperties
+
+
+class StopFeatureCollection(BaseModel):
+    type: Literal["FeatureCollection"] = "FeatureCollection"
+    features: list[StopFeature]
+
+
+class ShapeProperties(BaseModel):
+    direction_id: int
+    headsign: str
+    length_m: float
+    shape_source: str
+
+
+class ShapeFeature(BaseModel):
+    type: Literal["Feature"] = "Feature"
+    geometry: LineStringGeometry
+    properties: ShapeProperties
+
+
+class HeadwayHourOut(BaseModel):
+    hour: int
+    headway_seconds: int
+    departures: int
+
+
+class RouteDirectionOut(BaseModel):
+    direction_id: int
+    headsign: str
+    length_m: float
+    scheduled_run_seconds: int
+    peak_headway_seconds: int
+    trips_per_day: int
+    first_departure: str
+    last_departure: str
+    headway_profile: list[HeadwayHourOut]
+    shape: ShapeFeature
+    stops: StopFeatureCollection
+
+
+class RouteSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    short_name: str
+    long_name: str
+    agency: str
+
+
+class RouteOut(RouteSummary):
+    attribution: str | None
+    directions: list[RouteDirectionOut]
+
+
+class RoutesResponse(BaseModel):
+    routes: list[RouteSummary]

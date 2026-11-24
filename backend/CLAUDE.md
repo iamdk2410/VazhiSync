@@ -28,6 +28,7 @@ backend/
 ├── app/
 │   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + websocket; schemas.py
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
+│   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
 │   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor
 │   ├── graph/      LangGraph state, node wiring, routing, checkpointer
 │   ├── workers/    ARQ simulation jobs
@@ -38,7 +39,7 @@ backend/
 │   ├── healthcheck.py  container health-check CLI (http / redis heartbeat)
 │   └── config.py   pydantic-settings
 ├── docker/         compose support files (postgres-init SQL)
-├── data/gtfs/      Chennai GTFS (raw zip not committed) + imported route
+├── data/gtfs/      Chennai GTFS zip (not committed) + routes/<id>.json config and snapped GeoJSON (committed); see its README
 └── tests/          unit/, integration/, edge_cases/
 ```
 `simulator/` must not import from `app/` (it stays pure and reusable by the world runner,
@@ -64,6 +65,8 @@ the workers and the tests).
 - Lint/format/types: `uv run ruff check . && uv run ruff format . && uv run mypy .`
 - Seed users (officer/driver only): `SEED_PASSWORD=... uv run python -m app.db.seed --role officer --email ... [--name ...]`
   (driver: add `--vehicle <fleet_number>`; inside compose: `docker compose exec -e SEED_PASSWORD=... api python -m app.db.seed ...`)
+- Import the route (needs the GTFS zip, see data/gtfs/README.md): `uv run python -m app.gtfs.import_gtfs --route 32B [--dry-run]`
+- Re-snap route geometry (one-off, calls the public OSRM server): `uv run python -m app.gtfs.snap_shape --route 32B`
 - New migration: `uv run alembic revision --autogenerate --rev-id 000N -m "..."`, review it, then `uv run alembic check`
 
 ## Conventions

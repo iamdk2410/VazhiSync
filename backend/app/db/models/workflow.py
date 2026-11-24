@@ -32,7 +32,7 @@ class BunchingEvent(Base):
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
-    route_id: Mapped[str] = mapped_column(String(64))
+    route_id: Mapped[str] = mapped_column(ForeignKey("routes.id"))
     leader_vehicle_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("vehicles.id"))
     follower_vehicle_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("vehicles.id"))
     detected_at: Mapped[datetime] = utc_now_column()

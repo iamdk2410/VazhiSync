@@ -1,0 +1,20 @@
+{
+  "id": "32B",
+  "short_name": "32B",
+  "long_name": "Korukkupet R.S - Vivekananda House",
+  "feed_file": "chennai-unified-gtfs.zip",
+  "directions": [
+    {
+      "direction_id": 0,
+      "gtfs_route_id": "MTC-20581",
+      "headsign": "Vivekananda House",
+      "shape_file": "32B.dir0.geojson"
+    },
+    {
+      "direction_id": 1,
+      "gtfs_route_id": "MTC-20582",
+      "headsign": "Korukkupet R.S",
+      "shape_file": "32B.dir1.geojson"
+    }
+  ]
+}

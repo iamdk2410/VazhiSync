@@ -60,7 +60,7 @@ async def _approval(session: AsyncSession) -> tuple[Approval, Vehicle, Recommend
     return approval, bus, rec
 
 
-async def test_instruction_id_is_an_idempotency_key(db: None) -> None:
+async def test_instruction_id_is_an_idempotency_key(network: None) -> None:
     async with get_sessionmaker()() as session:
         approval, bus, _ = await _approval(session)
         for _ in range(2):
@@ -76,7 +76,7 @@ async def test_instruction_id_is_an_idempotency_key(db: None) -> None:
             await session.commit()
 
 
-async def test_one_decision_per_recommendation(db: None) -> None:
+async def test_one_decision_per_recommendation(network: None) -> None:
     async with get_sessionmaker()() as session:
         approval, _, rec = await _approval(session)
         session.add(
@@ -90,7 +90,7 @@ async def test_one_decision_per_recommendation(db: None) -> None:
             await session.commit()
 
 
-async def test_rejection_needs_a_reason(db: None) -> None:
+async def test_rejection_needs_a_reason(network: None) -> None:
     async with get_sessionmaker()() as session:
         approval, _, rec = await _approval(session)
         await session.delete(approval)
@@ -106,7 +106,7 @@ async def test_rejection_needs_a_reason(db: None) -> None:
             await session.commit()
 
 
-async def test_vehicle_has_one_open_driver_assignment(db: None) -> None:
+async def test_vehicle_has_one_open_driver_assignment(network: None) -> None:
     async with get_sessionmaker()() as session:
         bus = Vehicle(fleet_number="TN-ONE", route_id="R21G")
         session.add(bus)
@@ -127,7 +127,7 @@ async def test_vehicle_has_one_open_driver_assignment(db: None) -> None:
             await session.commit()
 
 
-async def test_unknown_enum_value_rejected_by_database(db: None) -> None:
+async def test_unknown_enum_value_rejected_by_database(network: None) -> None:
     async with get_sessionmaker()() as session:
         run = WorkflowRun()
         session.add(run)

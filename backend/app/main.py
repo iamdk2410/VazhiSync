@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, driver, officer, passenger
+from app.api import auth, driver, officer, passenger, routes
 from app.api.health import router as health_router
 from app.auth.rate_limit import RedisRateLimiter
 from app.config import get_settings
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(officer.router)
     app.include_router(driver.router)
     app.include_router(passenger.router)
+    app.include_router(routes.router)
     return app
 
 

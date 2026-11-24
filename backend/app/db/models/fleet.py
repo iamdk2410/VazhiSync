@@ -14,7 +14,7 @@ class Vehicle(Base):
 
     id: Mapped[uuid.UUID] = uuid_pk()
     fleet_number: Mapped[str] = mapped_column(String(32), unique=True)  # e.g. "TN01AN1234"
-    route_id: Mapped[str] = mapped_column(String(64), index=True)  # GTFS route_id (FK in B2)
+    route_id: Mapped[str] = mapped_column(ForeignKey("routes.id"), index=True)
     capacity: Mapped[int] = mapped_column(server_default=text("80"))
     is_active: Mapped[bool] = mapped_column(server_default=text("true"))
     created_at: Mapped[datetime] = utc_now_column()
@@ -73,7 +73,7 @@ class StopQueue(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    route_id: Mapped[str] = mapped_column(String(64))
-    stop_id: Mapped[str] = mapped_column(String(64))
+    route_id: Mapped[str] = mapped_column(ForeignKey("routes.id"))
+    stop_id: Mapped[str] = mapped_column(ForeignKey("stops.id"))
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     waiting_count: Mapped[int]

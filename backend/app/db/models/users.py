@@ -31,6 +31,8 @@ class FavouriteStop(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
-    stop_id: Mapped[str] = mapped_column(String(64), primary_key=True)  # GTFS stop_id
+    stop_id: Mapped[str] = mapped_column(
+        ForeignKey("stops.id", ondelete="CASCADE"), primary_key=True
+    )
     alert_minutes: Mapped[int] = mapped_column(server_default=text("5"))
     created_at: Mapped[datetime] = utc_now_column()

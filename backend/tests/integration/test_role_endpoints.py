@@ -14,7 +14,7 @@ pytestmark = pytest.mark.services
 
 
 async def test_passenger_favourites_round_trip(
-    client: AsyncClient, accounts: dict[str, Account]
+    client: AsyncClient, accounts: dict[str, Account], network: None
 ) -> None:
     h = bearer(await login(client, accounts["passenger"]))
     put = await client.put("/passenger/favourites/STOP_1", json={"alert_minutes": 7}, headers=h)
@@ -35,7 +35,7 @@ async def test_invalid_stop_id_rejected(client: AsyncClient, accounts: dict[str,
 
 
 async def test_driver_sees_only_own_assignment(
-    client: AsyncClient, accounts: dict[str, Account]
+    client: AsyncClient, accounts: dict[str, Account], network: None
 ) -> None:
     async with get_sessionmaker()() as session:
         driver = await session.scalar(select(User).where(User.email == accounts["driver"].email))
@@ -61,7 +61,7 @@ async def test_driver_without_assignment_gets_null(
 
 
 async def test_officer_alerts_list_only_open_events(
-    client: AsyncClient, accounts: dict[str, Account]
+    client: AsyncClient, accounts: dict[str, Account], network: None
 ) -> None:
     async with get_sessionmaker()() as session:
         a = Vehicle(fleet_number="TN01AN0002", route_id="R21G")

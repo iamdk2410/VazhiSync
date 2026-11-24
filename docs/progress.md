@@ -8,8 +8,8 @@ Frontend (B13–B16) after the backend. B20 last.
 - [x] Session 0 — environment and scaffolding (uv, Python 3.12, Ollama + qwen3:8b; repo skeleton; GTFS zip downloaded)
 
 ## Phase A: Foundation
-- [x] B1. Project setup and infrastructure — compose (PostGIS on host 5434, Redis, api, worker, avl-mcp, demand-mcp, sim-runner all healthy; Langfuse v3 behind `--profile observability`; native host Ollama), pydantic-settings config, async Alembic (0001 enables PostGIS), GitHub Actions CI (ruff, mypy, pytest). Acceptance: `uv run pytest -m integration`.
-- [ ] B2. Static data: Chennai GTFS import
+- [x] B1. Project setup and infrastructure — compose (PostGIS on host 5434, Redis, api, worker, avl-mcp, demand-mcp, sim-runner all healthy; Langfuse v3 behind `--profile observability`; native host Ollama), pydantic-settings config, async Alembic (0001 enables PostGIS), GitHub Actions CI (ruff, mypy, pytest). Acceptance: `uv run pytest -m stack`.
+- [x] B2. Static data: Chennai GTFS import — route **32B** Korukkupet ↔ Vivekananda House (21/22 stops, ~10 km, 5–6 min peak headway, passes Chepauk/Triplicane). Feed has no bus shapes, so geometry is OSRM-snapped once and committed (local detours repaired, OSM attribution). Importer validates order, stop-to-line offset (max 25 m), detours, spacing, headway, speed; idempotent writes; `GET /routes/{id}` returns GeoJSON. Migration 0003 adds routes/stops tables and FKs from B3 tables. Acceptance: `tests/integration/test_routes_api.py`.
 - [x] B3. Database schema, login and roles — 17 tables (migration 0002; enums as VARCHAR+CHECK; unique `instruction_id`, one approval per recommendation, one open assignment per bus/driver), argon2 + JWT with role re-checked against the DB, `require_role` on every endpoint (enforced by test), register always creates a passenger, Redis rate limit on login/register, seed CLI for officers/drivers. Acceptance: `tests/integration/test_auth_roles.py`.
 
 ## Phase B: The simulated world
