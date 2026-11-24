@@ -2,15 +2,18 @@
 
 Names from `docs/build-plan.md`. Tick a module when its "Done when" test passes, with a one-line note.
 
-**Backend order:** B1 → B3 → B2 → B4 → B6 → B5 → B7 → B8 → B10 (rules only) → B11 → B12 → B9 → B17 → B18 → B19.
-Frontend (B13–B16) after the backend. B20 last.
+**Backend order:** B1 → B3 → B2 → B4 → B6 → B5 → B7 → B8 → B10 (rules only) → B11 → B12 → B9 → B21 → B22 → B17 → B18 → B19.
+**Frontend:** B13 → B14 → B15 → B16 → B23. **Last:** B24 (optional) → B20.
 
 - [x] Session 0 — environment and scaffolding (uv, Python 3.12, Ollama + qwen3:8b; repo skeleton; GTFS zip downloaded)
 
 ## Phase A: Foundation
 - [x] B1. Project setup and infrastructure — compose (PostGIS on host 5434, Redis, api, worker, avl-mcp, demand-mcp, sim-runner all healthy; Langfuse v3 behind `--profile observability`; native host Ollama), pydantic-settings config, async Alembic (0001 enables PostGIS), GitHub Actions CI (ruff, mypy, pytest). Acceptance: `uv run pytest -m stack`.
+  - Follow-up: database image needs pgvector → B22.
 - [x] B2. Static data: Chennai GTFS import — route **32B** Korukkupet ↔ Vivekananda House (21/22 stops, ~10 km, 5–6 min peak headway, passes Chepauk/Triplicane). Feed has no bus shapes, so geometry is OSRM-snapped once and committed (local detours repaired, OSM attribution). Importer validates order, stop-to-line offset (max 25 m), detours, spacing, headway, speed; idempotent writes; `GET /routes/{id}` returns GeoJSON. Migration 0003 adds routes/stops tables and FKs from B3 tables. Acceptance: `tests/integration/test_routes_api.py`.
+  - Follow-up: per-stop-pair snapping, short-turn connection paths, per-segment road distance/duration, `waypoints.json`, `geometry_source` → B6.
 - [x] B3. Database schema, login and roles — 17 tables (migration 0002; enums as VARCHAR+CHECK; unique `instruction_id`, one approval per recommendation, one open assignment per bus/driver), argon2 + JWT with role re-checked against the DB, `require_role` on every endpoint (enforced by test), register always creates a passenger, Redis rate limit on login/register, seed CLI for officers/drivers. Acceptance: `tests/integration/test_auth_roles.py`.
+  - Follow-up: new migrations — predicted benefit, recommendation expiry, "can't comply" status → B12; predicted bunching-event kind → B21; pgvector + `cases` → B22.
 
 ## Phase B: The simulated world
 - [x] B4. Simulation engine — pure-Python `simulator/` (no I/O, no `app` imports): 14 buses cycling 32B with layovers and no terminal headway control; Poisson demand with a time-of-day profile; dwell `10 + 2.5·board + 1.5·alight` with boarding during the dwell (the bunching feedback); capacity 80 / left-behind; log-normal travel noise; weather, slowdown, demand-surge and breakdown events; hold / skip-stop / short-turn validated against bus position; `step`, `snapshot`, `from_observations` (observable fields only, rule 1), `fast_forward`; named RNG streams per stop/bus (deterministic, common random numbers). Calibrated: trips 35.2/38.8 min vs timetable 35/37; 23/30 seeds first bunch in 15–30 min, all by 33. Acceptance: `tests/unit/test_simulator_acceptance.py`.
@@ -19,10 +22,10 @@ Frontend (B13–B16) after the backend. B20 last.
 
 ## Phase C: Tools (MCP)
 - [ ] B7. MCP servers
-- [ ] B8. MCP client and tool layer
+- [ ] B8. MCP client and agentic harness (part 1)
 
 ## Phase D: The brain
-- [ ] B9. LLM gateway
+- [ ] B9. LLM gateway and agentic harness (part 2)
 - [ ] B10. Agent workflow with LangGraph
 - [ ] B11. Counterfactual simulation workers
 
@@ -38,5 +41,11 @@ Frontend (B13–B16) after the backend. B20 last.
 ## Phase G: Hardening and proof
 - [ ] B17. Reliability hardening
 - [ ] B18. Observability and cost reporting
-- [ ] B19. Testing and evaluation
+- [ ] B19. Evaluation harness
 - [ ] B20. Documentation and submission evidence
+
+## Phase H: Extensions
+- [ ] B21. Early warning
+- [ ] B22. Case retrieval
+- [ ] B23. Tamil language
+- [ ] B24. Jev decision tier (optional, build last)

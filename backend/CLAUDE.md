@@ -5,12 +5,14 @@ Everything Python lives in this folder: the API, the agents, the simulator and t
 
 ## Stack
 - Python 3.12, `uv` for dependencies (one `pyproject.toml` in this folder), FastAPI, Pydantic v2, pydantic-settings
-- Postgres + PostGIS, SQLAlchemy 2.0 (async, asyncpg), GeoAlchemy2, Alembic
+- Postgres + PostGIS + pgvector (case retrieval, B22), SQLAlchemy 2.0 (async, asyncpg), GeoAlchemy2, Alembic
 - Redis (pub/sub + ARQ job queue)
 - LangGraph (+ langgraph-checkpoint-postgres) for the agent workflow
 - MCP: official `mcp` Python SDK (FastMCP, streamable HTTP); client via `langchain-mcp-adapters`
-- LLMs: provider APIs for agents via LiteLLM; local Ollama for scenario generation and last-resort fallback
-- Observability: structlog (JSON logs) + Langfuse
+- LLMs: provider APIs for agents via LiteLLM; local Ollama (`qwen3:8b`, thinking mode disabled for
+  structured JSON) for scenario generation and last-resort fallback; optional Jev decision tier (B24)
+- Observability: structlog (JSON logs) + Langfuse (Langfuse Cloud, or self-hosted via the
+  `observability` compose profile)
 - Auth: PyJWT + pwdlib (argon2); rate limiting on public auth routes
 - Tests: pytest, pytest-asyncio, httpx; lint: ruff; types: mypy
 
@@ -29,7 +31,10 @@ backend/
 │   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + websocket; schemas.py
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
-│   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor
+│   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor (+ AgentSpecs)
+│   ├── harness/    tool gate (per-agent allowlists), pre/post tool hooks, step/time/token budgets,
+│   │               context builder, rulebook constraints
+│   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      LangGraph state, node wiring, routing, checkpointer
 │   ├── workers/    ARQ simulation jobs
 │   ├── llm/        gateway: fallback chain, retries, token/cost logging
@@ -49,7 +54,8 @@ the workers and the tests).
 `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `STALE_GPS_SECONDS=60`,
 `BUNCHING_RATIO=0.5`, `CLOSING_RATIO=0.75`, `SIM_TIMEOUT_SECONDS`, `SIM_CONCURRENCY=4`,
 `MAX_GRAPH_STEPS`, `PRIMARY_MODEL`, `BACKUP_MODEL`, `LOCAL_MODEL`, `OLLAMA_URL`,
-`CORS_ORIGINS` (the frontend dev URL), provider API keys, Langfuse keys.
+`CORS_ORIGINS` (the frontend dev URL), provider API keys, Langfuse keys,
+`JEV_ENABLED=false`, `JEV_API_KEY` (optional Jev tier, off without a key).
 
 ## Commands (run from `backend/`)
 - Start services (from repo root): `docker compose up -d`

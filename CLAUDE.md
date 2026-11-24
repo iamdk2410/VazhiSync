@@ -5,7 +5,8 @@ VazhiSync detects bus bunching on one Chennai MTC route, simulates corrective ac
 who approves it before it is sent to the driver. The data is simulated; the route is real
 (Chennai GTFS).
 
-Full build plan: `docs/build-plan.md` (build modules B1–B20). Progress: `docs/progress.md`.
+Full build plan: `docs/build-plan.md` (build modules B1–B24). Progress: `docs/progress.md`.
+Design decisions: `docs/decisions.md`.
 
 ## Repo layout
 ```
@@ -13,7 +14,7 @@ vazhisync/
 ├── CLAUDE.md            this file — shared context and rules
 ├── docker-compose.yml   all services (postgres, redis, ollama, langfuse, api, worker, mcp servers, sim-runner, web)
 ├── .env.example
-├── docs/                build-plan.md, progress.md, failure-matrix.md, architecture
+├── docs/                build-plan.md, progress.md, failure-matrix.md, decisions.md, agents.md, rulebook.md, architecture
 ├── backend/             Python: API, agents, simulator, MCP servers  → see backend/CLAUDE.md
 └── frontend/            React + Vite + TypeScript PWA               → see frontend/CLAUDE.md (later)
 ```
@@ -49,11 +50,18 @@ reads the database or calls MCP servers directly.
 10. **Roles are enforced on the server** (`require_role`), never only in the frontend.
     `POST /auth/register` always creates a passenger.
 11. **Deterministic simulation**: every run takes a seed; same seed → same result.
+12. **Every tool call goes through the harness tool gate and its hooks**; risky actions are
+    checked by both the harness and the MCP server.
+13. **Hard operating rules (`docs/rulebook.md`) are code constraints**, never left to a model.
+14. **Neither Jev nor the LLM chooses the final action**; the simulator's ranking does.
+15. **Recommendations expire and are re-validated before sending**; cooldown rules prevent
+    repeated instructions to the same bus.
+16. **Unscheduled stretch items are not built** unless the user asks.
 
 ## How to work in this repo
 - Build **one build module (B-number) at a time**, in the order in `docs/build-plan.md`.
-  Backend order: B1 → B3 → B2 → B4 → B6 → B5 → B7 → B8 → B10 → B11 → B12 → B9 → B17 → B18 → B19.
-  Frontend (B13–B16) after the backend.
+  Backend: B1 → B3 → B2 → B4 → B6 → B5 → B7 → B8 → B10 (rules only) → B11 → B12 → B9 → B21 → B22
+  → B17 → B18 → B19. Frontend: B13 → B14 → B15 → B16 → B23. Last: B24 (optional) → B20.
 - Before coding a module: read its section in the build plan, propose a short plan, then implement.
 - Each module's **"Done when"** line is its acceptance test — write a test for it.
 - Run the lint, type and test commands for the part you changed before declaring a module done.
