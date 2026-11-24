@@ -122,7 +122,8 @@ Design decisions and the reasons behind them: `docs/decisions.md`.
 
 **Goal:** agents discover and call tools safely, and every call goes through one harness.
 
-- `MultiServerMCPClient` connected to both servers, with tool discovery logged at startup
+- An MCP client connected to both servers, with tool discovery logged at startup (the official
+  SDK client; `langchain-mcp-adapters` doesn't support MCP SDK v2, see `docs/decisions.md`)
 - `app/harness/` with a **tool gate**: per-agent tool allowlists (least privilege); a call to a tool not on the agent's list is refused and logged
 - **Pre-tool hooks:** block `send_driver_instruction` without a valid approval or for a stale bus — this deliberately duplicates the MCP server's own guards (defence in depth)
 - **Post-tool hooks:** validate every tool result against its Pydantic model

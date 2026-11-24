@@ -91,7 +91,23 @@ action.
 **Why:** cheaper and faster where it fits, but the system must work fully without it, and the
 final decision stays with the simulator's ranking (rule 14).
 
-## 8. Skipped items and why
+## 8. MCP client: the official SDK, not langchain-mcp-adapters
+
+**Context:** the stack named `langchain-mcp-adapters` (`MultiServerMCPClient`) as the MCP
+client. Its latest release (0.3.1) imports `mcp.shared.context.RequestContext`, which MCP SDK v2
+removed; the B7 servers are built on SDK v2 (`MCPServer`). The package installs cleanly (it
+doesn't pin `mcp<2`) and then fails on import.
+
+**Decision:** the harness (`app/harness/client.py`) uses the official SDK client
+(`mcp.Client`) over streamable HTTP directly, one session per call. Revisit if the adapters
+add SDK v2 support and we need LangChain tool objects (e.g. LLM tool-calling in B10).
+
+**Why:** downgrading to SDK v1 would mean rewriting the servers; the SDK client returns
+structured results natively, which the harness validates against the same Pydantic models the
+servers declare; and every call must pass through our own gate, hooks and budgets anyway,
+which a generic tool wrapper would bypass.
+
+## 9. Skipped items and why
 
 | Skipped | Why |
 | --- | --- |

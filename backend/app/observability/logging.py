@@ -18,6 +18,8 @@ def configure_logging(service: str, level: str = "INFO") -> None:
         ],
         wrapper_class=structlog.make_filtering_bound_logger(logging.getLevelName(level)),
         logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True,
+        # Not cached: log capture in tests (and reconfiguration) must always take effect;
+        # at this app's log rate the cache saves nothing measurable.
+        cache_logger_on_first_use=False,
     )
     structlog.contextvars.bind_contextvars(service=service)

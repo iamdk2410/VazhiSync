@@ -16,6 +16,8 @@ x-backend: &backend
     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}
     REDIS_URL: redis://redis:6379/0
     OLLAMA_URL: http://host.docker.internal:11434
+    AVL_MCP_URL: http://avl-mcp:8101/mcp
+    DEMAND_MCP_URL: http://demand-mcp:8102/mcp
     LANGFUSE_HOST: http://langfuse-web:3000
   extra_hosts:
     - "host.docker.internal:host-gateway"

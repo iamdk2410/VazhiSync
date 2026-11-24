@@ -8,7 +8,8 @@ Everything Python lives in this folder: the API, the agents, the simulator and t
 - Postgres + PostGIS + pgvector (case retrieval, B22), SQLAlchemy 2.0 (async, asyncpg), GeoAlchemy2, Alembic
 - Redis (pub/sub + ARQ job queue)
 - LangGraph (+ langgraph-checkpoint-postgres) for the agent workflow
-- MCP: official `mcp` Python SDK (FastMCP, streamable HTTP); client via `langchain-mcp-adapters`
+- MCP: official `mcp` Python SDK v2 (`MCPServer`, streamable HTTP); client: the SDK's `mcp.Client`
+  inside the harness (`langchain-mcp-adapters` is incompatible with SDK v2, see docs/decisions.md)
 - LLMs: provider APIs for agents via LiteLLM; local Ollama (`qwen3:8b`, thinking mode disabled for
   structured JSON) for scenario generation and last-resort fallback; optional Jev decision tier (B24)
 - Observability: structlog (JSON logs) + Langfuse (Langfuse Cloud, or self-hosted via the
@@ -35,8 +36,9 @@ backend/
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
 │   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor (+ AgentSpecs)
-│   ├── harness/    tool gate (per-agent allowlists), pre/post tool hooks, step/time/token budgets,
-│   │               context builder, rulebook constraints
+│   ├── harness/    the only way agents call tools: specs.py (tools + per-agent allowlists),
+│   │               client.py (MCP client, availability circuit), hooks.py (send guard),
+│   │               budget.py (step/time; tokens in B9), harness.py; context builder, rules later
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      LangGraph state, node wiring, routing, checkpointer
 │   ├── workers/    ARQ jobs: scenario generation (B5), simulation jobs (B11)

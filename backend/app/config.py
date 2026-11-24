@@ -61,6 +61,15 @@ class Settings(BaseSettings):
     langfuse_secret_key: SecretStr | None = None
     langfuse_host: str = "http://localhost:3000"
 
+    # MCP client and agentic harness (B8)
+    avl_mcp_url: str = "http://localhost:8101/mcp"
+    demand_mcp_url: str = "http://localhost:8102/mcp"
+    tool_timeout_seconds: float = Field(default=10.0, gt=0)
+    tool_attempts: int = Field(default=3, ge=1, le=5)  # transient errors only (rule 7)
+    tool_unavailable_cooldown_seconds: float = Field(default=30.0, gt=0)
+    run_time_limit_seconds: float = Field(default=120.0, gt=0)  # whole workflow run (rule 8)
+    agent_max_tool_calls: int = Field(default=12, ge=1)  # per agent per run (rule 8)
+
     # Live world runner (B6)
     world_route_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,32}$")] = "32B"
     world_seed: int = 1

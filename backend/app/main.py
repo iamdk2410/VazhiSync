@@ -1,5 +1,6 @@
 """FastAPI application entry point: `uvicorn app.main:app`."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -11,7 +12,8 @@ from app.api import auth, driver, lab, live, officer, passenger, routes
 from app.api.health import router as health_router
 from app.auth.rate_limit import RedisRateLimiter
 from app.config import get_settings
-from app.db.session import get_engine
+from app.db.session import get_engine, get_sessionmaker
+from app.harness.harness import ToolHarness
 from app.live.hub import LiveHub
 from app.observability.logging import configure_logging
 
@@ -22,7 +24,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.redis = redis
     app.state.live_hub = LiveHub(redis)
     await app.state.live_hub.start()
+    # The agent tool harness (B8); discovery is logged in the background so a down MCP
+    # server never blocks API startup (it is simply marked unavailable).
+    app.state.harness = ToolHarness.from_settings(get_settings(), get_sessionmaker())
+    discovery = asyncio.create_task(app.state.harness.discover())
     yield
+    discovery.cancel()
     await app.state.live_hub.stop()
     await redis.aclose()
     job_queue = getattr(app.state, "job_queue", None)
