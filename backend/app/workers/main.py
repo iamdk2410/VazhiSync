@@ -13,6 +13,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.config import get_settings
 from app.db.session import get_sessionmaker
 from app.graph.checkpoint import postgres_checkpointer
+from app.harness.client import MCPConnector
+from app.harness.faults import FaultyConnector, redis_fault_source
 from app.harness.harness import ToolHarness
 from app.lab.library import sync_golden
 from app.llm.gateway import LlmGateway
@@ -42,11 +44,16 @@ async def ping(ctx: dict[str, Any]) -> str:
 async def on_startup(ctx: dict[str, Any]) -> None:
     configure_logging("worker")
     log.info("worker_started")
-    ctx["harness"] = ToolHarness.from_settings(get_settings(), get_sessionmaker())
+    settings = get_settings()
+    # B17: the real MCP connector, wrapped so a scenario's fault plan (Redis) can break it.
+    connector = FaultyConnector(
+        MCPConnector({"avl": settings.avl_mcp_url, "demand": settings.demand_mcp_url}),
+        redis_fault_source(ctx["redis"]),
+    )
+    ctx["harness"] = ToolHarness.from_settings(settings, get_sessionmaker(), connector)
     await ctx["harness"].discover()  # logged; a down server is just marked unavailable
     ctx["checkpointer_cm"] = postgres_checkpointer(get_settings().database_url)
     ctx["checkpointer"] = await ctx["checkpointer_cm"].__aenter__()  # graph state (B12)
-    settings = get_settings()
     ctx["llm"] = (
         LlmGateway.from_settings(
             settings, get_sessionmaker(), include_local=settings.llm_local_in_runs

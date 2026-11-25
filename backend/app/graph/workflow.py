@@ -370,6 +370,7 @@ async def _settle(
             run.status, run.waiting_for, run.end_reason = status, waiting, end_reason
             run.step_count = steps
             run.regeneration_round = int(final.get("round", 0))
+            run.degraded = sorted(set(run.degraded or []) | set(final.get("degraded", [])))
             if waiting is None:
                 run.finished_at = datetime.now(UTC)
         if event is not None and event.status in (

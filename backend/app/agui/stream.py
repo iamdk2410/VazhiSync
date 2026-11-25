@@ -45,6 +45,7 @@ from app.db.models import (
     WorkflowRun,
 )
 from app.live.channels import agui_stream_key, agui_view_key
+from app.officer.status import run_messages
 
 END_TYPES = {"RUN_FINISHED", "RUN_ERROR"}
 HEARTBEAT_S = 15.0
@@ -227,6 +228,8 @@ async def view_from_db(session: AsyncSession, run_id: uuid.UUID) -> RunView | No
         waiting_for=run.waiting_for,
         end_reason=run.end_reason,
         round=run.regeneration_round,
+        degraded=list(run.degraded or []),
+        status_messages=run_messages(run.degraded),
     )
     fleets = dict((await session.execute(select(Vehicle.id, Vehicle.fleet_number))).all())
     event = await session.get(BunchingEvent, run.bunching_event_id)

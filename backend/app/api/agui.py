@@ -32,6 +32,7 @@ from app.db.models import BunchingEvent, User, Vehicle, WorkflowRun
 from app.db.session import get_session, get_sessionmaker
 from app.officer import decisions
 from app.officer.decisions import DecisionRefused, OfficerDecisionPayload
+from app.officer.status import run_messages
 
 log = structlog.get_logger()
 
@@ -53,6 +54,7 @@ class RunSummary(BaseModel):
     round: int
     started_at: datetime
     finished_at: datetime | None
+    status_messages: list[str] = []  # degraded mode etc. (B17)
 
 
 class RunsResponse(BaseModel):
@@ -94,6 +96,7 @@ async def list_runs(
                 round=run.regeneration_round,
                 started_at=run.started_at,
                 finished_at=run.finished_at,
+                status_messages=run_messages(run.degraded),
             )
             for run, lead, follow in rows
         ]

@@ -38,6 +38,7 @@ from app.live.channels import SPEED_KEY
 from app.live.hub import LiveHub
 from app.officer import decisions
 from app.officer.decisions import DecisionRefused, OfficerDecisionPayload
+from app.officer.status import SystemStatus, run_messages, system_status
 from app.runner.world import parse_speed
 
 log = structlog.get_logger()
@@ -46,6 +47,7 @@ router = APIRouter(prefix="/officer", tags=["officer"])
 
 Officer = Annotated[User, Depends(require_role(Role.OFFICER))]
 Session = Annotated[AsyncSession, Depends(get_session)]
+RedisDep = Annotated[Redis, Depends(get_redis)]
 
 
 @router.get("/alerts", response_model=AlertsResponse)
@@ -103,6 +105,13 @@ async def set_world_speed(
     return body
 
 
+@router.get("/status", response_model=SystemStatus)
+async def status_messages(_: Officer, session: Session, redis: RedisDep) -> SystemStatus:
+    """What is degraded right now and why, in plain words (B17): servers down, tools runs did
+    without, LLM fallbacks, injected failures."""
+    return await system_status(session, redis)
+
+
 # ------------------------------------------------------------------ recommendations (B12)
 
 
@@ -144,6 +153,7 @@ async def pending_recommendations(_: Officer, session: Session) -> Recommendatio
                 similar_cases=[SimilarCaseOut.model_validate(c) for c in rec.similar_cases or []],
                 confidence="lowered" if rec.confidence == "lowered" else "normal",
                 confidence_note=rec.confidence_note,
+                status_messages=run_messages(run.degraded),
             )
             for run, rec, cand, fleet in rows
         ]

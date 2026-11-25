@@ -337,7 +337,7 @@ async def test_applying_a_scenario_restarts_the_live_world(
     assert (await runner.tick(2)).sim_elapsed_s == 40  # no second reset for the same token
 
     current = (await client.get("/lab/world/scenario", headers=officer)).json()
-    assert current == {"scenario_id": created["id"], "name": "Rainy match night"}
+    assert current == {"scenario_id": created["id"], "name": "Rainy match night", "faults": []}
     assert (await client.delete("/lab/world/scenario", headers=officer)).status_code == 200
     clock.advance(2)
     back = await runner.tick(2)

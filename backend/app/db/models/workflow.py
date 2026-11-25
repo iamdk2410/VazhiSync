@@ -69,6 +69,8 @@ class WorkflowRun(Base):
     regeneration_round: Mapped[int] = mapped_column(server_default=text("0"))
     # B12: which interrupt the paused graph waits on: officer | driver | outcome (None: not paused)
     waiting_for: Mapped[str | None] = mapped_column(String(16))
+    # B17: tools the run had to do without (e.g. demand data), for "degraded mode" messages
+    degraded: Mapped[list[str]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
     end_reason: Mapped[str | None] = mapped_column(Text)
     error: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime] = utc_now_column()

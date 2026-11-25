@@ -35,7 +35,8 @@ backend/
 │   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab, agui) + /ws/live websocket; schemas.py
 │   ├── agui/       AG-UI run stream (decision 10): view.py (RunView + fold), patch.py (JSON Patch),
 │   │               publisher.py (worker: astream -> events -> Redis Stream), stream.py (API: SSE attach)
-│   ├── officer/    decisions.py: the officer decision service (REST and AG-UI resume share it)
+│   ├── officer/    decisions.py: the officer decision service (REST and AG-UI resume share it),
+│   │               status.py (B17: degraded-mode messages, GET /officer/status)
 │   ├── live/       live frame schemas + per-role filtering, headways, Redis channels, WebSocket hub
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
@@ -45,7 +46,8 @@ backend/
 │   ├── harness/    the only way agents call tools: specs.py (tools + per-agent allowlists),
 │   │               client.py (MCP client, availability circuit), hooks.py (send guard),
 │   │               budget.py (steps/time/tokens), harness.py, context.py (what each agent's
-│   │               LLM call sees, B9), cases.py (B22: features, similar cases, confidence)
+│   │               LLM call sees, B9), cases.py (B22: features, similar cases, confidence),
+│   │               faults.py (B17: failure injection connector)
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
 │   │               workflow.py (graph, start/resume claims, limits), checkpoint.py (Postgres

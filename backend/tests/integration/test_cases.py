@@ -9,7 +9,8 @@ measured. Repeat: the same situation arises again; the new run retrieves that ca
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 from arq import ArqRedis
@@ -17,6 +18,7 @@ from arq.worker import Worker
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.agents.dispatch import _record_case
 from app.config import get_settings
 from app.db.enums import InstructionStatus, WorkflowStatus
 from app.db.models import BunchingEvent, Case, DriverInstruction, WorkflowRun
@@ -79,6 +81,26 @@ async def test_a_repeated_scenario_retrieves_its_earlier_case_on_the_card(
     assert case.predicted_benefit_passenger_minutes == rec["benefit_passenger_minutes"]
     assert len(case.features) == 9 and case.feature_values["gap_ratio"] < 0.5
     assert case.actual_benefit_passenger_minutes is None  # not measured yet
+
+    # A replayed approval (the send returns already_sent) records no second case.
+    await _record_case(
+        cast(Any, SimpleNamespace(sessionmaker=get_sessionmaker(), run_id=str(case.run_id))),
+        cast(
+            Any,
+            {
+                "case_features": case.feature_values,
+                "route_id": "T1",
+                "recommendation": SimpleNamespace(
+                    benefit_passenger_minutes=case.predicted_benefit_passenger_minutes
+                ),
+            },
+        ),
+        cast(Any, SimpleNamespace(action_type=case.action_type.value)),
+        case.params,
+        cast(Any, SimpleNamespace(id=case.driver_instruction_id)),
+    )
+    async with get_sessionmaker()() as session:
+        assert len((await session.scalars(select(Case))).all()) == 1
 
     # ---- the intervention is over and measured (an earlier day: no cooldown left)
     async with get_sessionmaker()() as session:

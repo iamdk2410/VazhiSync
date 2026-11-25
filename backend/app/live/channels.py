@@ -30,3 +30,5 @@ def agui_view_key(run_id: str) -> str:
 
 AGUI_TTL_SECONDS = 24 * 3600
 AGUI_MAXLEN = 2000  # events per run (a run has a few dozen; resumes add more)
+
+FAULTS_KEY = "vazhisync:world:faults"  # FaultPlan JSON (B17 failure injection); absent = none

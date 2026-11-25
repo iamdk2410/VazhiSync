@@ -46,7 +46,7 @@ Names from `docs/build-plan.md`. Tick a module when its "Done when" test passes,
 - [ ] B16. Passenger app
 
 ## Phase G: Hardening and proof
-- [ ] B17. Reliability hardening
+- [x] B17. Reliability hardening — every failure-matrix row now names an automated test, enforced by `tests/unit/test_failure_matrix.py` (each row must reference `file::test` or a CI step, the test must exist, and every failure in the course brief must have a row); 18 new tests for rows that had none (`tests/unit/test_reliability.py`, `tests/integration/test_reliability.py`: Redis/Postgres down while the world runs, slow WebSocket clients, malformed frames and scenario signals, pruning, MCP host/origin checks, queue down, re-validation before sending, driver timeout, avl down during a sweep...); three development-machine notes moved out of the matrix. Failure injection per scenario (`app/harness/faults.py`): kill avl/demand, slow a tool, bad JSON — set with `POST /lab/scenarios/{id}/apply` or toggled live with `PUT /lab/world/faults`, applied by the worker's harness connector. Status messages (`app/officer/status.py`, migration 0012 `workflow_runs.degraded`): `GET /officer/status` and `status_messages` on recommendations, runs and the AG-UI view ("Running in degraded mode: demand data unavailable"). Found on the way: the status query's GROUP BY bug (caught by its test).
 - [ ] B18. Observability and cost reporting
 - [ ] B19. Evaluation harness
 - [ ] B20. Documentation and submission evidence

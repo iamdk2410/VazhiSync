@@ -19,6 +19,7 @@ from app.db.enums import (
     ScenarioStatus,
     WorkflowStatus,
 )
+from app.harness.faults import FaultPlan
 from scenario_gen.preview import Preview
 from scenario_gen.schema import ScenarioPlan
 
@@ -244,6 +245,13 @@ class ScenarioList(BaseModel):
 class WorldScenarioOut(BaseModel):
     scenario_id: uuid.UUID | None  # None: a normal day
     name: str | None
+    faults: list[str] = []  # injected failures, described (B17)
+
+
+class ApplyScenarioRequest(StrictModel):
+    """Optional body of POST /lab/scenarios/{id}/apply: failures to inject (B17)."""
+
+    faults: FaultPlan | None = None
 
 
 # --- approval, dispatch and driver feedback (B12) ---
@@ -299,6 +307,7 @@ class RecommendationOut(BaseModel):
     similar_cases: list[SimilarCaseOut] = []  # B22
     confidence: Literal["normal", "lowered"] = "normal"
     confidence_note: str | None = None
+    status_messages: list[str] = []  # e.g. "Running in degraded mode: demand data unavailable"
 
 
 class RecommendationsResponse(BaseModel):

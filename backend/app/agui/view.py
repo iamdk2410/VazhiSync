@@ -16,6 +16,7 @@ from app.graph.state import (
     SimOutcome,
     Snapshot,
 )
+from app.officer.status import run_messages
 
 StepStatus = Literal["running", "done", "error", "paused"]
 RunStatus = Literal["running", "paused", "finished", "failed"]
@@ -79,6 +80,7 @@ class RunView(BaseModel):
     round: int = 0
     event_kind: str = "actual"  # predicted: started by early warning (B21)
     degraded: list[str] = Field(default_factory=list)
+    status_messages: list[str] = Field(default_factory=list)  # degraded mode, in words (B17)
     pair: PairView | None = None
     steps: list[StepView] = Field(default_factory=list)
     candidates: list[CandidateView] = Field(default_factory=list)
@@ -171,6 +173,7 @@ def fold(view: RunView, node: str, update: dict[str, Any] | None) -> RunView:
     for tool in update.get("degraded", []):
         if tool not in v.degraded:
             v.degraded.append(tool)
+            v.status_messages = run_messages(v.degraded)
     for key in ("decision", "instruction", "driver_reply", "outcome"):
         if update.get(key) is not None:
             setattr(v, key, update[key])
