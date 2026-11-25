@@ -26,7 +26,7 @@ from sqlalchemy import func, select, text
 from app.api.deps import get_job_queue
 from app.auth.rate_limit import MemoryRateLimiter, get_rate_limiter
 from app.config import get_settings
-from app.db.enums import InstructionStatus, Role, WorkflowStatus
+from app.db.enums import BunchingEventStatus, InstructionStatus, Role, WorkflowStatus
 from app.db.models import (
     BunchingEvent,
     DriverAssignment,
@@ -501,6 +501,9 @@ async def test_an_ignored_recommendation_does_not_block_its_pair_forever(
     assert second.run_id is not None and second.run_id != first.run_id
     old = await run_row(run_id_of(first))
     assert old.end_reason == "superseded" and old.waiting_for is None
+    async with get_sessionmaker()() as session:
+        first_event = await session.get(BunchingEvent, event.id)
+    assert first_event is not None and first_event.status == BunchingEventStatus.DISMISSED
 
 
 async def test_runs_left_behind_by_a_dead_worker_or_an_old_version_do_not_block_their_pair(

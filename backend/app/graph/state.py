@@ -122,6 +122,8 @@ class WorkflowState(TypedDict, total=False):
     driver_reply: dict[str, Any]  # resume value of await_driver
     acked_world_time_s: float  # the world's clock when the driver acknowledged
     outcome: dict[str, Any]  # measured after the intervention: predicted vs actual benefit
+    event_kind: Literal["actual", "predicted"]  # predicted: early warning, not bunched yet (B21)
+    predicted_in_s: float  # predicted events: how far ahead the bunch was forecast
 
 
 # ------------------------------------------------------------------ resume values (B12)

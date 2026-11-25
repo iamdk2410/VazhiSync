@@ -24,12 +24,12 @@ from geoalchemy2 import WKTElement
 from pydantic import ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
-from sqlalchemy import delete, select, update
+from sqlalchemy import and_, delete, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import GpsDropout, Settings
-from app.db.enums import BunchingEventStatus, BunchingSeverity
+from app.db.enums import BunchingEventKind, BunchingEventStatus, BunchingSeverity
 from app.db.models import BunchingEvent, StopQueue, Vehicle, VehiclePosition
 from app.live.channels import (
     BUNCHING_CHANNEL,
@@ -58,6 +58,9 @@ from scenario_gen.checks import dropouts as scenario_dropouts
 from simulator import Action, ActionError, Hold, ShortTurn, SimConfig, Simulation, SkipStops
 
 log = structlog.get_logger()
+
+# Events the detector still owns: open, or handled by a run that left it to close on recovery.
+LIVE_STATUSES = (BunchingEventStatus.OPEN, BunchingEventStatus.HANDLING)
 
 Speed = Literal[1, 5, 10]
 SPEEDS: tuple[Speed, ...] = (1, 5, 10)
@@ -203,7 +206,9 @@ class WorldRunner:
             open_rows = await session.scalars(
                 select(BunchingEvent).where(
                     BunchingEvent.route_id == route_id,
-                    BunchingEvent.status == BunchingEventStatus.OPEN,
+                    BunchingEvent.status.in_(LIVE_STATUSES),
+                    # predicted events (B21) are the early-warning sweep's, not the detector's
+                    BunchingEvent.kind == BunchingEventKind.ACTUAL,
                 )
             )
             for event in open_rows:
@@ -252,7 +257,8 @@ class WorldRunner:
                     update(BunchingEvent)
                     .where(
                         BunchingEvent.id.in_(decisions.resolve),
-                        BunchingEvent.status == BunchingEventStatus.OPEN,
+                        # handling too: a "do nothing" run leaves its event to be closed here
+                        BunchingEvent.status.in_(LIVE_STATUSES),
                     )
                     .values(status=BunchingEventStatus.RESOLVED, resolved_at=now)
                 )
@@ -515,16 +521,22 @@ class WorldRunner:
         self._scenario_token = wanted.token
         self.scenario_name = name
         now = self._clock()
-        if dismissed:
-            async with self._sessionmaker() as session, session.begin():
-                await session.execute(
-                    update(BunchingEvent)
-                    .where(
+        async with self._sessionmaker() as session, session.begin():
+            await session.execute(
+                update(BunchingEvent)
+                .where(
+                    BunchingEvent.status == BunchingEventStatus.OPEN,
+                    or_(
                         BunchingEvent.id.in_(dismissed),
-                        BunchingEvent.status == BunchingEventStatus.OPEN,
-                    )
-                    .values(status=BunchingEventStatus.DISMISSED, resolved_at=now)
+                        # a new world: open predictions about the old one are void (B21)
+                        and_(
+                            BunchingEvent.route_id == self.route.model.route_id,
+                            BunchingEvent.kind == BunchingEventKind.PREDICTED,
+                        ),
+                    ),
                 )
+                .values(status=BunchingEventStatus.DISMISSED, resolved_at=now)
+            )
         log.info(
             "world_reset",
             scenario=name or "normal day",

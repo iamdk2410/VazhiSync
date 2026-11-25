@@ -22,7 +22,7 @@ from websockets.exceptions import ConnectionClosed
 
 from app.auth.security import create_access_token
 from app.config import GpsDropout, get_settings
-from app.db.enums import Role
+from app.db.enums import BunchingEventStatus, Role
 from app.db.models import BunchingEvent, DriverAssignment, StopQueue, User, VehiclePosition
 from app.db.session import get_sessionmaker
 from app.gtfs.import_gtfs import prepare
@@ -210,6 +210,43 @@ async def test_bunching_raises_exactly_one_event(route: WorldRoute, redis: Redis
         events = (await session.scalars(select(BunchingEvent))).all()
     assert [e.id for e in events] == [raised.event_id]
     assert events[0].headway_seconds < 0.5 * events[0].scheduled_headway_seconds
+
+
+async def test_an_event_left_handling_resolves_when_the_pair_recovers(
+    route: WorldRoute, redis: Redis
+) -> None:
+    """A "do nothing" run leaves its event 'handling' for the detector to close once the
+    headway recovers - also across a runner restart (seen live: events stuck forever)."""
+    clock = FakeClock()
+    runner = _runner(route, redis, clock)
+    _bunched_pair(runner, route)
+    await runner.setup()
+    await _tick(runner, clock, 3)
+    async with get_sessionmaker()() as session:
+        (event,) = (await session.scalars(select(BunchingEvent))).all()
+        event.status = BunchingEventStatus.HANDLING  # what a do-nothing run leaves behind
+        await session.commit()
+
+    restarted = _runner(route, redis, clock)
+    restarted.sim = from_observations(  # the buses have separated again
+        route.model,
+        Observations(
+            time_s=8 * 3600,
+            vehicles=(
+                VehicleObservation("T1-01", 0, 4000.0, load=20),
+                VehicleObservation("T1-02", 0, 2000.0, load=5),
+                VehicleObservation("T1-03", 0, 900.0, load=10),
+            ),
+        ),
+        restarted.sim.config,
+        seed=1,
+    )
+    await restarted.setup()
+    assert event.id in restarted.tracker.open_events.values()  # reloaded, though handling
+    await _tick(restarted, clock, 2)
+    async with get_sessionmaker()() as session:
+        after = await session.get(BunchingEvent, event.id)
+    assert after is not None and after.status == BunchingEventStatus.RESOLVED
 
 
 # ------------------------------------------------------------------ WebSocket

@@ -16,7 +16,12 @@ ToolName = Literal[
     "get_vehicle_positions", "get_headways", "get_boarding_estimates", "send_driver_instruction"
 ]
 AgentName = Literal[
-    "headway_monitor", "action_generator", "impact_simulator", "control_advisor", "dispatch"
+    "headway_monitor",
+    "action_generator",
+    "impact_simulator",
+    "control_advisor",
+    "dispatch",
+    "early_warning",
 ]
 
 
@@ -49,4 +54,6 @@ AGENT_TOOLS: dict[AgentName, frozenset[str]] = {
     # rule 5: the only caller of send; reads headways to re-validate right before sending and
     # to measure the outcome afterwards (B12).
     "dispatch": frozenset({"send_driver_instruction", "get_headways"}),
+    # B21: reads what the advisor may see, looks ahead with "do nothing"; never sends.
+    "early_warning": frozenset({"get_vehicle_positions", "get_headways", "get_boarding_estimates"}),
 }

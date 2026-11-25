@@ -50,8 +50,16 @@ The officer resolves the interrupt with `POST /officer/runs/{run_id}/agui` (AG-U
 | Impact Simulator | Simulates every candidate from the observations, in parallel | Measure passenger-minutes, bunching, people left behind | `get_vehicle_positions`, `get_headways`, `get_boarding_estimates` | Snapshot, candidates | One outcome per candidate (3 seeds, common random numbers) |
 | Control Advisor | Ranks the outcomes and explains the best | Recommend what saves the most passenger time; escalate near-ties | none | Outcomes, candidates | Ranked recommendation, explanation; route `recommend` / `escalate` / `do_nothing` |
 | Dispatch (B12) | Sends the approved instruction | Deliver exactly what was approved, once, to a bus with fresh GPS | `send_driver_instruction` (the only caller, rule 5) | Approval | Driver instruction |
+| Early Warning (B21) | Looks ahead every 30 s with "do nothing" from the observations | Start the workflow before a bunch forms, while a small fix still works | `get_vehicle_positions`, `get_headways`, `get_boarding_estimates` | MCP observations | Predicted bunching event (pair, lead time) |
 
 ## How the agents decide (rules)
+
+- **Early Warning (B21):** builds the what-if model from the same observations as the Impact
+  Simulator and steps "do nothing" 15 minutes over 3 seeds, checking pair headways with the
+  live detector's rule. A pair that is fresh and ok/closing now but bunches in at least 2 seeds
+  raises a predicted event (not while an event is open for the pair, nor within 5 minutes of
+  the last prediction). The workflow then runs as usual, except that the Headway Monitor and
+  dispatch's last check accept the pair before it has bunched.
 
 - **Headway Monitor:** finds the event's pair in `get_headways`. Stale pair → end
   (`stale_data`, event stays open and is retried). Pair missing (overtaken, terminal) or no

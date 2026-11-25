@@ -206,7 +206,8 @@ async def dispatch(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
         "dispatch", "get_headways", {"route_id": state["route_id"]}, Headways
     )
     pair = find_pair(headways, state["leader_vehicle_id"], state["follower_vehicle_id"])
-    if pair is None or pair.status == "ok":
+    predicted = state.get("event_kind") == "predicted"  # B21: acting early, before the bunch
+    if pair is None or (pair.status == "ok" and not predicted):
         return {"route": "resolved", "end_reason": "not_bunched"}
 
     params = (

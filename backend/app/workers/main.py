@@ -22,6 +22,7 @@ from app.workers.queue import arq_redis_settings
 from app.workers.scenarios import generate_scenario
 from app.workers.workflows import (
     driver_ack_timeout,
+    early_warning,
     measure_outcome,
     resume_workflow_job,
     retry_open_events,
@@ -87,7 +88,16 @@ class WorkerSettings:
         func(measure_outcome, timeout=get_settings().run_time_limit_seconds + 60, max_tries=1),
         func(driver_ack_timeout, timeout=get_settings().run_time_limit_seconds + 60, max_tries=1),
     ]
-    cron_jobs: ClassVar[list[Any]] = [cron(retry_open_events, second={0}, run_at_startup=False)]
+    cron_jobs: ClassVar[list[Any]] = [
+        cron(retry_open_events, second={0}, run_at_startup=False),
+        # B21: every EARLY_WARNING_EVERY_SECONDS (cron is unique: a slow sweep never overlaps)
+        cron(
+            early_warning,
+            second=set(range(0, 60, get_settings().early_warning_every_seconds)),
+            run_at_startup=False,
+            timeout=60,
+        ),
+    ]
     on_startup = on_startup
     on_shutdown = on_shutdown
     redis_settings = arq_redis_settings()

@@ -13,6 +13,7 @@ from app.db.base import Base, str_enum, utc_now_column, uuid_pk
 from app.db.enums import (
     ActionType,
     ApprovalDecision,
+    BunchingEventKind,
     BunchingEventStatus,
     BunchingSeverity,
     CandidateSource,
@@ -29,6 +30,9 @@ class BunchingEvent(Base):
     __table_args__ = (
         Index("ix_bunching_events_status_detected", "status", text("detected_at DESC")),
         CheckConstraint("leader_vehicle_id <> follower_vehicle_id", name="distinct_vehicles"),
+        CheckConstraint(
+            "kind = 'actual' OR predicted_in_seconds IS NOT NULL", name="predicted_has_lead_time"
+        ),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -43,6 +47,10 @@ class BunchingEvent(Base):
         str_enum(BunchingEventStatus, "status"), server_default=BunchingEventStatus.OPEN.value
     )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    kind: Mapped[BunchingEventKind] = mapped_column(
+        str_enum(BunchingEventKind, "kind"), server_default=BunchingEventKind.ACTUAL.value
+    )
+    predicted_in_seconds: Mapped[float | None]  # predicted events: how far ahead (B21)
 
 
 class WorkflowRun(Base):

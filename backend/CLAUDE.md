@@ -40,6 +40,7 @@ backend/
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape
 │   ├── agents/     headway_monitor, action_generator, impact_simulator, control_advisor,
+│   │               early_warning (B21: look-ahead sweep, predicted events), dispatch,
 │   │               specs.py (AgentSpecs, docs/agents.md), rulebook.py (docs/rulebook.md)
 │   ├── harness/    the only way agents call tools: specs.py (tools + per-agent allowlists),
 │   │               client.py (MCP client, availability circuit), hooks.py (send guard),
@@ -78,6 +79,8 @@ LLM gateway (B9): `PRIMARY_MODEL`, `BACKUP_MODEL`, `FALLBACK_MODEL` (`<groq|open
 `LOCAL_MODEL`, `OLLAMA_URL`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `LLM_ENABLED`,
 `LLM_TIMEOUT_SECONDS`, `LLM_ATTEMPTS`, `LLM_MAX_OUTPUT_TOKENS`, `LLM_RATE_LIMIT_COOLDOWN_SECONDS`,
 `LLM_RUN_TOKEN_BUDGET`, `LLM_AGENT_TOKEN_BUDGET`, `LLM_TIME_RESERVE_SECONDS`, `LLM_LOCAL_IN_RUNS`.
+Early warning (B21): `EARLY_WARNING_ENABLED`, `EARLY_WARNING_EVERY_SECONDS`, `EARLY_WARNING_HORIZON_MINUTES`,
+`EARLY_WARNING_STEP_SECONDS`, `EARLY_WARNING_SEEDS`, `EARLY_WARNING_MIN_AGREE`, `EARLY_WARNING_COOLDOWN_MINUTES`.
 `VAZHISYNC_PUBSUB_NAMESPACE` (default `vazhisync`): prefix of the Redis pub/sub channels; the tests
 set their own, because pub/sub is shared across Redis database numbers.
 

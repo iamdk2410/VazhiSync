@@ -23,6 +23,7 @@ from app.db.enums import JobStatus
 from app.db.models import SimulationJob
 from app.graph.deps import WorkflowDeps
 from app.graph.state import Candidate, SimOutcome, Snapshot, WorkflowState
+from mcp_servers.schemas import BoardingEstimates, VehiclePositions
 from simulator import (
     Action,
     DoNothing,
@@ -44,7 +45,14 @@ POLL_S = 0.1  # how often a branch checks its job's result
 _background: set[asyncio.Task[None]] = set()  # abort tasks still running (kept referenced)
 
 
-def build_observations(snapshot: Snapshot, route: RouteModel) -> Observations:
+def observations_from(
+    positions: VehiclePositions,
+    estimates: BoardingEstimates | None,
+    world_time_s: float,
+    route: RouteModel,
+) -> Observations:
+    """The what-if model's input, from MCP tool results only (rule 1). Shared with the early
+    warning sweep (B21), so both look ahead from exactly the same observations."""
     vehicles = tuple(
         VehicleObservation(
             vehicle_id=v.fleet_number,
@@ -53,19 +61,23 @@ def build_observations(snapshot: Snapshot, route: RouteModel) -> Observations:
             load=v.load,
             stale=v.is_stale,
         )
-        for v in snapshot.positions.vehicles
+        for v in positions.vehicles
         if v.distance_m is not None
     )
     waiting: dict[tuple[int, int], int] = {}
-    if snapshot.estimates is not None:
+    if estimates is not None:
         index = {
             (d.direction_id, s.stop_id): i for d in route.directions for i, s in enumerate(d.stops)
         }
-        for e in snapshot.estimates.stops:
+        for e in estimates.stops:
             i = index.get((e.direction_id, e.stop_id))
             if i is not None and e.waiting_now is not None and e.data_quality == "ok":
                 waiting[(e.direction_id, i)] = e.waiting_now
-    return Observations(time_s=snapshot.world_time_s, vehicles=vehicles, waiting=waiting)
+    return Observations(time_s=world_time_s, vehicles=vehicles, waiting=waiting)
+
+
+def build_observations(snapshot: Snapshot, route: RouteModel) -> Observations:
+    return observations_from(snapshot.positions, snapshot.estimates, snapshot.world_time_s, route)
 
 
 def to_action(c: Candidate, route: RouteModel, direction_of: dict[str, int]) -> Action:

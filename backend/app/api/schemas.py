@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 from app.auth.security import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 from app.db.enums import (
     ActionType,
+    BunchingEventKind,
     BunchingEventStatus,
     BunchingSeverity,
     CantComplyReason,
@@ -74,6 +75,8 @@ class BunchingEventOut(BaseModel):
     scheduled_headway_seconds: float
     severity: BunchingSeverity
     status: BunchingEventStatus
+    kind: BunchingEventKind = BunchingEventKind.ACTUAL  # predicted: early warning (B21)
+    predicted_in_seconds: float | None = None
 
 
 class AlertsResponse(BaseModel):

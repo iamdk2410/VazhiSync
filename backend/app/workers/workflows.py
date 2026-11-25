@@ -19,15 +19,18 @@ from typing import Any
 import structlog
 from arq import ArqRedis
 from redis.exceptions import RedisError
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
+from app.agents.early_warning import early_warning_sweep
 from app.config import get_settings
-from app.db.enums import BunchingEventStatus, InstructionStatus
+from app.db.enums import BunchingEventKind, BunchingEventStatus, InstructionStatus
 from app.db.models import BunchingEvent, DriverInstruction, WorkflowRun
 from app.db.session import get_sessionmaker
 from app.graph.workflow import ACTIVE, resume_workflow, start_workflow
+from app.harness.errors import HarnessError
 from app.live.channels import LAST_FRAME_KEY
 from app.live.schemas import LiveFrame
+from app.runner.route_loader import RouteNotImported, load_world_route
 
 log = structlog.get_logger()
 
@@ -120,6 +123,21 @@ async def driver_ack_timeout(ctx: dict[str, Any], run_id: str, instruction_id: s
 
 async def retry_open_events(ctx: dict[str, Any]) -> int:
     now = datetime.now(UTC)
+    async with get_sessionmaker()() as session, session.begin():
+        # A prediction nobody could act on in time is stale, not worth retrying (B21): the
+        # early-warning sweep raises a fresh one if the pair still heads for a bunch.
+        stale = await session.execute(
+            update(BunchingEvent)
+            .where(
+                BunchingEvent.kind == BunchingEventKind.PREDICTED,
+                BunchingEvent.status == BunchingEventStatus.OPEN,
+                BunchingEvent.detected_at < now - RETRY_AFTER,
+            )
+            .values(status=BunchingEventStatus.DISMISSED, resolved_at=now)
+            .returning(BunchingEvent.id)
+        )
+        if dismissed := stale.all():
+            log.info("predicted_events_dismissed", count=len(dismissed))
     async with get_sessionmaker()() as session:
         last_run = (
             select(
@@ -140,6 +158,7 @@ async def retry_open_events(ctx: dict[str, Any]) -> int:
                 .outerjoin(last_run, last_run.c.bunching_event_id == BunchingEvent.id)
                 .where(
                     BunchingEvent.status == BunchingEventStatus.OPEN,
+                    BunchingEvent.kind == BunchingEventKind.ACTUAL,
                     BunchingEvent.detected_at < now - RETRY_AFTER,
                     func.coalesce(last_run.c.active, 0) == 0,
                     func.coalesce(last_run.c.at, BunchingEvent.detected_at) < now - RETRY_AFTER,
@@ -154,3 +173,32 @@ async def retry_open_events(ctx: dict[str, Any]) -> int:
     if rows:
         log.info("workflow_retries_queued", count=len(rows))
     return len(rows)
+
+
+async def early_warning(ctx: dict[str, Any]) -> int:
+    """Cron (B21): look ahead with "do nothing"; each predicted bunch starts a workflow."""
+    settings = get_settings()
+    if not settings.early_warning_enabled:
+        return 0
+    route = ctx.get("world_route")
+    if route is None:
+        try:
+            async with get_sessionmaker()() as session:
+                route = await load_world_route(session, settings.world_route_id)
+        except RouteNotImported as exc:
+            log.warning("early_warning_skipped", reason=str(exc))
+            return 0
+        ctx["world_route"] = route
+    queue: ArqRedis = ctx["redis"]
+
+    async def enqueue(event_id: uuid.UUID) -> None:
+        await queue.enqueue_job("run_workflow", str(event_id), _job_id=f"workflow:{event_id}")
+
+    try:
+        raised = await early_warning_sweep(
+            ctx["harness"], get_sessionmaker(), settings, route, enqueue
+        )
+    except HarnessError as exc:  # avl-mcp down: no look-ahead this time
+        log.warning("early_warning_skipped", reason=f"tools:{exc.kind}:{exc.tool}")
+        return 0
+    return len(raised)

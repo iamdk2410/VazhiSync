@@ -48,7 +48,7 @@ from app.agents.headway_monitor import headway_monitor
 from app.agents.impact_simulator import impact_simulator, simulate
 from app.agui.publisher import RunEventPublisher
 from app.config import Settings
-from app.db.enums import BunchingEventStatus, WorkflowStatus
+from app.db.enums import BunchingEventKind, BunchingEventStatus, WorkflowStatus
 from app.db.models import AgentStep, BunchingEvent, Recommendation, RouteDirection, WorkflowRun
 from app.graph.deps import WorkflowDeps, recorded
 from app.graph.state import WorkflowState
@@ -248,6 +248,7 @@ async def _superseded(session: AsyncSession, run: WorkflowRun, abandoned: timede
         run.status, run.waiting_for = WorkflowStatus.FAILED, None
         run.end_reason, run.finished_at = "abandoned", now
         run.error = "no worker finished this run (it stopped mid-run)"
+        await _dismiss_event(session, run, now)
         log.warning("workflow_abandoned", run_id=str(run.id))
         return True
     if run.waiting_for != "officer":
@@ -259,8 +260,20 @@ async def _superseded(session: AsyncSession, run: WorkflowRun, abandoned: timede
         return False
     run.status, run.waiting_for = WorkflowStatus.COMPLETED, None
     run.end_reason, run.finished_at = "superseded", now
+    await _dismiss_event(session, run, now)
     log.info("workflow_superseded", run_id=str(run.id))
     return True
+
+
+async def _dismiss_event(session: AsyncSession, run: WorkflowRun, now: datetime) -> None:
+    """The closed run's event: a newer event for the same pair takes over, so this one is
+    dismissed (otherwise it would sit in 'handling' forever)."""
+    event = await session.get(BunchingEvent, run.bunching_event_id)
+    if event is not None and event.status in (
+        BunchingEventStatus.OPEN,
+        BunchingEventStatus.HANDLING,
+    ):
+        event.status, event.resolved_at = BunchingEventStatus.DISMISSED, now
 
 
 async def _claim_start(
@@ -363,8 +376,16 @@ async def _settle(
             BunchingEventStatus.HANDLING,
             BunchingEventStatus.OPEN,
         ):
+            if (
+                waiting is None
+                and event_status == BunchingEventStatus.HANDLING
+                and event.kind == BunchingEventKind.PREDICTED
+            ):
+                # "Do nothing" on a prediction: nothing to watch for (the world runner only
+                # closes the events it detects); an actual bunch later raises its own event.
+                event_status = BunchingEventStatus.DISMISSED
             event.status = event_status
-            if event_status == BunchingEventStatus.RESOLVED:
+            if event_status in (BunchingEventStatus.RESOLVED, BunchingEventStatus.DISMISSED):
                 event.resolved_at = datetime.now(UTC)
     log.info(
         "workflow_paused" if waiting else "workflow_finished",
@@ -501,10 +522,13 @@ async def start_workflow(
             "run_id": str(run_id),
             "event_id": str(event_id),
             "route_id": event.route_id,
+            "event_kind": event.kind.value,
             "leader_vehicle_id": str(event.leader_vehicle_id),
             "follower_vehicle_id": str(event.follower_vehicle_id),
             "round": 0,
         }
+        if event.predicted_in_seconds is not None:
+            initial["predicted_in_s"] = event.predicted_in_seconds
         return await _execute(
             run_id, event, initial, 0, harness, sessionmaker, settings, job_queue, checkpointer, llm
         )

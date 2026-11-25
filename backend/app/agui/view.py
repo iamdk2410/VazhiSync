@@ -74,6 +74,7 @@ class RunView(BaseModel):
     waiting_for: str | None = None
     end_reason: str | None = None
     round: int = 0
+    event_kind: str = "actual"  # predicted: started by early warning (B21)
     degraded: list[str] = Field(default_factory=list)
     pair: PairView | None = None
     steps: list[StepView] = Field(default_factory=list)
@@ -148,6 +149,8 @@ def fold(view: RunView, node: str, update: dict[str, Any] | None) -> RunView:
     if "round" in update and update["round"] != v.round:
         v.round = int(update["round"])
         v.simulations, v.recommendation = {}, None  # a new round is planned from scratch
+    if update.get("event_kind"):
+        v.event_kind = str(update["event_kind"])
     if (snapshot := update.get("snapshot")) is not None:
         v.pair = pair_view(snapshot)
     if "candidates" in update:

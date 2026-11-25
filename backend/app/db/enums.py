@@ -21,6 +21,11 @@ class BunchingSeverity(StrEnum):
     BUNCHED = "bunched"  # headway below BUNCHING_RATIO x scheduled
 
 
+class BunchingEventKind(StrEnum):
+    ACTUAL = "actual"  # detected by the world runner from reported GPS (B6)
+    PREDICTED = "predicted"  # early warning: a do-nothing fast-forward bunches the pair (B21)
+
+
 class BunchingEventStatus(StrEnum):
     OPEN = "open"
     HANDLING = "handling"

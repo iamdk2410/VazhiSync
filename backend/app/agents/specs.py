@@ -16,7 +16,7 @@ class AgentSpec:
     objective: str
     inputs: tuple[str, ...]
     outputs: tuple[str, ...]
-    uses_llm: bool  # rules-only first (B10); LLM proposals/explanations arrive with B9
+    uses_llm: bool  # LLM ideas / wording through the gateway (B9); the simulator decides
 
     @property
     def allowed_tools(self) -> frozenset[str]:
@@ -40,7 +40,7 @@ AGENTS: dict[AgentName, AgentSpec] = {
             objective="Cover the sensible options; drop anything the rulebook forbids.",
             inputs=("snapshot", "boarding estimates (optional)", "rulebook", "past outcomes"),
             outputs=("candidates", "dropped candidates with rule reasons"),
-            uses_llm=False,
+            uses_llm=True,
         ),
         AgentSpec(
             name="impact_simulator",
@@ -56,7 +56,7 @@ AGENTS: dict[AgentName, AgentSpec] = {
             objective="Recommend what saves the most passenger time; escalate near-ties.",
             inputs=("simulation outcomes", "candidates"),
             outputs=("ranked recommendation", "explanation", "route: recommend | escalate"),
-            uses_llm=False,
+            uses_llm=True,
         ),
         AgentSpec(
             name="dispatch",
@@ -64,6 +64,14 @@ AGENTS: dict[AgentName, AgentSpec] = {
             objective="Deliver exactly what was approved, once, to a bus with fresh GPS.",
             inputs=("approval", "fresh headways"),
             outputs=("driver instruction", "intervention outcome (predicted vs actual)"),
+            uses_llm=False,
+        ),
+        AgentSpec(
+            name="early_warning",
+            role="Looks ahead: fast-forwards 'do nothing' from the observations every few seconds.",
+            objective="Start the workflow before a bunch forms, while a small fix still works.",
+            inputs=("avl-mcp positions and headways", "boarding estimates (optional)"),
+            outputs=("predicted bunching event (pair, lead time)",),
             uses_llm=False,
         ),
     )

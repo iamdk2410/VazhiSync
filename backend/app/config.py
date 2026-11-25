@@ -45,6 +45,15 @@ class Settings(BaseSettings):
     sim_concurrency: int = Field(default=4, ge=1)
     max_graph_steps: int = Field(default=25, ge=1)
 
+    # Early warning (B21): look ahead with "do nothing" from MCP observations
+    early_warning_enabled: bool = True
+    early_warning_every_seconds: int = Field(default=30, ge=10, le=300)
+    early_warning_horizon_minutes: float = Field(default=15.0, gt=0, le=30)
+    early_warning_step_seconds: float = Field(default=30.0, ge=5, le=120)
+    early_warning_seeds: int = Field(default=3, ge=1, le=7)
+    early_warning_min_agree: int = Field(default=2, ge=1)  # seeds that must bunch the pair
+    early_warning_cooldown_minutes: float = Field(default=5.0, ge=0)  # per pair, between alerts
+
     # LLMs (B9). "<provider>/<model id>"; providers: groq, openrouter, ollama. An empty model or
     # a missing key skips that tier: primary -> backup -> fallback -> local -> rules.
     primary_model: str = "groq/openai/gpt-oss-120b"
