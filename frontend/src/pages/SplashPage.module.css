@@ -1,0 +1,39 @@
+.page { min-height: 100vh; min-height: 100dvh; display: flex; background: var(--vs-navy); }
+
+.stage {
+  flex: 1 1 auto; min-height: 100vh; min-height: 100dvh;
+  position: relative; overflow: hidden;
+  padding: 48px 24px 190px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  color: var(--vs-sand); text-decoration: none; cursor: pointer;
+}
+.stage:hover { color: var(--vs-sand); }
+.stage:focus-visible { outline: var(--vs-focus); outline-offset: -6px; }
+.mobile.stage { padding: 40px 24px 150px; gap: 14px; }
+
+.logo { position: relative; width: 420px; max-width: 88%; }
+.mobile .logo { width: 280px; }
+
+.word { padding: 0 12px; line-height: 1.05; }
+.mobile .word { padding: 0 8px; }
+
+.tag {
+  margin: -6px 0 0; font-size: 14px; font-weight: 700; letter-spacing: 0.24em;
+  text-transform: uppercase; text-align: center; color: var(--vs-sand);
+}
+.mobile .tag { margin-top: -4px; font-size: 11px; letter-spacing: 0.2em; --vs-tag-from: .4em; --vs-tag-to: .2em; }
+
+.progress { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 18px; }
+.track {
+  width: 260px; height: 6px; border-radius: 3px;
+  background: rgba(222, 217, 211, 0.16); overflow: hidden;
+}
+.mobile .track { width: 200px; }
+.bar {
+  width: 100%; height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--vs-blue), var(--vs-coral));
+  transform-origin: left center;
+}
+.loading { font-size: 14px; font-weight: 600; }
+.mobile .loading { font-size: 13px; }
+.hint { font-size: 13px; font-weight: 500; color: var(--vs-sand); }

@@ -27,3 +27,7 @@ backend/data/gtfs/*.zip
 Thumbs.db
 .vscode/
 .idea/
+
+# design exports (kept locally, not committed)
+VazhiSync-project/
+VazhiSync-project.zip

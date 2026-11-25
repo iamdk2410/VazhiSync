@@ -41,6 +41,7 @@ Names from `docs/build-plan.md`. Tick a module when its "Done when" test passes,
 
 ## Phase F: Interfaces (React PWA)
 - [ ] B13. Frontend shell and shared map
+  - [x] Part 1 (from the user's HTML designs in `VazhiSync-project/`): React 19 + Vite + TypeScript app in `frontend/` — design tokens and the designs' keyframes, shared brand/scenery/form components, loading screen, sign in, create account (with a "Your name" field, as `/auth/register` needs `display_name`), desktop and mobile layouts, session restored via `/auth/me`, role-guarded placeholder homes (`/officer`, `/driver`, `/passenger`). Types generated from `/openapi.json`. 25 Vitest tests. Still to do for B13: PWA, the shared map and the WebSocket.
 - [ ] B14. Officer console
 - [ ] B15. Driver view
 - [ ] B16. Passenger app

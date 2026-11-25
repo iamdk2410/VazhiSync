@@ -1,0 +1,41 @@
+/* VazhiSync design tokens - taken from the design files (VazhiSync-project/*.dc.html).
+   Every colour, font and radius in the app comes from here. */
+:root {
+  /* palette */
+  --vs-navy: #1c2740;
+  --vs-navy-deep: #141c2e;
+  --vs-skyline-1: #24324f; /* splash skyline */
+  --vs-skyline-far: #25345a;
+  --vs-skyline-near: #2f4269;
+  --vs-blue: #3e5889;
+  --vs-coral: #ef6a45;
+  --vs-coral-hover: #f27e5d;
+  --vs-sand: #ded9d3;
+  --vs-page: #ece8e3;
+  --vs-input: #faf8f6;
+  --vs-bus-white: #f4f1ed;
+  --vs-bus-roof: #bdb6ad;
+  --vs-tyre: #2b3142;
+  --vs-white: #ffffff;
+
+  /* text and lines */
+  --vs-text: #1c2740;
+  --vs-muted: #4b4f5c;
+  --vs-border: #8a837a;
+  --vs-icon: #5a6170;
+  --vs-placeholder: #6b655e;
+  --vs-error: #a3391a;
+
+  /* type */
+  --vs-font-display: "Poppins", system-ui, sans-serif;
+  --vs-font-body: "Manrope", system-ui, sans-serif;
+
+  /* shape */
+  --vs-radius: 12px;
+  --vs-radius-sm: 10px;
+  --vs-shadow-cta: 0 8px 20px rgba(239, 106, 69, 0.3);
+  --vs-focus: 3px solid var(--vs-coral);
+
+  /* layout */
+  --vs-mobile-max: 720px;
+}

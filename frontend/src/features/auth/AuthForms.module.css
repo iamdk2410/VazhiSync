@@ -1,0 +1,44 @@
+.form { display: flex; flex-direction: column; }
+.mobile.form { flex: 1 1 auto; }
+
+.login.form { gap: 26px; }
+.login.mobile.form { gap: 20px; }
+.signup.form { gap: 22px; }
+.signup.mobile.form { gap: 18px; }
+
+.intro { display: flex; flex-direction: column; gap: 6px; }
+.mobile .intro { gap: 4px; }
+
+.title {
+  margin: 0;
+  font-family: var(--vs-font-display);
+  font-weight: 700; font-size: 30px; line-height: 1.2;
+}
+.mobile .title { font-size: 26px; }
+
+.lead { margin: 0; font-size: 15px; line-height: 1.5; color: var(--vs-muted); }
+.mobile .lead { font-size: 14px; }
+.signup .lead { font-size: 14px; }
+.signup.mobile .lead { font-size: 13px; }
+
+.fields { display: flex; flex-direction: column; gap: 18px; }
+.mobile .fields { gap: 16px; }
+.signup .fields { gap: 16px; }
+.signup.mobile .fields { gap: 14px; }
+
+.pushDown { margin-top: auto; }
+
+.success {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 16px; padding-top: 8px;
+}
+.mobile.success { flex: 1 1 auto; padding-top: 32px; }
+.badge {
+  width: 60px; height: 60px; border-radius: 30px;
+  background: var(--vs-blue); color: var(--vs-sand);
+  display: flex; align-items: center; justify-content: center;
+}
+.successText { margin: 0; font-size: 16px; line-height: 1.5; color: var(--vs-muted); overflow-wrap: anywhere; }
+.mobile .successText { font-size: 15px; }
+.stretch { align-self: stretch; }
+.mobile .stretch { margin-top: 8px; }

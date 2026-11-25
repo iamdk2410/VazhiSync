@@ -1,0 +1,67 @@
+.field { display: flex; flex-direction: column; gap: 8px; }
+.compact.field { gap: 6px; }
+
+.label { font-size: 14px; font-weight: 600; }
+
+.control { position: relative; display: flex; }
+
+.leadingIcon {
+  position: absolute; left: 16px; top: 16px;
+  color: var(--vs-icon); pointer-events: none;
+}
+.compact .leadingIcon { top: 15px; }
+
+.input {
+  flex: 1 1 auto; min-width: 0; height: 52px;
+  padding: 0 16px 0 48px;
+  border-radius: var(--vs-radius);
+  border: 1.5px solid var(--vs-border);
+  background: var(--vs-input);
+  font: inherit; font-size: 16px; color: var(--vs-text);
+}
+.compact .input { height: 50px; }
+.withTrailing { padding-right: 56px; }
+.error .input { border-color: var(--vs-error); }
+.ok .input { border-color: var(--vs-blue); }
+
+.toggle {
+  position: absolute; right: 4px; top: 4px;
+  width: 44px; height: 44px; border: 0; border-radius: var(--vs-radius-sm);
+  background: transparent; color: var(--vs-blue);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.compact .toggle { right: 3px; top: 3px; }
+
+.message { font-size: 13px; font-weight: 600; }
+.messageError { color: var(--vs-error); }
+.messageOk { color: var(--vs-blue); }
+.messageMuted { color: var(--vs-muted); }
+.messageRow { display: flex; align-items: center; gap: 6px; }
+.liveSlot { min-height: 18px; font-size: 13px; font-weight: 600; }
+
+.button {
+  height: 54px; border: 0; border-radius: var(--vs-radius);
+  background: var(--vs-coral); color: var(--vs-navy);
+  font: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+  box-shadow: var(--vs-shadow-cta);
+  display: flex; align-items: center; justify-content: center; text-decoration: none;
+}
+.button:hover { background: var(--vs-coral-hover); color: var(--vs-navy); }
+.button:disabled { cursor: progress; opacity: 0.85; }
+
+.footer { margin: 0; font-size: 15px; text-align: center; color: var(--vs-muted); }
+.footerLink {
+  font-weight: 700; color: var(--vs-blue);
+  text-decoration: underline; text-decoration-color: var(--vs-coral);
+  text-decoration-thickness: 2px; text-underline-offset: 4px;
+}
+.footerLinkTall { display: inline-block; padding: 12px 0; }
+
+.alert {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; border-radius: var(--vs-radius);
+  border: 1.5px solid var(--vs-error);
+  background: rgba(163, 57, 26, 0.06);
+  color: var(--vs-error); font-size: 14px; font-weight: 600; line-height: 1.4;
+}
+.alert svg { flex: 0 0 auto; margin-top: 1px; }

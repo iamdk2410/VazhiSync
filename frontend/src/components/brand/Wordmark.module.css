@@ -1,0 +1,18 @@
+.wordmark {
+  font-family: var(--vs-font-display);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.sync { color: var(--vs-coral); }
+
+.tagline {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.light.wordmark { color: var(--vs-navy); }
+.light.tagline { color: var(--vs-muted); }
+.dark { color: var(--vs-sand); }
