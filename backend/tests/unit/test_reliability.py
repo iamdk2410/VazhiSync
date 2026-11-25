@@ -7,11 +7,12 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, cast
 
-import httpx
 import pytest
+from mcp.server.transport_security import TransportSecurityMiddleware
 from mcp.types import CallToolResult, TextContent
 from redis.exceptions import ConnectionError as RedisConnectionError
 from sqlalchemy.exc import OperationalError
+from starlette.requests import Request
 
 from app.db.enums import Role
 from app.harness.budget import RunBudget
@@ -25,7 +26,6 @@ from app.live.schemas import LiveFrame
 from app.runner import main as runner_main
 from app.runner.route_loader import RouteNotImported
 from app.runner.world import WorldRunner
-from mcp_servers.avl_mcp.server import server as avl_server
 from mcp_servers.common import transport_security
 
 
@@ -137,43 +137,36 @@ async def test_route_not_imported_when_the_runner_starts_is_retried(
 # ------------------------------------------------------------------ MCP servers
 
 
-INIT = {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {
-        "protocolVersion": "2025-06-18",
-        "capabilities": {},
-        "clientInfo": {"name": "test", "version": "0"},
-    },
-}
-HEADERS = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json"}
+def mcp_request(host: str, origin: str | None = None) -> Request:
+    headers = [(b"host", host.encode()), (b"content-type", b"application/json")]
+    if origin is not None:
+        headers.append((b"origin", origin.encode()))
+    return Request({"type": "http", "method": "POST", "path": "/mcp", "headers": headers})
 
 
-async def post_init(*header_sets: dict[str, str]) -> list[int]:
-    """POST an MCP initialize with each set of extra headers (lifespan in this one task)."""
-    app = avl_server.streamable_http_app(transport_security=transport_security("avl-mcp"))
-    codes: list[int] = []
-    async with app.router.lifespan_context(app):
-        transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://localhost:8101") as c:
-            for extra in header_sets:
-                codes.append((await c.post("/mcp", json=INIT, headers=HEADERS | extra)).status_code)
-    return codes
+async def check(request: Request) -> int:
+    """What the MCP servers' DNS-rebinding guard answers (None = let through -> 200)."""
+    guard = TransportSecurityMiddleware(transport_security("avl-mcp"))
+    refused = await guard.validate_request(request, is_post=True)
+    return 200 if refused is None else refused.status_code
 
 
 async def test_mcp_rejects_an_unexpected_host_header() -> None:
-    ok, rebound = await post_init({}, {"Host": "evil.example"})
-    assert ok == 200
-    assert rebound in (400, 403, 421)
+    assert await check(mcp_request("localhost:8101")) == 200
+    assert await check(mcp_request("avl-mcp:8101")) == 200  # the compose service name
+    assert await check(mcp_request("evil.example")) in (400, 403, 421)
 
 
 async def test_mcp_rejects_a_foreign_browser_origin() -> None:
-    local, foreign = await post_init(
-        {"Origin": "http://localhost:5173"}, {"Origin": "https://evil.example"}
-    )
-    assert local == 200
-    assert foreign == 403
+    assert await check(mcp_request("localhost:8101", "http://localhost:5173")) == 200
+    assert await check(mcp_request("localhost:8101", "https://evil.example")) == 403
+
+
+def test_the_servers_run_with_that_guard() -> None:
+    """`serve()` passes exactly these settings to the server it runs."""
+    security = transport_security("avl-mcp")
+    assert security.enable_dns_rebinding_protection
+    assert "avl-mcp:*" in security.allowed_hosts and "localhost:*" in security.allowed_hosts
 
 
 # ------------------------------------------------------------------ failure injection
