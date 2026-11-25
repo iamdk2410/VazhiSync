@@ -120,7 +120,10 @@ the existing Ollama client for the local tier; no new dependency. Chain: Groq
 `google/gemma-4-31b-it:free` (different provider) → local `qwen3:8b` → rules. JSON mode plus the
 schema in the prompt, validated with Pydantic and repaired once. A 429 moves to the next tier
 at once and cools that tier down instead of waiting. Inside a run, each call is cut off at the
-run's remaining time minus a reserve, so a slow model can't starve the simulations.
+run's remaining time minus a reserve, so a slow model can't starve the simulations. The local
+model is left out of live workflow runs by default (`LLM_LOCAL_IN_RUNS=false`): on this machine it
+needs ~75 s per call, so when every hosted tier is rate-limited the rules answer at once; it
+stays the model for scenario generation.
 
 **Why:** fewer moving parts and a small supply-chain surface; timeouts, retries, budgets and
 logging have to be ours anyway (rules 7–9); free tiers keep the project at zero cost, with

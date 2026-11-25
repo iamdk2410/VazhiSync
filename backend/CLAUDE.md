@@ -77,7 +77,9 @@ Live world (B6): `WORLD_ROUTE_ID`, `WORLD_SEED`, `WORLD_SPEED`, `WORLD_TICK_SECO
 LLM gateway (B9): `PRIMARY_MODEL`, `BACKUP_MODEL`, `FALLBACK_MODEL` (`<groq|openrouter>/<model>`),
 `LOCAL_MODEL`, `OLLAMA_URL`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `LLM_ENABLED`,
 `LLM_TIMEOUT_SECONDS`, `LLM_ATTEMPTS`, `LLM_MAX_OUTPUT_TOKENS`, `LLM_RATE_LIMIT_COOLDOWN_SECONDS`,
-`LLM_RUN_TOKEN_BUDGET`, `LLM_AGENT_TOKEN_BUDGET`, `LLM_TIME_RESERVE_SECONDS`.
+`LLM_RUN_TOKEN_BUDGET`, `LLM_AGENT_TOKEN_BUDGET`, `LLM_TIME_RESERVE_SECONDS`, `LLM_LOCAL_IN_RUNS`.
+`VAZHISYNC_PUBSUB_NAMESPACE` (default `vazhisync`): prefix of the Redis pub/sub channels; the tests
+set their own, because pub/sub is shared across Redis database numbers.
 
 ## Commands (run from `backend/`)
 - Start services (from repo root): `docker compose up -d`

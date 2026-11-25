@@ -584,3 +584,29 @@ async def session_execute_migration_fix() -> None:
             )
         )
         await session.commit()
+
+
+async def test_a_finished_run_never_blocks_its_pair_whatever_its_status(
+    bunched: tuple[WorldRunner, list[uuid.UUID]],  # noqa: F811
+    sim_worker: Worker,
+    job_queue: ArqRedis,
+    checkpointer: Any,
+) -> None:
+    """Seen live: runs from before B12 ended at the recommendation with status
+    'awaiting_approval' / 'escalated' and finished_at set; they blocked their pairs forever."""
+    event = await only_event()
+    settings = get_settings()
+    async with get_sessionmaker()() as session:
+        session.add(
+            WorkflowRun(
+                bunching_event_id=event.id,
+                status=WorkflowStatus.ESCALATED,
+                end_reason="escalated",
+                finished_at=datetime.now(UTC) - timedelta(hours=18),
+            )
+        )
+        await session.commit()
+    result = await start_workflow(
+        event.id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
+    )
+    assert result.run_id is not None, result.end_reason

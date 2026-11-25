@@ -109,7 +109,10 @@ def _secret(value: Any) -> str:
 
 
 def tiers_from_settings(
-    settings: Settings, transport: httpx.AsyncBaseTransport | None = None
+    settings: Settings,
+    transport: httpx.AsyncBaseTransport | None = None,
+    *,
+    include_local: bool = True,
 ) -> list[Tier]:
     keys = {
         "groq": _secret(settings.groq_api_key),
@@ -141,7 +144,7 @@ def tiers_from_settings(
             transport=transport,
         )
         tiers.append(Tier(level, provider, model, client))
-    if settings.local_model:
+    if include_local and settings.local_model:
         local = OllamaClient(
             settings.ollama_url,
             settings.local_model,
@@ -181,9 +184,11 @@ class LlmGateway:
         settings: Settings,
         sessionmaker: async_sessionmaker[AsyncSession] | None,
         transport: httpx.AsyncBaseTransport | None = None,
+        *,
+        include_local: bool = True,
     ) -> "LlmGateway":
         gateway = cls(
-            tiers_from_settings(settings, transport),
+            tiers_from_settings(settings, transport, include_local=include_local),
             sessionmaker=sessionmaker,
             tracer=LangfuseTracer.from_settings(settings),
             max_output_tokens=settings.llm_max_output_tokens,

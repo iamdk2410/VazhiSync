@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     llm_run_token_budget: int = Field(default=12_000, ge=0)  # whole run, all agents
     llm_agent_token_budget: int = Field(default=5_000, ge=0)  # one agent within a run
     llm_time_reserve_seconds: float = Field(default=45.0, ge=0)  # run time kept for the rest
+    # The local model inside live workflow runs. Off: qwen3:8b on this machine needs ~75 s per
+    # call, longer than a run can spare, so when every hosted tier is rate-limited the agents
+    # go straight to their rules. Scenario generation (B5) uses Ollama directly either way.
+    llm_local_in_runs: bool = False
     llm_enabled: bool = True  # false: agents use their rules only
 
     # Langfuse (optional: observability profile)

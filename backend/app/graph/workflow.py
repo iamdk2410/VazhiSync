@@ -285,6 +285,9 @@ async def _claim_start(
                     BunchingEvent.leader_vehicle_id == event.leader_vehicle_id,
                     BunchingEvent.follower_vehicle_id == event.follower_vehicle_id,
                     WorkflowRun.status.in_(ACTIVE),
+                    # A finished run is never active, whatever its status says (runs from
+                    # before B12 ended at the recommendation as 'awaiting_approval').
+                    WorkflowRun.finished_at.is_(None),
                 )
                 .with_for_update(of=WorkflowRun)
             )

@@ -24,6 +24,9 @@ _dev_redis_url = os.environ.get("REDIS_URL") or dotenv_values(REPO_ROOT / ".env"
 # Unit tests must not depend on a developer's .env: provide the required settings up front.
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5434/test")
 os.environ.setdefault("JWT_SECRET", "unit-test-secret-at-least-16-chars")
+# Our own pub/sub channels: Redis pub/sub ignores database numbers, so without this the tests
+# hear the running dev stack's live frames (app/live/channels.py).
+os.environ["VAZHISYNC_PUBSUB_NAMESPACE"] = "vazhisync-test"
 
 
 @pytest.fixture(scope="session")

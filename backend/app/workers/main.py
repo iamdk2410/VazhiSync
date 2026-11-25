@@ -47,7 +47,11 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     ctx["checkpointer"] = await ctx["checkpointer_cm"].__aenter__()  # graph state (B12)
     settings = get_settings()
     ctx["llm"] = (
-        LlmGateway.from_settings(settings, get_sessionmaker()) if settings.llm_enabled else None
+        LlmGateway.from_settings(
+            settings, get_sessionmaker(), include_local=settings.llm_local_in_runs
+        )
+        if settings.llm_enabled
+        else None
     )  # B9: candidate ideas and explanations; None -> rules only
     try:
         async with get_sessionmaker()() as session:

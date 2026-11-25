@@ -376,6 +376,10 @@ def test_tiers_without_a_key_or_model_are_left_out() -> None:
         (FALLBACK, "openrouter", "google/gemma-4-31b-it:free"),
     ]
 
+    hosted_only = tiers_from_settings(settings(groq_api_key=SecretStr("k")), include_local=False)
+    assert LOCAL not in [t.level for t in hosted_only]  # live runs: no slow local tier
+    assert settings().llm_local_in_runs is False
+
     unknown = tiers_from_settings(settings(groq_api_key=SecretStr("k"), primary_model="acme/x"))
     assert [t.level for t in unknown] == [BACKUP, LOCAL]
 

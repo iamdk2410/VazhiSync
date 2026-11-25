@@ -127,7 +127,9 @@ async def retry_open_events(ctx: dict[str, Any]) -> int:
                 func.max(func.coalesce(WorkflowRun.finished_at, WorkflowRun.started_at)).label(
                     "at"
                 ),
-                func.count().filter(WorkflowRun.status.in_(ACTIVE)).label("active"),
+                func.count()
+                .filter(WorkflowRun.status.in_(ACTIVE), WorkflowRun.finished_at.is_(None))
+                .label("active"),
             )
             .group_by(WorkflowRun.bunching_event_id)
             .subquery()
