@@ -18,6 +18,7 @@ from app.db.enums import StepStatus
 from app.db.models import AgentStep
 from app.harness.budget import RunBudget
 from app.harness.harness import OptionalResult, ToolHarness
+from app.llm.gateway import LlmGateway
 from app.runner.route_loader import WorldRoute
 from simulator import Observations
 
@@ -46,6 +47,7 @@ class WorkflowDeps:
     job_queue: ArqRedis | None = None  # simulation jobs (B11)
     sim_queue: str = "vazhisync:sims"
     first_step: int = 0  # steps already recorded for this run (a resumed run continues the count)
+    llm: LlmGateway | None = None  # B9: None -> agents use their rules only
     _step: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:

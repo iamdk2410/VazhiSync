@@ -64,6 +64,7 @@ class WorkflowRun(Base):
     end_reason: Mapped[str | None] = mapped_column(Text)
     error: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime] = utc_now_column()
+    last_active_at: Mapped[datetime] = utc_now_column()  # last start/resume claim by a worker
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

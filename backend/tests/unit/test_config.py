@@ -35,8 +35,8 @@ def test_cors_origins_comma_separated(env: pytest.MonkeyPatch) -> None:
 
 
 def test_empty_api_key_is_none(env: pytest.MonkeyPatch) -> None:
-    env.setenv("ANTHROPIC_API_KEY", "")
-    assert load().anthropic_api_key is None
+    env.setenv("GROQ_API_KEY", "")
+    assert load().groq_api_key is None
 
 
 def test_jwt_secret_never_printed(env: pytest.MonkeyPatch) -> None:

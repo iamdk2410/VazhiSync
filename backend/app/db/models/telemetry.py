@@ -42,7 +42,7 @@ class LlmUsage(Base):
     agent: Mapped[str] = mapped_column(String(64))
     provider: Mapped[str] = mapped_column(String(32))
     model: Mapped[str] = mapped_column(String(128))
-    fallback_level: Mapped[int]  # 0 primary, 1 backup, 2 local, 3 rule-based
+    fallback_level: Mapped[int]  # 0 primary, 1 backup, 2 fallback, 3 local, 4 rules (B9)
     input_tokens: Mapped[int]
     output_tokens: Mapped[int]
     cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))

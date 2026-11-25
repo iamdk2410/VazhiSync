@@ -27,6 +27,7 @@ class LlmReply:
     input_tokens: int
     output_tokens: int
     latency_ms: int
+    cost_usd: float = 0.0  # as reported by the provider (free tiers and local: 0)
 
 
 class ChatModel(Protocol):

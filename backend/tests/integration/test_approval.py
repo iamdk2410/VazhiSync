@@ -21,7 +21,7 @@ from arq import ArqRedis
 from arq.worker import Worker
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from app.api.deps import get_job_queue
 from app.auth.rate_limit import MemoryRateLimiter, get_rate_limiter
@@ -39,7 +39,7 @@ from app.db.models import (
 )
 from app.db.session import get_sessionmaker
 from app.graph.checkpoint import postgres_checkpointer
-from app.graph.workflow import RunResult, resume_workflow, start_workflow
+from app.graph.workflow import RunResult, abandoned_after, resume_workflow, start_workflow
 from app.live.channels import WORLD_ACTIONS_KEY
 from app.main import create_app
 from app.runner.world import WorldRunner
@@ -501,3 +501,86 @@ async def test_an_ignored_recommendation_does_not_block_its_pair_forever(
     assert second.run_id is not None and second.run_id != first.run_id
     old = await run_row(run_id_of(first))
     assert old.end_reason == "superseded" and old.waiting_for is None
+
+
+async def test_runs_left_behind_by_a_dead_worker_or_an_old_version_do_not_block_their_pair(
+    bunched: tuple[WorldRunner, list[uuid.UUID]],  # noqa: F811
+    sim_worker: Worker,
+    job_queue: ArqRedis,
+    checkpointer: Any,
+) -> None:
+    """Seen live: Docker stopped mid-run (a run stuck 'running') and runs paused before
+    migration 0007 (no waiting_for) blocked every new event for their pairs."""
+    event = await only_event()
+    settings = get_settings()
+    async with get_sessionmaker()() as session:
+        stuck = WorkflowRun(bunching_event_id=event.id, status=WorkflowStatus.RUNNING)
+        session.add(stuck)
+        later = BunchingEvent(
+            route_id="T1",
+            leader_vehicle_id=event.leader_vehicle_id,
+            follower_vehicle_id=event.follower_vehicle_id,
+            headway_seconds=20,
+            scheduled_headway_seconds=300,
+            severity=event.severity,
+        )
+        session.add(later)
+        await session.commit()
+        stuck_id, later_id = stuck.id, later.id
+
+    async def start(event_id: uuid.UUID) -> RunResult:
+        return await start_workflow(
+            event_id, harness(settings), get_sessionmaker(), settings, job_queue, checkpointer
+        )
+
+    # A run that is genuinely running is respected...
+    assert (await start(later_id)).end_reason == "pair_already_handled"
+    # ...but one nobody has touched for longer than any segment can last is closed.
+    async with get_sessionmaker()() as session:
+        row = await session.get(WorkflowRun, stuck_id)
+        assert row is not None
+        row.last_active_at = datetime.now(UTC) - abandoned_after(settings) - timedelta(seconds=1)
+        await session.commit()
+    fresh = await start(later_id)
+    assert fresh.run_id is not None and fresh.run_id != stuck_id
+    old = await run_row(stuck_id)
+    assert (old.status, old.end_reason) == (WorkflowStatus.FAILED, "abandoned")
+    assert old.finished_at is not None
+
+    # A pre-0007 paused run (no waiting_for) is migrated to "officer" and so can be superseded.
+    async with get_sessionmaker()() as session:
+        for rec in await session.scalars(select(Recommendation)):
+            rec.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        legacy = await session.get(WorkflowRun, run_id_of(fresh))
+        assert legacy is not None
+        legacy.waiting_for = None  # as written before migration 0007
+        await session.commit()
+    await session_execute_migration_fix()
+    third_event = BunchingEvent(
+        route_id="T1",
+        leader_vehicle_id=event.leader_vehicle_id,
+        follower_vehicle_id=event.follower_vehicle_id,
+        headway_seconds=20,
+        scheduled_headway_seconds=300,
+        severity=event.severity,
+    )
+    async with get_sessionmaker()() as session:
+        session.add(third_event)
+        await session.commit()
+        third_id = third_event.id
+    third = await start(third_id)
+    assert third.run_id is not None
+    assert (await run_row(run_id_of(fresh))).end_reason == "superseded"
+
+
+async def session_execute_migration_fix() -> None:
+    """The data fix migration 0008 applies to runs paused before 0007."""
+    async with get_sessionmaker()() as session:
+        await session.execute(
+            text(
+                "UPDATE workflow_runs SET waiting_for = 'officer' "
+                "WHERE waiting_for IS NULL AND finished_at IS NULL "
+                "AND status IN ('awaiting_approval', 'escalated')"
+            )
+        )
+        await session.commit()

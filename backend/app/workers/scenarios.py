@@ -28,7 +28,7 @@ from scenario_gen.preview import preview
 log = structlog.get_logger()
 
 AGENT = "scenario_director"
-LOCAL_FALLBACK_LEVEL = 2  # 0 primary, 1 backup, 2 local, 3 rule-based (llm_usage)
+LOCAL_FALLBACK_LEVEL = 3  # app.llm.gateway.LOCAL (llm_usage.fallback_level)
 
 
 def default_model() -> ChatModel:

@@ -107,7 +107,26 @@ structured results natively, which the harness validates against the same Pydant
 servers declare; and every call must pass through our own gate, hooks and budgets anyway,
 which a generic tool wrapper would bypass.
 
-## 9. Skipped items and why
+## 9. LLM gateway: our own thin wrapper, free hosted tiers first
+
+**Context:** B9 allows LiteLLM or our own wrapper. LiteLLM 1.110 pulls in boto3, tokenizers,
+huggingface-hub, tiktoken, aiohttp and the openai SDK (much larger API/worker images), and its
+PyPI package was compromised in March 2026 (1.82.7 / 1.82.8). The chosen providers (Groq and
+OpenRouter) both serve the OpenAI-compatible `/chat/completions` API.
+
+**Decision:** `app/llm/gateway.py` with one httpx client for the OpenAI-compatible tiers and
+the existing Ollama client for the local tier; no new dependency. Chain: Groq
+`openai/gpt-oss-120b` → Groq `qwen/qwen3.8-27b` (separate per-model quota) → OpenRouter
+`google/gemma-4-31b-it:free` (different provider) → local `qwen3:8b` → rules. JSON mode plus the
+schema in the prompt, validated with Pydantic and repaired once. A 429 moves to the next tier
+at once and cools that tier down instead of waiting. Inside a run, each call is cut off at the
+run's remaining time minus a reserve, so a slow model can't starve the simulations.
+
+**Why:** fewer moving parts and a small supply-chain surface; timeouts, retries, budgets and
+logging have to be ours anyway (rules 7–9); free tiers keep the project at zero cost, with
+two independent providers and an offline model behind them.
+
+## 10. Skipped items and why
 
 | Skipped | Why |
 | --- | --- |

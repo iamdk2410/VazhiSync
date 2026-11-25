@@ -45,16 +45,23 @@ class Settings(BaseSettings):
     sim_concurrency: int = Field(default=4, ge=1)
     max_graph_steps: int = Field(default=25, ge=1)
 
-    # LLMs
-    primary_model: str = ""
-    backup_model: str = ""
+    # LLMs (B9). "<provider>/<model id>"; providers: groq, openrouter, ollama. An empty model or
+    # a missing key skips that tier: primary -> backup -> fallback -> local -> rules.
+    primary_model: str = "groq/openai/gpt-oss-120b"
+    backup_model: str = "groq/qwen/qwen3.8-27b"
+    fallback_model: str = "openrouter/google/gemma-4-31b-it:free"
     local_model: str = "ollama/qwen3:8b"
     ollama_url: str = "http://localhost:11434"
-
-    # Provider keys (optional until B9)
-    anthropic_api_key: SecretStr | None = None
-    openai_api_key: SecretStr | None = None
-    gemini_api_key: SecretStr | None = None
+    groq_api_key: SecretStr | None = None
+    openrouter_api_key: SecretStr | None = None
+    llm_timeout_seconds: float = Field(default=20.0, gt=0)  # per attempt (local: 3x)
+    llm_attempts: int = Field(default=2, ge=1, le=4)  # timeouts / connection / 5xx only (rule 7)
+    llm_max_output_tokens: int = Field(default=800, ge=64)
+    llm_rate_limit_cooldown_seconds: float = Field(default=60.0, gt=0)  # 429 -> skip the tier
+    llm_run_token_budget: int = Field(default=12_000, ge=0)  # whole run, all agents
+    llm_agent_token_budget: int = Field(default=5_000, ge=0)  # one agent within a run
+    llm_time_reserve_seconds: float = Field(default=45.0, ge=0)  # run time kept for the rest
+    llm_enabled: bool = True  # false: agents use their rules only
 
     # Langfuse (optional: observability profile)
     langfuse_public_key: str = ""
@@ -90,9 +97,8 @@ class Settings(BaseSettings):
         return value
 
     @field_validator(
-        "anthropic_api_key",
-        "openai_api_key",
-        "gemini_api_key",
+        "groq_api_key",
+        "openrouter_api_key",
         "langfuse_secret_key",
         mode="before",
     )

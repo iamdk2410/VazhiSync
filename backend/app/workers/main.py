@@ -15,6 +15,7 @@ from app.db.session import get_sessionmaker
 from app.graph.checkpoint import postgres_checkpointer
 from app.harness.harness import ToolHarness
 from app.lab.library import sync_golden
+from app.llm.gateway import LlmGateway
 from app.observability.logging import configure_logging
 from app.runner.route_loader import RouteNotImported
 from app.workers.queue import arq_redis_settings
@@ -44,6 +45,10 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     await ctx["harness"].discover()  # logged; a down server is just marked unavailable
     ctx["checkpointer_cm"] = postgres_checkpointer(get_settings().database_url)
     ctx["checkpointer"] = await ctx["checkpointer_cm"].__aenter__()  # graph state (B12)
+    settings = get_settings()
+    ctx["llm"] = (
+        LlmGateway.from_settings(settings, get_sessionmaker()) if settings.llm_enabled else None
+    )  # B9: candidate ideas and explanations; None -> rules only
     try:
         async with get_sessionmaker()() as session:
             await sync_golden(session, get_settings().world_route_id)

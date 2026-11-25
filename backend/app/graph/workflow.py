@@ -23,7 +23,7 @@ and every log line carries the run_id (rule 9).
 import asyncio
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -54,6 +54,7 @@ from app.graph.state import WorkflowState
 from app.harness.budget import RunBudget
 from app.harness.errors import BudgetExceeded, HarnessError
 from app.harness.harness import ToolHarness
+from app.llm.gateway import LlmGateway
 from app.runner.route_loader import RouteNotImported, load_world_route
 
 log = structlog.get_logger()
@@ -227,25 +228,44 @@ def _config(run_id: uuid.UUID, settings: Settings) -> dict[str, Any]:
     }
 
 
-async def _superseded(session: AsyncSession, run: WorkflowRun) -> bool:
-    """A run still waiting for an officer whose recommendation has expired (or never had an
-    expiry) no longer describes the present: close it so a fresh run can take the pair.
-    Without this, an ignored recommendation would block its bus pair forever."""
+def abandoned_after(settings: Settings) -> timedelta:
+    """A 'running' run idle this long has no worker any more: every segment is capped by the
+    run time limit, so twice that plus a margin can't be a live run."""
+    return timedelta(seconds=2 * settings.run_time_limit_seconds + 60)
+
+
+async def _superseded(session: AsyncSession, run: WorkflowRun, abandoned: timedelta) -> bool:
+    """Close an active run that no longer describes the present, so a fresh run can take the
+    pair; without this a stuck run would block its bus pair forever:
+    - waiting for an officer whose recommendation has expired (or never had an expiry);
+    - 'running' with no worker claim for longer than any segment can last (the worker died,
+      e.g. Docker stopped mid-run)."""
+    now = datetime.now(UTC)
+    if run.status == WorkflowStatus.RUNNING:
+        if now - run.last_active_at < abandoned:
+            return False
+        run.status, run.waiting_for = WorkflowStatus.FAILED, None
+        run.end_reason, run.finished_at = "abandoned", now
+        run.error = "no worker finished this run (it stopped mid-run)"
+        log.warning("workflow_abandoned", run_id=str(run.id))
+        return True
     if run.waiting_for != "officer":
         return False
     expires = await session.scalar(
         select(func.max(Recommendation.expires_at)).where(Recommendation.run_id == run.id)
     )
-    if expires is not None and expires > datetime.now(UTC):
+    if expires is not None and expires > now:
         return False
     run.status, run.waiting_for = WorkflowStatus.COMPLETED, None
-    run.end_reason, run.finished_at = "superseded", datetime.now(UTC)
+    run.end_reason, run.finished_at = "superseded", now
     log.info("workflow_superseded", run_id=str(run.id))
     return True
 
 
 async def _claim_start(
-    sessionmaker: async_sessionmaker[AsyncSession], event_id: uuid.UUID
+    sessionmaker: async_sessionmaker[AsyncSession],
+    event_id: uuid.UUID,
+    abandoned: timedelta,
 ) -> tuple[uuid.UUID, BunchingEvent] | str:
     """Create the run if the event is open and its bus pair has no active run (atomic)."""
     async with sessionmaker() as session, session.begin():
@@ -269,7 +289,7 @@ async def _claim_start(
             )
         ).all()
         for other in active:
-            if not await _superseded(session, other):
+            if not await _superseded(session, other, abandoned):
                 return "pair_already_handled"
         run = WorkflowRun(bunching_event_id=event.id, status=WorkflowStatus.RUNNING)
         session.add(run)
@@ -291,6 +311,7 @@ async def _claim_resume(
         if run.waiting_for != kind:
             return f"not_waiting_for_{kind}"
         run.status, run.waiting_for = WorkflowStatus.RUNNING, None
+        run.last_active_at = datetime.now(UTC)
         event = await session.get(BunchingEvent, run.bunching_event_id)
         steps = await session.scalar(
             select(func.coalesce(func.max(AgentStep.step_index), 0)).where(
@@ -383,6 +404,7 @@ async def _execute(
     settings: Settings,
     job_queue: ArqRedis,
     checkpointer: BaseCheckpointSaver[Any],
+    llm: LlmGateway | None = None,
 ) -> RunResult:
     budget = RunBudget.from_settings(run_id, settings)  # limits apply to each active segment
     budget.steps = first_step
@@ -406,6 +428,7 @@ async def _execute(
             sim_semaphore=asyncio.Semaphore(settings.sim_concurrency),
             job_queue=job_queue,
             first_step=first_step,
+            llm=llm,
         )
         graph = build_graph(deps, checkpointer)
         final = await asyncio.wait_for(
@@ -450,8 +473,9 @@ async def start_workflow(
     settings: Settings,
     job_queue: ArqRedis,
     checkpointer: BaseCheckpointSaver[Any],
+    llm: LlmGateway | None = None,
 ) -> RunResult:
-    claimed = await _claim_start(sessionmaker, event_id)
+    claimed = await _claim_start(sessionmaker, event_id, abandoned_after(settings))
     if isinstance(claimed, str):
         log.info("workflow_skipped", event_id=str(event_id), reason=claimed)
         return RunResult(None, "skipped", claimed)
@@ -467,7 +491,7 @@ async def start_workflow(
             "round": 0,
         }
         return await _execute(
-            run_id, event, initial, 0, harness, sessionmaker, settings, job_queue, checkpointer
+            run_id, event, initial, 0, harness, sessionmaker, settings, job_queue, checkpointer, llm
         )
 
 
@@ -480,6 +504,7 @@ async def resume_workflow(
     settings: Settings,
     job_queue: ArqRedis,
     checkpointer: BaseCheckpointSaver[Any],
+    llm: LlmGateway | None = None,
 ) -> RunResult:
     """Continue a paused run with the officer's decision / driver's reply / outcome due."""
     claimed = await _claim_resume(sessionmaker, run_id, kind)
@@ -499,4 +524,5 @@ async def resume_workflow(
             settings,
             job_queue,
             checkpointer,
+            llm,
         )

@@ -10,8 +10,9 @@ Everything Python lives in this folder: the API, the agents, the simulator and t
 - LangGraph (+ langgraph-checkpoint-postgres) for the agent workflow
 - MCP: official `mcp` Python SDK v2 (`MCPServer`, streamable HTTP); client: the SDK's `mcp.Client`
   inside the harness (`langchain-mcp-adapters` is incompatible with SDK v2, see docs/decisions.md)
-- LLMs: provider APIs for agents via LiteLLM; local Ollama (`qwen3:8b`, thinking mode disabled for
-  structured JSON) for scenario generation and last-resort fallback; optional Jev decision tier (B24)
+- LLMs: our own gateway (`app/llm/gateway.py`, decision 9): Groq and OpenRouter free tiers over
+  their OpenAI-compatible API (httpx), local Ollama (`qwen3:8b`, thinking disabled for structured
+  JSON) for scenario generation and as the last model tier, then rules; optional Jev tier (B24)
 - Observability: structlog (JSON logs) + Langfuse (Langfuse Cloud, or self-hosted via the
   `observability` compose profile)
 - Auth: PyJWT + pwdlib (argon2); rate limiting on public auth routes
@@ -39,14 +40,16 @@ backend/
 │   │               specs.py (AgentSpecs, docs/agents.md), rulebook.py (docs/rulebook.md)
 │   ├── harness/    the only way agents call tools: specs.py (tools + per-agent allowlists),
 │   │               client.py (MCP client, availability circuit), hooks.py (send guard),
-│   │               budget.py (step/time; tokens in B9), harness.py; context builder, rules later
+│   │               budget.py (steps/time/tokens), harness.py, context.py (what each agent's
+│   │               LLM call sees, B9)
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
 │   │               workflow.py (graph, start/resume claims, limits), checkpoint.py (Postgres
 │   │               checkpointer, own `langgraph` schema), control.py (API side of resumes)
 │   ├── workers/    ARQ jobs: scenario generation (B5), run_workflow + open-event sweep (B10);
 │   │               simulations.py: simulation jobs on their own queue/worker (sim-worker, B11)
-│   ├── llm/        Ollama client (B5); gateway: fallback chain, retries, token/cost logging (B9)
+│   ├── llm/        gateway.py (fallback chain, repair, budgets, llm_usage), openai_compat.py
+│   │               (Groq/OpenRouter), ollama.py (local tier, B5), langfuse.py (best-effort traces)
 │   ├── lab/        Simulation Lab: scenario library (golden sync, route context)
 │   ├── db/         SQLAlchemy models, migrations, seed scripts
 │   ├── observability/
@@ -64,11 +67,14 @@ world runner, the workers and the tests; enforced by `tests/unit/test_layering.p
 ## Config (`../.env`, loaded via pydantic-settings)
 `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `STALE_GPS_SECONDS=60`,
 `BUNCHING_RATIO=0.5`, `CLOSING_RATIO=0.75`, `SIM_TIMEOUT_SECONDS`, `SIM_CONCURRENCY=4`,
-`MAX_GRAPH_STEPS`, `PRIMARY_MODEL`, `BACKUP_MODEL`, `LOCAL_MODEL`, `OLLAMA_URL`,
-`CORS_ORIGINS` (the frontend dev URL), provider API keys, Langfuse keys,
+`MAX_GRAPH_STEPS`, `CORS_ORIGINS` (the frontend dev URL), Langfuse keys,
 `JEV_ENABLED=false`, `JEV_API_KEY` (optional Jev tier, off without a key).
 Live world (B6): `WORLD_ROUTE_ID`, `WORLD_SEED`, `WORLD_SPEED`, `WORLD_TICK_SECONDS`,
 `WORLD_QUEUE_EVERY_SECONDS`, `WORLD_RETENTION_HOURS`, `WORLD_GPS_DROPOUTS` (JSON list).
+LLM gateway (B9): `PRIMARY_MODEL`, `BACKUP_MODEL`, `FALLBACK_MODEL` (`<groq|openrouter>/<model>`),
+`LOCAL_MODEL`, `OLLAMA_URL`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `LLM_ENABLED`,
+`LLM_TIMEOUT_SECONDS`, `LLM_ATTEMPTS`, `LLM_MAX_OUTPUT_TOKENS`, `LLM_RATE_LIMIT_COOLDOWN_SECONDS`,
+`LLM_RUN_TOKEN_BUDGET`, `LLM_AGENT_TOKEN_BUDGET`, `LLM_TIME_RESERVE_SECONDS`.
 
 ## Commands (run from `backend/`)
 - Start services (from repo root): `docker compose up -d`

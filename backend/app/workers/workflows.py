@@ -44,6 +44,7 @@ async def run_workflow(ctx: dict[str, Any], event_id: str) -> str:
         get_settings(),
         ctx["redis"],
         ctx["checkpointer"],
+        ctx.get("llm"),
     )
     return f"{result.status}:{result.end_reason}"
 
@@ -60,6 +61,7 @@ async def resume_workflow_job(
         get_settings(),
         ctx["redis"],
         ctx["checkpointer"],
+        ctx.get("llm"),
     )
     return f"{result.status}:{result.end_reason}"
 

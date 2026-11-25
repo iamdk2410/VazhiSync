@@ -3,8 +3,10 @@
 The advisor is one LangGraph graph (`backend/app/graph/workflow.py`). Each agent has an
 **AgentSpec** in code (`backend/app/agents/specs.py`); its allowed tools are the harness
 allowlist (`backend/app/harness/specs.py`), so this table and the enforced gate can't disagree
-(checked by `tests/unit/test_agents.py`). All agents are rules-only for now; B9 adds LLM
-candidate proposals and explanations — the simulator still decides (rule 2).
+(checked by `tests/unit/test_agents.py`). With the LLM gateway (B9) the Action Generator gets
+up to 3 extra candidate ideas and the Control Advisor gets plain-language wording; both work on
+rules alone when every model fails or the token budget is spent, and the simulator still
+decides (rule 2).
 
 ```
 START -> Headway Monitor --stale--------> END   (flagged; nobody instructed)
@@ -42,7 +44,11 @@ and a worker resumes the run (B12).
   demand data — skipped when demand-mcp is down, the run notes it as degraded); short-turn the
   follower when the opposite direction has a gap ≥ 1.5× scheduled. Candidates are checked
   against the rulebook (R1–R6) and against past measured outcomes (an action type that made
-  waits worse in ≥ 3 interventions is dropped).
+  waits worse in ≥ 3 interventions is dropped). LLM ideas (B9): the model sees the context
+  builder's summary (pair, the two buses, the skippable and turn stops the rules allow,
+  existing and rejected options, past outcomes) and may suggest up to 3 actions; ideas naming
+  other stops are repaired or dropped, the rest become canonical candidates checked exactly
+  like the rule ones (rules' best two first, at most 4 actions).
 - **Impact Simulator:** builds the what-if model once with `from_observations` from the tool
   results only (positions, loads, staleness, waiting counts, world clock — rule 1), then runs
   each candidate for 15 minutes over the same 3 seeds, in parallel branches with a
@@ -51,11 +57,15 @@ and a worker resumes the run (B12).
 - **Control Advisor:** benefit = do-nothing passenger-minutes − candidate's. R7 rejects
   candidates that add bunching. Nothing positive → "do nothing" wins. Top two within
   max(20 passenger-minutes, 10 %) → escalated to the officer. No usable baseline → escalated.
+  The explanation is a template; with the gateway an LLM rewords it from the top options'
+  simulated figures, and any number not in those figures rejects the wording (template kept).
 
 ## Limits and logging
 
 Graph step budget (`MAX_GRAPH_STEPS`), whole-run time limit (`RUN_TIME_LIMIT_SECONDS`),
 per-simulation timeout (`SIM_TIMEOUT_SECONDS`), concurrency (`SIM_CONCURRENCY`), tool-call cap
-per agent (`AGENT_MAX_TOOL_CALLS`). One active run per bus pair. Every node writes an
+per agent (`AGENT_MAX_TOOL_CALLS`), LLM token budgets per run and per agent
+(`LLM_RUN_TOKEN_BUDGET`, `LLM_AGENT_TOKEN_BUDGET`) and an LLM time cap (run time left minus
+`LLM_TIME_RESERVE_SECONDS`). Every LLM attempt is an `llm_usage` row. One active run per bus pair. Every node writes an
 `agent_steps` row (input/output summary, routing decision, duration, error) and every log line
 carries the `run_id`.

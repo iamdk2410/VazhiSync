@@ -5,14 +5,17 @@ seeds as "do nothing", so each seed gives a paired benefit (passenger-minutes of
 from those: the mean with a 95 % confidence range, and a bad case (10th percentile) for the
 "safest option". R7 rejects a fix that creates more bunching than doing nothing. "Do nothing"
 wins when no mean benefit is positive. If the top two confidence ranges overlap it is a
-near-tie, escalated to the officer. Explanations are a template for now (B9: the LLM writes
-them, from these same numbers).
+near-tie, escalated to the officer. The explanation is a template; with the LLM gateway (B9)
+an LLM rewords it from these same numbers, and an answer that quotes a number the simulator
+didn't produce is rejected (repaired once, else the template stays).
 """
 
 import math
 import statistics
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from pydantic import BaseModel, Field
 
 from app.db.models import Recommendation
 from app.graph.deps import WorkflowDeps
@@ -23,10 +26,13 @@ from app.graph.state import (
     SimOutcome,
     WorkflowState,
 )
+from app.harness.context import control_advisor_messages, numbers_not_in
 
 # Two-sided 95 % Student-t critical values by degrees of freedom (n - 1).
 T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262}
 BAD_CASE_QUANTILE = 0.10
+AGENT = "control_advisor"
+MAX_EXPLAINED = 4  # options shown to the LLM (the top of the ranking plus do nothing)
 
 
 def describe(c: Candidate) -> str:
@@ -171,11 +177,87 @@ def rank(
 RECOMMENDATION_TTL = timedelta(seconds=90)  # B12: re-plan if the officer decides later
 
 
+class Explanation(BaseModel):
+    text: str = Field(min_length=20, max_length=700)
+
+
+def explanation_context(
+    result: RecommendationResult, candidates: list[Candidate], horizon_min: float
+) -> list[dict[str, str]]:
+    """The simulator's figures for the top options, worded for the officer (B9)."""
+    by_key = {c.key: c for c in candidates}
+    nothing = next((r for r in result.ranking if r.candidate_key == "do_nothing"), None)
+    rows: list[dict[str, Any]] = []
+    for r in result.ranking[:MAX_EXPLAINED]:
+        c = by_key.get(r.candidate_key)
+        row: dict[str, Any] = {
+            "option": describe(c) if c else r.candidate_key,
+            "passenger_minutes_saved_vs_doing_nothing": round(r.benefit_passenger_minutes),
+            "likely_range_of_that_saving": [round(r.benefit_low), round(r.benefit_high)],
+            "saving_in_a_bad_case": round(r.bad_case_benefit),
+            "bunching_episodes_with_this_option": round(r.bunching_count, 1),
+        }
+        if nothing is not None:
+            row["bunching_episodes_if_nothing_is_done"] = round(nothing.bunching_count, 1)
+        if r.candidate_key == "do_nothing":
+            row = {
+                "option": "Do nothing",
+                "total_passenger_minutes_of_waiting": round(r.passenger_wait_minutes),
+            }
+        if r.rejected_reason:
+            row["rejected"] = r.rejected_reason
+        if c is not None and c.action_type != "do_nothing":
+            row["why"] = c.rationale
+        rows.append(row)
+    chosen = by_key.get(result.candidate_key)
+    safest = by_key.get(result.safest_candidate_key or "")
+    return control_advisor_messages(
+        recommended=describe(chosen) if chosen else "Do nothing",
+        ranking=rows,
+        horizon_min=horizon_min,
+        near_tie=result.is_near_tie,
+        safest=describe(safest) if safest else None,
+        note=None,
+    )
+
+
+async def explain(
+    result: RecommendationResult, candidates: list[Candidate], deps: WorkflowDeps
+) -> RecommendationResult:
+    """Plain-language wording from the LLM, checked to quote only the simulator's numbers;
+    the rules' wording when the gateway is off, fails or the budget is spent. The ranking
+    itself is never touched (rule 2)."""
+    if deps.llm is None or result.end_reason not in ("recommended", "escalated"):
+        return result
+    if not any(r.candidate_key == result.candidate_key for r in result.ranking):
+        return result
+    messages = explanation_context(result, candidates, deps.horizon_min)
+
+    def invented(e: Explanation) -> list[str]:
+        extra = numbers_not_in(e.text, messages)
+        return [f"text: uses numbers not in the data: {', '.join(extra)}"] if extra else []
+
+    answer = await deps.llm.complete(
+        agent=AGENT,
+        messages=messages,
+        output=Explanation,
+        rules=lambda: Explanation(text=result.explanation),
+        run_id=deps.run_id,
+        budget=deps.budget,
+        check=invented,
+    )
+    if answer.from_rules:
+        return result
+    return result.model_copy(
+        update={"explanation": answer.value.text.strip(), "explanation_source": "llm"}
+    )
+
+
 async def control_advisor(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
     round_ = state.get("round", 0)
     candidates = [c for c in state.get("candidates", []) if c.round == round_]
     outcomes = [o for o in state.get("sim_outcomes", []) if o.round == round_]
-    result = rank(outcomes, candidates, deps.horizon_min)
+    result = await explain(rank(outcomes, candidates, deps.horizon_min), candidates, deps)
     if result.end_reason == "do_nothing_recommended" and any(
         c.key.startswith("edit:") for c in candidates
     ):

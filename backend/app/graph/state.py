@@ -49,6 +49,7 @@ class Candidate(_Model):
     rationale: str
     db_id: uuid.UUID | None = None  # candidate_actions row
     round: int = 0  # regeneration round it belongs to (B12)
+    source: Literal["rule", "llm"] = "rule"  # llm: an LLM idea, checked like any other (B9)
 
 
 class DroppedCandidate(_Model):
@@ -93,6 +94,7 @@ class RecommendationResult(_Model):
     is_near_tie: bool
     end_reason: EndReason
     safest_candidate_key: str | None = None  # best bad case, when it differs from the winner
+    explanation_source: Literal["rules", "llm"] = "rules"  # who worded it (B9); never who ranked
     recommendation_id: uuid.UUID | None = None  # recommendations row (what the officer decides on)
 
 

@@ -3,7 +3,7 @@
 qwen3:8b runs with thinking disabled (`think: false`) so it returns the JSON object directly.
 Retries are bounded and only for transient failures — timeouts, connection errors, 429/5xx
 (rule 7); anything else (bad request, unknown model, invalid body) fails immediately.
-B9 will route this through the LLM gateway as the "local" tier.
+The LLM gateway (B9) uses it as the "local" tier.
 """
 
 import asyncio
@@ -55,6 +55,7 @@ class OllamaClient:
         timeout_s: float = 180.0,
         attempts: int = 3,
         temperature: float = 0.4,
+        max_tokens: int | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
@@ -62,16 +63,20 @@ class OllamaClient:
         self._timeout = httpx.Timeout(timeout_s, connect=10.0)
         self._attempts = attempts
         self._temperature = temperature
+        self._max_tokens = max_tokens
         self._transport = transport
 
     async def chat(self, messages: Sequence[Message], schema: dict[str, Any]) -> LlmReply:
+        options: dict[str, Any] = {"temperature": self._temperature}
+        if self._max_tokens is not None:
+            options["num_predict"] = self._max_tokens
         body = {
             "model": self.model,
             "messages": list(messages),
             "format": schema,
             "stream": False,
             "think": False,
-            "options": {"temperature": self._temperature},
+            "options": options,
         }
         last: LlmError | None = None
         async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
