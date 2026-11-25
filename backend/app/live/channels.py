@@ -9,3 +9,17 @@ SCENARIO_KEY = "vazhisync:world:scenario"  # WorldScenario JSON; a new token res
 INSTRUCTION_CHANNEL = "vazhisync:instructions"  # pub/sub: an InstructionSent per new instruction
 WORLD_ACTIONS_KEY = "vazhisync:world:actions"  # list: acknowledged instructions the world applies
 ALERT_CHANNEL = "vazhisync:alerts"  # pub/sub: officer alerts (e.g. a driver can't comply)
+
+
+# AG-UI run streams (decision 10): one Redis Stream of AG-UI events per workflow run, plus a
+# hash with the latest RunView and the stream id it includes (attach = snapshot + tail).
+def agui_stream_key(run_id: str) -> str:
+    return f"vazhisync:agui:{run_id}"
+
+
+def agui_view_key(run_id: str) -> str:
+    return f"vazhisync:agui:{run_id}:view"
+
+
+AGUI_TTL_SECONDS = 24 * 3600
+AGUI_MAXLEN = 2000  # events per run (a run has a few dozen; resumes add more)

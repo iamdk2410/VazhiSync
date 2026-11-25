@@ -46,6 +46,7 @@ from app.agents.dispatch import (
 )
 from app.agents.headway_monitor import headway_monitor
 from app.agents.impact_simulator import impact_simulator, simulate
+from app.agui.publisher import RunEventPublisher
 from app.config import Settings
 from app.db.enums import BunchingEventStatus, WorkflowStatus
 from app.db.models import AgentStep, BunchingEvent, Recommendation, RouteDirection, WorkflowRun
@@ -394,6 +395,22 @@ async def _failed(
     return RunResult(run_id, status.value, reason)
 
 
+async def _drive(
+    graph: Any, graph_input: Any, config: dict[str, Any], publisher: RunEventPublisher
+) -> dict[str, Any]:
+    """Run one segment through LangGraph's stream, feeding the AG-UI publisher (decision 10);
+    returns the final state (the last `values` chunk, with `__interrupt__` if it paused)."""
+    final: dict[str, Any] = {}
+    async for mode, chunk in graph.astream(
+        graph_input, config=config, stream_mode=["tasks", "updates", "values"]
+    ):
+        if mode == "values":
+            final = chunk
+        else:
+            await publisher.on_chunk(mode, chunk)
+    return final
+
+
 async def _execute(
     run_id: uuid.UUID,
     event: BunchingEvent,
@@ -408,6 +425,10 @@ async def _execute(
 ) -> RunResult:
     budget = RunBudget.from_settings(run_id, settings)  # limits apply to each active segment
     budget.steps = first_step
+    publisher = RunEventPublisher(job_queue, str(run_id))
+    await publisher.start()
+    failure: tuple[WorkflowStatus, str, str | None] | None = None
+    final: dict[str, Any] = {}
     try:
         async with sessionmaker() as session:
             route = await load_world_route(session, event.route_id)
@@ -432,38 +453,29 @@ async def _execute(
         )
         graph = build_graph(deps, checkpointer)
         final = await asyncio.wait_for(
-            graph.ainvoke(graph_input, config=_config(run_id, settings)),
+            _drive(graph, graph_input, _config(run_id, settings), publisher),
             timeout=settings.run_time_limit_seconds,
         )
     except TimeoutError:
-        return await _failed(
-            sessionmaker, run_id, event.id, WorkflowStatus.TIMED_OUT, "run_time_limit", budget.steps
-        )
+        failure = (WorkflowStatus.TIMED_OUT, "run_time_limit", "the run hit its time limit")
     except BudgetExceeded as exc:
-        return await _failed(
-            sessionmaker,
-            run_id,
-            event.id,
-            WorkflowStatus.FAILED,
-            f"budget:{exc.code}",
-            budget.steps,
-            str(exc),
-        )
+        failure = (WorkflowStatus.FAILED, f"budget:{exc.code}", str(exc))
     except HarnessError as exc:
-        return await _failed(
-            sessionmaker,
-            run_id,
-            event.id,
-            WorkflowStatus.FAILED,
-            f"tools:{exc.kind}:{exc.tool}",
-            budget.steps,
-            str(exc),
-        )
+        failure = (WorkflowStatus.FAILED, f"tools:{exc.kind}:{exc.tool}", str(exc))
     except RouteNotImported as exc:
-        return await _failed(
-            sessionmaker, run_id, event.id, WorkflowStatus.FAILED, "route_not_imported", 0, str(exc)
+        budget.steps = 0
+        failure = (WorkflowStatus.FAILED, "route_not_imported", str(exc))
+    if failure is not None:
+        status, reason, error = failure
+        error_detail = None if status == WorkflowStatus.TIMED_OUT else error
+        result = await _failed(
+            sessionmaker, run_id, event.id, status, reason, budget.steps, error_detail
         )
-    return await _settle(sessionmaker, run_id, event.id, dict(final), budget.steps)
+        await publisher.error(reason, error or reason)
+        return result
+    result = await _settle(sessionmaker, run_id, event.id, dict(final), budget.steps)
+    await publisher.finish(result.waiting_for, result.end_reason)
+    return result
 
 
 async def start_workflow(

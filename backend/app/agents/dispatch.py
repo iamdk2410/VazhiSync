@@ -349,4 +349,9 @@ async def measure(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
         "outcome_measured", run_id=deps.run_id, predicted=rec.benefit_passenger_minutes,
         actual=actual_benefit, resolved=resolved,
     )  # fmt: skip
-    return {"route": "done", "end_reason": "outcome_measured"}
+    outcome = {
+        "predicted_benefit_passenger_minutes": rec.benefit_passenger_minutes,
+        "actual_benefit_passenger_minutes": actual_benefit,
+        "bunching_resolved": resolved,
+    }
+    return {"route": "done", "end_reason": "outcome_measured", "outcome": outcome}

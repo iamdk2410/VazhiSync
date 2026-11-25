@@ -284,7 +284,9 @@ async def control_advisor(state: WorkflowState, deps: WorkflowDeps) -> dict[str,
             )
             session.add(row)
             await session.commit()
-            result = result.model_copy(update={"recommendation_id": row.id})
+            result = result.model_copy(
+                update={"recommendation_id": row.id, "expires_at": row.expires_at}
+            )
     routes = {"recommended": "recommend", "escalated": "escalate"}
     return {
         "recommendation": result,

@@ -126,7 +126,38 @@ run's remaining time minus a reserve, so a slow model can't starve the simulatio
 logging have to be ours anyway (rules 7–9); free tiers keep the project at zero cost, with
 two independent providers and an offline model behind them.
 
-## 10. Skipped items and why
+## 10. AG-UI run stream: our own SSE endpoint, not ag-ui-langgraph
+
+**Context:** the officer console should watch each workflow run as an AG-UI event stream (run
+lifecycle, a step per agent node, state as candidates and simulation results arrive, the
+explanation text, and the approval pause as an AG-UI interrupt resolved with approve / edit /
+reject). Runs are started by the backend (sim-runner → ARQ worker), so the officer must be
+able to attach to a run already in progress and rehydrate it. The official adapter
+(`ag-ui-langgraph` 0.0.48) was checked: `LangGraphAgent.run()` always executes the graph itself
+(`graph.astream_events`) in the process that holds the compiled graph; it has no attach,
+observe or reconnect mode (its only non-executing path replays a stored interrupt). Our graph
+runs in the worker, not the API, and the adapter also pulls in `langchain`.
+
+**Decision:** the worker drives each segment with `graph.astream(stream_mode=["tasks",
+"updates", "values"])` and turns it into `ag_ui.core` events (`ag-ui-protocol` 1.0.0, which only
+depends on pydantic): `threadId` = the workflow run id (the LangGraph thread), `runId` = one
+segment (the start or a resume); STEP_STARTED / STEP_FINISHED per node (simulate branches as
+`simulate:<candidate>`); STATE_SNAPSHOT + STATE_DELTA (JSON Patch) of an officer-facing
+`RunView`; the validated explanation as TEXT_MESSAGE_* (sent only after the number check,
+rule 2); RUN_FINISHED with an interrupt outcome (id = the recommendation) for the officer
+pause, a plain RUN_FINISHED for driver / outcome waits, RUN_ERROR for failures. Events go to a
+Redis Stream per run, and the latest view plus the stream id it includes is written in the same
+Lua call, so `GET /officer/runs/{id}/events` can send a consistent snapshot and then tail from
+exactly that id (`Last-Event-ID` reconnects too). `POST /officer/runs/{id}/agui` takes an AG-UI
+`RunAgentInput` whose `resume` resolves the interrupt through the same decision service as the
+REST endpoint, and streams the resumed segment. Runs without a stream (older than 24 h) are
+rebuilt from the database. Live positions, instructions and alerts stay on `/ws/live`.
+
+**Why:** attach and rehydration are the core requirement and the adapter can't do them; one
+small dependency instead of langchain; the stream survives API restarts and multiple officers
+watching; publishing is best effort and can never break a run.
+
+## 11. Skipped items and why
 
 | Skipped | Why |
 | --- | --- |

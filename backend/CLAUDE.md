@@ -32,7 +32,10 @@ backend/
 │   ├── demand_mcp/ get_boarding_estimates, send_driver_instruction (guards in dispatch.py)
 │   └── schemas.py  tool input/output models (shared with the B8 client), errors.py (JSON errors)
 ├── app/
-│   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab) + /ws/live websocket; schemas.py
+│   ├── api/        FastAPI routers (auth, officer, driver, passenger, lab, agui) + /ws/live websocket; schemas.py
+│   ├── agui/       AG-UI run stream (decision 10): view.py (RunView + fold), patch.py (JSON Patch),
+│   │               publisher.py (worker: astream -> events -> Redis Stream), stream.py (API: SSE attach)
+│   ├── officer/    decisions.py: the officer decision service (REST and AG-UI resume share it)
 │   ├── live/       live frame schemas + per-role filtering, headways, Redis channels, WebSocket hub
 │   ├── auth/       password hashing + JWT (security), require_role (deps), rate limit, user service
 │   ├── gtfs/       GTFS import: feed (validated rows), geometry, schedule, builder (validation), writer, snap_shape

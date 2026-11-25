@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
-from app.api import auth, driver, lab, live, officer, passenger, routes
+from app.api import agui, auth, driver, lab, live, officer, passenger, routes
 from app.api.health import router as health_router
 from app.auth.rate_limit import RedisRateLimiter
 from app.config import get_settings
@@ -60,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(routes.router)
     app.include_router(live.router)
     app.include_router(lab.router)
+    app.include_router(agui.router)
     return app
 
 

@@ -6,6 +6,7 @@ those observations; never from the world simulator itself (rule 1).
 
 import operator
 import uuid
+from datetime import datetime
 from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict
@@ -96,6 +97,7 @@ class RecommendationResult(_Model):
     safest_candidate_key: str | None = None  # best bad case, when it differs from the winner
     explanation_source: Literal["rules", "llm"] = "rules"  # who worded it (B9); never who ranked
     recommendation_id: uuid.UUID | None = None  # recommendations row (what the officer decides on)
+    expires_at: datetime | None = None  # after this the officer can't approve it (B12 TTL)
 
 
 class WorkflowState(TypedDict, total=False):
@@ -119,6 +121,7 @@ class WorkflowState(TypedDict, total=False):
     instruction: dict[str, Any]  # the dispatched instruction (InstructionSent as JSON)
     driver_reply: dict[str, Any]  # resume value of await_driver
     acked_world_time_s: float  # the world's clock when the driver acknowledged
+    outcome: dict[str, Any]  # measured after the intervention: predicted vs actual benefit
 
 
 # ------------------------------------------------------------------ resume values (B12)

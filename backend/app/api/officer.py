@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import structlog
@@ -8,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_job_queue, get_redis
@@ -25,9 +23,8 @@ from app.api.schemas import (
     WorldStatus,
 )
 from app.auth.deps import require_role
-from app.db.enums import ActionType, ApprovalDecision, BunchingEventStatus, Role
+from app.db.enums import BunchingEventStatus, Role
 from app.db.models import (
-    Approval,
     BunchingEvent,
     CandidateAction,
     Recommendation,
@@ -36,9 +33,10 @@ from app.db.models import (
     WorkflowRun,
 )
 from app.db.session import get_session
-from app.graph.control import queue_resume
 from app.live.channels import SPEED_KEY
 from app.live.hub import LiveHub
+from app.officer import decisions
+from app.officer.decisions import DecisionRefused, OfficerDecisionPayload
 from app.runner.world import parse_speed
 
 log = structlog.get_logger()
@@ -163,72 +161,13 @@ async def decide(
 ) -> DecisionResponse:
     """Approve, edit (hold length) or reject. Recorded with the officer's id; the run resumes on
     the worker. Deciding twice (a double-click) returns the first decision, nothing more."""
-    rec = await session.get(Recommendation, recommendation_id)
-    if rec is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Recommendation not found")
-    rec_id, run_id = rec.id, rec.run_id  # plain values: a rollback below expires the ORM objects
-    existing = await session.scalar(select(Approval).where(Approval.recommendation_id == rec_id))
-    if existing is not None:
-        return DecisionResponse(status="already_decided", approval_id=existing.id, run_id=run_id)
-    run = await session.get(WorkflowRun, run_id)
-    if (
-        run is None
-        or run.waiting_for != "officer"
-        or run.regeneration_round != rec.regeneration_round
-    ):
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="Not awaiting a decision")
-    candidate = await session.get(CandidateAction, rec.candidate_id)
-    if body.decision == "reject" and not body.reason:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail="A reason is required")
-    edited: dict[str, Any] | None = None
-    if body.decision == "edit":
-        if candidate is None or candidate.action_type != ActionType.HOLD or body.seconds is None:
-            raise HTTPException(
-                status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Only a hold's length can be edited"
-            )
-        edited = {"seconds": body.seconds}
-
-    if rec.expires_at is not None and rec.expires_at < datetime.now(UTC):
-        await queue_resume(queue, run_id, "officer", {"decision": "expired"}, f"{rec_id}:expired")
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            detail="This recommendation expired; re-planning with fresh data",
-        )
-
-    decision = {
-        "approve": ApprovalDecision.APPROVED,
-        "edit": ApprovalDecision.EDITED,
-        "reject": ApprovalDecision.REJECTED,
-    }[body.decision]
-    approval = Approval(
-        recommendation_id=rec_id,
-        officer_id=officer.id,
-        decision=decision,
-        edited_params=edited,
-        reason=body.reason,
+    payload = OfficerDecisionPayload(
+        decision=body.decision, seconds=body.seconds, reason=body.reason
     )
-    session.add(approval)
     try:
-        await session.commit()
-    except IntegrityError:  # a concurrent click won (one approval per recommendation)
-        await session.rollback()
-        first = await session.scalar(select(Approval).where(Approval.recommendation_id == rec_id))
-        if first is None:
-            raise
-        return DecisionResponse(status="already_decided", approval_id=first.id, run_id=run_id)
-    value = {
-        "decision": body.decision,
-        "approval_id": str(approval.id),
-        "officer_id": str(officer.id),
-        "params": edited,
-        "reason": body.reason,
-    }
-    await queue_resume(queue, run_id, "officer", value, str(rec_id))
-    log.info(
-        "officer_decision",
-        run_id=str(run_id),
-        recommendation_id=str(rec_id),
-        decision=body.decision,
-        officer_id=str(officer.id),
+        result = await decisions.decide(session, queue, recommendation_id, payload, officer)
+    except DecisionRefused as exc:
+        raise HTTPException(exc.status_code, detail=exc.detail) from None
+    return DecisionResponse(
+        status=result.status, approval_id=result.approval_id, run_id=result.run_id
     )
-    return DecisionResponse(status="accepted", approval_id=approval.id, run_id=run_id)

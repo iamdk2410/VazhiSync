@@ -26,6 +26,23 @@ START -> Headway Monitor --stale--------> END   (flagged; nobody instructed)
 Pauses are LangGraph interrupts checkpointed in Postgres; the API records the human's decision
 and a worker resumes the run (B12).
 
+**Watching a run (AG-UI, decision 10):** each worker segment is one AG-UI run on the thread
+`run_id`, published while the graph runs and served at `GET /officer/runs/{run_id}/events`
+(SSE; attach any time, `Last-Event-ID` to reconnect):
+
+| Graph | AG-UI event |
+|---|---|
+| segment starts (event or resume) | RUN_STARTED (+ STATE_SNAPSHOT of the run view) |
+| a node starts / finishes (`tasks` stream) | STEP_STARTED / STEP_FINISHED (`simulate:<candidate>` per branch) |
+| a node's state update (`updates` stream) | STATE_DELTA (JSON Patch on the run view) |
+| Control Advisor's checked explanation | TEXT_MESSAGE_START / CONTENT / END |
+| pause for the officer | RUN_FINISHED with an interrupt outcome (id = recommendation) |
+| pause for the driver / outcome, or the run ends | RUN_FINISHED (`result.waiting_for` when paused) |
+| time limit, budget, tools down | RUN_ERROR (`code` = the run's end reason) |
+
+The officer resolves the interrupt with `POST /officer/runs/{run_id}/agui` (AG-UI
+`RunAgentInput.resume`: approve, edit with `seconds`, reject with `reason`).
+
 | Agent | Role | Objective | Tools | Inputs | Outputs |
 |---|---|---|---|---|---|
 | Headway Monitor | Checks the data is fresh and the reported pair is really bunched | Stop early unless acting is possible and needed | `get_vehicle_positions`, `get_headways` | Bunching event (leader, follower) | Snapshot of observations; route `stale` / `not_bunched` / `generate` |
