@@ -293,6 +293,9 @@ async def view_from_db(session: AsyncSession, run_id: uuid.UUID) -> RunView | No
             near_tie=rec.is_near_tie,
             end_reason="escalated" if rec.is_near_tie else "recommended",
             expires_at=rec.expires_at.isoformat() if rec.expires_at else None,
+            similar_cases=list(rec.similar_cases or []),
+            confidence=rec.confidence,
+            confidence_note=rec.confidence_note,
         )
         instruction = await session.scalar(
             select(DriverInstruction)

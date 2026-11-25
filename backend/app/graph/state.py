@@ -98,6 +98,9 @@ class RecommendationResult(_Model):
     explanation_source: Literal["rules", "llm"] = "rules"  # who worded it (B9); never who ranked
     recommendation_id: uuid.UUID | None = None  # recommendations row (what the officer decides on)
     expires_at: datetime | None = None  # after this the officer can't approve it (B12 TTL)
+    similar_cases: list[dict[str, Any]] = []  # closest past cases (B22), for the officer's card
+    confidence: Literal["normal", "lowered"] = "normal"  # lowered: similar cases underperformed
+    confidence_note: str | None = None
 
 
 class WorkflowState(TypedDict, total=False):
@@ -123,6 +126,8 @@ class WorkflowState(TypedDict, total=False):
     acked_world_time_s: float  # the world's clock when the driver acknowledged
     outcome: dict[str, Any]  # measured after the intervention: predicted vs actual benefit
     event_kind: Literal["actual", "predicted"]  # predicted: early warning, not bunched yet (B21)
+    case_features: dict[str, float]  # the situation as numbers, recorded as a case on dispatch
+    similar_cases: list[dict[str, Any]]  # closest past cases (B22)
     predicted_in_s: float  # predicted events: how far ahead the bunch was forecast
 
 

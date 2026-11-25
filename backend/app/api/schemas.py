@@ -267,6 +267,20 @@ class RankedOut(BaseModel):
     rejected_reason: str | None = None
 
 
+class SimilarCaseOut(BaseModel):
+    """A past intervention in a similar situation (B22), as the recommendation card shows it."""
+
+    case_id: uuid.UUID
+    distance: float  # 0 = the same situation
+    action_type: str
+    params: dict[str, float | int | str | list[str]]
+    predicted_benefit_passenger_minutes: float
+    actual_benefit_passenger_minutes: float | None  # None until the outcome was measured
+    bunching_resolved: bool | None
+    decided_at: datetime
+    situation: dict[str, float]
+
+
 class RecommendationOut(BaseModel):
     id: uuid.UUID
     run_id: uuid.UUID
@@ -282,6 +296,9 @@ class RecommendationOut(BaseModel):
     ranking: list[RankedOut]
     created_at: datetime
     expires_at: datetime | None
+    similar_cases: list[SimilarCaseOut] = []  # B22
+    confidence: Literal["normal", "lowered"] = "normal"
+    confidence_note: str | None = None
 
 
 class RecommendationsResponse(BaseModel):

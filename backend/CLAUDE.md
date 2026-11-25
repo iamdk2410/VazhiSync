@@ -45,7 +45,7 @@ backend/
 │   ├── harness/    the only way agents call tools: specs.py (tools + per-agent allowlists),
 │   │               client.py (MCP client, availability circuit), hooks.py (send guard),
 │   │               budget.py (steps/time/tokens), harness.py, context.py (what each agent's
-│   │               LLM call sees, B9)
+│   │               LLM call sees, B9), cases.py (B22: features, similar cases, confidence)
 │   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
 │   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
 │   │               workflow.py (graph, start/resume claims, limits), checkpoint.py (Postgres
@@ -55,12 +55,12 @@ backend/
 │   ├── llm/        gateway.py (fallback chain, repair, budgets, llm_usage), openai_compat.py
 │   │               (Groq/OpenRouter), ollama.py (local tier, B5), langfuse.py (best-effort traces)
 │   ├── lab/        Simulation Lab: scenario library (golden sync, route context)
-│   ├── db/         SQLAlchemy models, migrations, seed scripts
+│   ├── db/         SQLAlchemy models, migrations, seed scripts; vector.py (pgvector column type)
 │   ├── observability/
 │   ├── runner/     live world sim-runner: world loop, GPS layer, bunching detector, route loader
 │   ├── healthcheck.py  container health-check CLI (http / redis heartbeat)
 │   └── config.py   pydantic-settings
-├── docker/         compose support files (postgres-init SQL)
+├── docker/         compose support files (postgres-init SQL, postgres/Dockerfile: PostGIS + pgvector)
 ├── devtools/       dev-only pages (live_map.html: watch /ws/live on a map)
 ├── data/gtfs/      Chennai GTFS zip (not committed) + routes/<id>.json config and snapped GeoJSON (committed); see its README
 └── tests/          unit/, integration/, edge_cases/

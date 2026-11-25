@@ -95,7 +95,7 @@ def test_action_generator_sees_a_compact_summary_and_its_memory_only() -> None:
     assert set(context) == {
         "pair", "leader", "follower", "skippable_stops_ahead_of_leader",
         "turn_stops_ahead_of_follower", "max_hold_s", "existing_options",
-        "rejected_by_officer", "past_outcomes",
+        "rejected_by_officer", "past_outcomes", "similar_past_cases",
     }  # fmt: skip
     assert context["leader"] == {
         "fleet_number": "32B-04", "next_stop": "Central", "load": 30, "gps_age_s": 2,

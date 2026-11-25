@@ -64,7 +64,7 @@ ACTION_GENERATOR_SYSTEM = (
     "steps), let the leader skip 1-2 of the listed skippable stops, or short-turn the follower "
     "at one of the listed turn stops. Use only stop ids from the lists. A simulator will test "
     "every idea; you do not need to estimate passenger impact. Never repeat a rejected or "
-    "existing option."
+    "existing option. Similar past cases show what was done before and what it really saved."
 )
 
 CONTROL_ADVISOR_SYSTEM = (
@@ -89,6 +89,7 @@ def action_generator_messages(
     rejected: Iterable[str],
     past: list[PastOutcome],
     max_hold_s: int,
+    similar: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, str]]:
     context = {
         "pair": {
@@ -105,6 +106,20 @@ def action_generator_messages(
         "existing_options": sorted(existing),
         "rejected_by_officer": sorted(rejected),
         "past_outcomes": [p.model_dump() for p in past],
+        "similar_past_cases": [  # B22: the closest situations and what happened
+            {
+                "action": c["action_type"],
+                "params": c["params"],
+                "predicted_saving": round(c["predicted_benefit_passenger_minutes"]),
+                "actual_saving": (
+                    None
+                    if c["actual_benefit_passenger_minutes"] is None
+                    else round(c["actual_benefit_passenger_minutes"])
+                ),
+                "similarity_distance": c["distance"],
+            }
+            for c in (similar or [])
+        ],
     }
     return [
         {"role": "system", "content": ACTION_GENERATOR_SYSTEM},

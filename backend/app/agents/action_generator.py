@@ -22,6 +22,7 @@ from app.db.enums import ActionType, CandidateSource, InstructionStatus
 from app.db.models import CandidateAction, DriverInstruction, InterventionOutcome
 from app.graph.deps import WorkflowDeps
 from app.graph.state import Candidate, DroppedCandidate, Snapshot, WorkflowState
+from app.harness.cases import SimilarCase, raw_features, similar_cases, vectorize
 from app.harness.context import PastOutcome, StopOption, action_generator_messages
 from mcp_servers.schemas import BoardingEstimates, VehiclePosition
 from simulator import RouteModel
@@ -191,6 +192,47 @@ def ideas_to_candidates(
                 )
             )
     return out
+
+
+def with_case_holds(
+    candidates: list[Candidate], snapshot: Snapshot, cases: list[SimilarCase]
+) -> list[Candidate]:
+    """B22: a hold that worked in a similar past case (measured: it saved passenger time) is
+    offered again, if not already there. Only holds: a past skip or short-turn names stops
+    that may not lie ahead now. Checked and simulated like every other candidate."""
+    follower = _vehicle(snapshot, str(snapshot.pair.follower_vehicle_id))
+    if follower is None:
+        return candidates
+    keys = {c.key for c in candidates}
+    extra: list[Candidate] = []
+    for case in cases:
+        actual = case.actual_benefit_passenger_minutes
+        if case.action_type != "hold" or actual is None or actual <= 0:
+            continue
+        seconds = _round_hold(float(case.params.get("seconds", 0)))
+        key = f"hold:{follower.fleet_number}:{seconds}"
+        if key in keys:
+            continue
+        keys.add(key)
+        extra.append(
+            Candidate(
+                key=key,
+                action_type="hold",
+                vehicle_id=follower.vehicle_id,
+                fleet_number=follower.fleet_number,
+                params={"seconds": seconds},
+                rationale=(
+                    f"Hold {follower.fleet_number} {seconds} s: in a similar case on "
+                    f"{case.decided_at[:10]} a {seconds} s hold saved {actual:.0f} "
+                    "passenger-minutes."
+                ),
+            )
+        )
+    if not extra:
+        return candidates
+    actions = [c for c in candidates if c.action_type != "do_nothing"]
+    nothing = [c for c in candidates if c.action_type == "do_nothing"]
+    return [*(actions[:2] + extra + actions[2:])[:MAX_ACTIONS], *nothing]
 
 
 def merge(rule: list[Candidate], llm: list[Candidate]) -> list[Candidate]:
@@ -379,6 +421,7 @@ async def llm_ideas(
     snapshot: Snapshot,
     rule_candidates: list[Candidate],
     past: list[PastOutcome],
+    similar: list[dict[str, Any]] | None = None,
 ) -> list[Candidate]:
     """Up to 3 extra candidates from the LLM gateway; [] when it's off or falls back."""
     if deps.llm is None:
@@ -400,6 +443,7 @@ async def llm_ideas(
         rejected=state.get("rejected_keys", []),
         past=past,
         max_hold_s=MAX_HOLD_S,
+        similar=similar,
     )
     result = await deps.llm.complete(
         agent=AGENT,
@@ -429,8 +473,13 @@ async def action_generator(state: WorkflowState, deps: WorkflowDeps) -> dict[str
     round_ = state.get("round", 0)
     rejected = set(state.get("rejected_keys", []))
     past = await _past_outcomes(deps)
+    raw = raw_features(snapshot, deps.route)
+    async with deps.sessionmaker() as session:
+        cases = await similar_cases(session, state["route_id"], vectorize(raw))
+    similar = [c.model_dump(mode="json") for c in cases]
     rule_candidates = propose(snapshot, deps.route.model, estimates)
-    ideas = await llm_ideas(state, deps, snapshot, rule_candidates, past)
+    rule_candidates = with_case_holds(rule_candidates, snapshot, cases)
+    ideas = await llm_ideas(state, deps, snapshot, rule_candidates, past, similar)
     proposed = [c.model_copy(update={"round": round_}) for c in merge(rule_candidates, ideas)]
 
     ids = [str(snapshot.pair.leader_vehicle_id), str(snapshot.pair.follower_vehicle_id)]
@@ -465,7 +514,13 @@ async def action_generator(state: WorkflowState, deps: WorkflowDeps) -> dict[str
         session.add_all(rows)
         await session.commit()
     kept = [c.model_copy(update={"db_id": row.id}) for c, row in zip(kept, rows, strict=True)]
-    out: dict[str, Any] = {"snapshot": snapshot, "candidates": kept, "dropped": dropped}
+    out: dict[str, Any] = {
+        "snapshot": snapshot,
+        "candidates": kept,
+        "dropped": dropped,
+        "case_features": raw,
+        "similar_cases": similar,
+    }
     if optional.degraded is not None:
         out["degraded"] = [optional.degraded.tool]
     return out

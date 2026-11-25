@@ -1,5 +1,6 @@
 """All ORM models. Importing this package registers every table on `Base.metadata`."""
 
+from app.db.models.cases import Case
 from app.db.models.fleet import DriverAssignment, StopQueue, Vehicle, VehiclePosition
 from app.db.models.notifications import Notification
 from app.db.models.routes import Route, RouteDirection, RouteDirectionStop, Stop
@@ -22,6 +23,7 @@ __all__ = [
     "Approval",
     "BunchingEvent",
     "CandidateAction",
+    "Case",
     "DriverAssignment",
     "DriverInstruction",
     "FavouriteStop",

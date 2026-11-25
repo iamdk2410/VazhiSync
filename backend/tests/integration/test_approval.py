@@ -29,6 +29,7 @@ from app.config import get_settings
 from app.db.enums import BunchingEventStatus, InstructionStatus, Role, WorkflowStatus
 from app.db.models import (
     BunchingEvent,
+    Case,
     DriverAssignment,
     DriverInstruction,
     InterventionOutcome,
@@ -408,6 +409,12 @@ async def test_driver_ack_is_applied_in_the_world_and_the_outcome_measured(
     assert outcome.predicted_benefit_passenger_minutes is not None
     assert outcome.actual_benefit_passenger_minutes is not None  # predicted AND actual stored
     assert outcome.metrics["queue_samples"] > 0 and outcome.bunching_resolved is not None
+    # B22: the dispatch recorded a case; measuring the outcome completed it.
+    async with get_sessionmaker()() as session:
+        (case,) = (await session.scalars(select(Case))).all()
+    assert case.driver_instruction_id == sent.id and case.measured_at is not None
+    assert case.actual_benefit_passenger_minutes == outcome.actual_benefit_passenger_minutes
+    assert case.predicted_benefit_passenger_minutes == outcome.predicted_benefit_passenger_minutes
 
 
 async def test_driver_cant_comply_cancels_alerts_and_replans(

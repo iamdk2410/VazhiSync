@@ -66,6 +66,9 @@ class RecommendationView(BaseModel):
     safest_candidate_key: str | None = None
     end_reason: str
     expires_at: str | None = None
+    similar_cases: list[dict[str, Any]] = Field(default_factory=list)  # B22
+    confidence: str = "normal"
+    confidence_note: str | None = None
 
 
 class RunView(BaseModel):
@@ -129,6 +132,9 @@ def recommendation_view(r: RecommendationResult) -> RecommendationView:
         safest_candidate_key=r.safest_candidate_key,
         end_reason=r.end_reason,
         expires_at=r.expires_at.isoformat() if r.expires_at else None,
+        similar_cases=r.similar_cases,
+        confidence=r.confidence,
+        confidence_note=r.confidence_note,
     )
 
 

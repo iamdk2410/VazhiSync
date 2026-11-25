@@ -79,6 +79,16 @@ similarity in the harness context builder.
 **Why:** the situation is numeric, so numeric similarity is more meaningful than text embeddings;
 no embedding model or extra service is needed; it stays in the same transactional database.
 
+**As built (B22):** nine features from MCP observations only (rule 1). The advisor never sees the
+world's weather, so an observed-speed factor (mean bus speed / timetabled speed) stands in for
+it: rain and traffic show up as slower buses. The database image adds `postgresql-17-pgvector`
+to `postgis/postgis:17-3.5` (`backend/docker/postgres/Dockerfile`; the bullseye packages now come
+from apt-archive.postgresql.org, and keeping the same base OS keeps glibc collations unchanged
+for the existing data; CI installs the same package into its service container). Instead of the
+`pgvector` Python package, a ~40-line SQLAlchemy type (`app/db/vector.py`) sends vectors as text
+and casts in SQL, since asyncpg has no codec for the extension type (and PyPI downloads kept
+failing on this network's IPv6). No index: a sequential scan is instant at a few thousand cases.
+
 ## 7. Jev as an optional fast tier only
 
 **Context:** some steps are simple classifications (driver replies, reject reasons, which action

@@ -19,6 +19,7 @@ from app.api.schemas import (
     RankedOut,
     RecommendationOut,
     RecommendationsResponse,
+    SimilarCaseOut,
     WorldSpeedRequest,
     WorldStatus,
 )
@@ -140,6 +141,9 @@ async def pending_recommendations(_: Officer, session: Session) -> Recommendatio
                 ranking=[RankedOut.model_validate(r) for r in rec.ranking],
                 created_at=rec.created_at,
                 expires_at=rec.expires_at,
+                similar_cases=[SimilarCaseOut.model_validate(c) for c in rec.similar_cases or []],
+                confidence="lowered" if rec.confidence == "lowered" else "normal",
+                confidence_note=rec.confidence_note,
             )
             for run, rec, cand, fleet in rows
         ]

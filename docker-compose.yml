@@ -36,7 +36,9 @@ x-healthcheck-timing: &hc-timing
 
 services:
   postgres:
-    image: postgis/postgis:17-3.5
+    # PostGIS + pgvector (B22); see backend/docker/postgres/Dockerfile
+    build: ./backend/docker/postgres
+    image: vazhisync-postgres:17-3.5-pgvector
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}

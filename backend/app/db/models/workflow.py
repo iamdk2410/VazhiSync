@@ -134,6 +134,11 @@ class Recommendation(Base):
     created_at: Mapped[datetime] = utc_now_column()
     # B12: a recommendation is only valid for a short while; after this it is re-planned.
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # B22: the most similar past cases, shown on the recommendation card, and the confidence
+    # they imply ('lowered' when similar cases saved clearly less than predicted).
+    similar_cases: Mapped[list[Json] | None] = mapped_column(JSONB)
+    confidence: Mapped[str] = mapped_column(String(16), server_default="normal")
+    confidence_note: Mapped[str | None] = mapped_column(Text)
 
 
 class Approval(Base):

@@ -15,11 +15,14 @@ from the approval, so a replayed or double-clicked approval can only ever send o
 
 import itertools
 import statistics
+import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 from langgraph.types import interrupt
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.agents.headway_monitor import find_pair
 from app.db.enums import (
@@ -31,6 +34,7 @@ from app.db.enums import (
 from app.db.models import (
     Approval,
     CandidateAction,
+    Case,
     DriverInstruction,
     InterventionOutcome,
     Notification,
@@ -46,6 +50,7 @@ from app.graph.state import (
     OutcomeDue,
     WorkflowState,
 )
+from app.harness.cases import vectorize
 from app.harness.errors import HookRejected, ToolFailed
 from mcp_servers.schemas import Headways, InstructionSent
 
@@ -229,6 +234,7 @@ async def dispatch(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
             return _next_round(state, "replans_exhausted")
         raise
     notified = await _notify_passengers(deps, c, sent)
+    await _record_case(deps, state, c, params, sent)
     if deps.job_queue is not None:
         await deps.job_queue.enqueue_job(
             "driver_ack_timeout", deps.run_id, sent.instruction_id,
@@ -238,6 +244,38 @@ async def dispatch(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
         "instruction": sent.model_dump(mode="json") | {"notified_stops": notified},
         "route": "sent",
     }
+
+
+async def _record_case(
+    deps: WorkflowDeps,
+    state: WorkflowState,
+    c: Candidate,
+    params: dict[str, Any],
+    sent: InstructionSent,
+) -> None:
+    """B22: the situation this instruction was decided in becomes a case (once per
+    instruction; the actual benefit is added when the outcome is measured)."""
+    raw = state.get("case_features")
+    if not raw:
+        return
+    rec = state["recommendation"]
+    async with deps.sessionmaker() as session:
+        await session.execute(
+            pg_insert(Case)
+            .values(
+                route_id=state["route_id"],
+                run_id=uuid.UUID(deps.run_id),
+                driver_instruction_id=sent.id,
+                action_type=ActionType(c.action_type),
+                params=params,
+                features=vectorize(raw),
+                feature_values=raw,
+                predicted_benefit_passenger_minutes=rec.benefit_passenger_minutes,
+                event_kind=state.get("event_kind", "actual"),
+            )
+            .on_conflict_do_nothing(index_elements=[Case.driver_instruction_id])
+        )
+        await session.commit()
 
 
 # ------------------------------------------------------------------ driver and outcome
@@ -343,6 +381,15 @@ async def measure(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
                         "queue_samples": len(samples),
                         "pair_status_after": pair.status if pair else "not_adjacent",
                     },
+                )
+            )
+            await session.execute(
+                update(Case)
+                .where(Case.driver_instruction_id == instruction.id)
+                .values(
+                    actual_benefit_passenger_minutes=actual_benefit,
+                    bunching_resolved=resolved,
+                    measured_at=datetime.now(UTC),
                 )
             )
             await session.commit()

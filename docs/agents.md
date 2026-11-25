@@ -73,7 +73,9 @@ The officer resolves the interrupt with `POST /officer/runs/{run_id}/agui` (AG-U
   builder's summary (pair, the two buses, the skippable and turn stops the rules allow,
   existing and rejected options, past outcomes) and may suggest up to 3 actions; ideas naming
   other stops are repaired or dropped, the rest become canonical candidates checked exactly
-  like the rule ones (rules' best two first, at most 4 actions).
+  like the rule ones (rules' best two first, at most 4 actions). Past cases (B22): the three
+  nearest past interventions in feature space go into the LLM context and onto the officer's
+  card; a hold that saved passenger time in a similar case is offered again.
 - **Impact Simulator:** builds the what-if model once with `from_observations` from the tool
   results only (positions, loads, staleness, waiting counts, world clock — rule 1), then runs
   each candidate for 15 minutes over the same 3 seeds, in parallel branches with a

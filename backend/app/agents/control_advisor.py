@@ -26,6 +26,7 @@ from app.graph.state import (
     SimOutcome,
     WorkflowState,
 )
+from app.harness.cases import SimilarCase, confidence
 from app.harness.context import control_advisor_messages, numbers_not_in
 
 # Two-sided 95 % Student-t critical values by degrees of freedom (n - 1).
@@ -253,11 +254,30 @@ async def explain(
     )
 
 
+def with_cases(
+    result: RecommendationResult, candidates: list[Candidate], similar: list[dict[str, Any]]
+) -> RecommendationResult:
+    """B22: attach the similar past cases for the officer's card, and lower the confidence
+    when similar cases of the recommended action saved clearly less than predicted. The note
+    is appended after any LLM wording, so its numbers are the database's, not a model's."""
+    if not similar:
+        return result
+    chosen = next((c for c in candidates if c.key == result.candidate_key), None)
+    action = chosen.action_type if chosen else result.candidate_key
+    verdict = confidence(action, [SimilarCase.model_validate(c) for c in similar])
+    update: dict[str, Any] = {"similar_cases": similar, "confidence": verdict.level}
+    if verdict.note:
+        update["confidence_note"] = verdict.note
+        update["explanation"] = f"{result.explanation} {verdict.note}"
+    return result.model_copy(update=update)
+
+
 async def control_advisor(state: WorkflowState, deps: WorkflowDeps) -> dict[str, Any]:
     round_ = state.get("round", 0)
     candidates = [c for c in state.get("candidates", []) if c.round == round_]
     outcomes = [o for o in state.get("sim_outcomes", []) if o.round == round_]
     result = await explain(rank(outcomes, candidates, deps.horizon_min), candidates, deps)
+    result = with_cases(result, candidates, state.get("similar_cases", []))
     if result.end_reason == "do_nothing_recommended" and any(
         c.key.startswith("edit:") for c in candidates
     ):
@@ -281,6 +301,9 @@ async def control_advisor(state: WorkflowState, deps: WorkflowDeps) -> dict[str,
                 is_near_tie=result.is_near_tie,
                 regeneration_round=round_,
                 expires_at=datetime.now(UTC) + RECOMMENDATION_TTL,
+                similar_cases=result.similar_cases,
+                confidence=result.confidence,
+                confidence_note=result.confidence_note,
             )
             session.add(row)
             await session.commit()
