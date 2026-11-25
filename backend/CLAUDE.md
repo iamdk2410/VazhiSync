@@ -48,7 +48,9 @@ backend/
 │   │               budget.py (steps/time/tokens), harness.py, context.py (what each agent's
 │   │               LLM call sees, B9), cases.py (B22: features, similar cases, confidence),
 │   │               faults.py (B17: failure injection connector)
-│   ├── eval/       evaluation harness: plays scenarios through the system and scores them (B19)
+│   ├── eval/       B19: ab.py (A/B: no control / advisor / + early warning), observe.py (MCP-shaped
+│   │               observations + GPS layer), run.py (CLI -> docs/eval/), charts.py (SVG),
+│   │               system.py (whole-system evaluation through the real stack)
 │   ├── graph/      state.py (WorkflowState), deps.py (per-run deps, agent_steps recorder),
 │   │               workflow.py (graph, start/resume claims, limits), checkpoint.py (Postgres
 │   │               checkpointer, own `langgraph` schema), control.py (API side of resumes)
@@ -113,6 +115,9 @@ set their own, because pub/sub is shared across Redis database numbers.
 - Live map (dev): `uv run python -m http.server 5173 --directory devtools`, open
   `http://localhost:5173/live_map.html` and log in (the API must be running)
 - Regenerate the simulator's 32B fixture after a re-import: `uv run python -m app.gtfs.sim_route --route 32B --out tests/fixtures/route_32b.json`
+- Evaluation (B19): `uv run python -m app.eval.run` (6 golden scenarios x 3 seeds, ~15 min; writes
+  docs/eval/results.md + charts); `--seeds 1 --scenarios normal_morning_peak` for a quick look;
+  `--from-json docs/eval/results.json` re-renders without rerunning
 - Token/cost + failure report (B18): `uv run python -m app.reports.generate_report --hours 24 --out report.md`
   (or `--out report.pdf`; no `--out`: Markdown to stdout)
 - New migration: `uv run alembic revision --autogenerate --rev-id 000N -m "..."`, review it, then `uv run alembic check`

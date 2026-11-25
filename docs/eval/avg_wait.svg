@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="380" viewBox="0 0 860 380" font-family="Segoe UI, Arial, sans-serif" font-size="11">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="60" y="24" font-size="15" font-weight="600">Average passenger wait</text>
+<text x="60" y="42" fill="#555">seconds - lower is better</text>
+<line x1="60" y1="290" x2="840" y2="290" stroke="#333"/>
+<line x1="60" y1="290.0" x2="840" y2="290.0" stroke="#eee"/><text x="54" y="294.0" text-anchor="end" fill="#666">0</text>
+<line x1="60" y1="232.5" x2="840" y2="232.5" stroke="#eee"/><text x="54" y="236.5" text-anchor="end" fill="#666">223</text>
+<line x1="60" y1="175.0" x2="840" y2="175.0" stroke="#eee"/><text x="54" y="179.0" text-anchor="end" fill="#666">446</text>
+<line x1="60" y1="117.5" x2="840" y2="117.5" stroke="#eee"/><text x="54" y="121.5" text-anchor="end" fill="#666">669</text>
+<line x1="60" y1="60.0" x2="840" y2="60.0" stroke="#eee"/><text x="54" y="64.0" text-anchor="end" fill="#666">892</text>
+<rect x="73.0" y="230.2" width="32.7" height="59.8" fill="#9aa5b1"/><text x="89.3" y="227.2" text-anchor="middle" fill="#333" font-size="9">232</text>
+<rect x="107.7" y="232.4" width="32.7" height="57.6" fill="#2f6fdd"/><text x="124.0" y="229.4" text-anchor="middle" fill="#333" font-size="9">224</text>
+<rect x="142.3" y="242.1" width="32.7" height="47.9" fill="#16a37b"/><text x="158.7" y="239.1" text-anchor="middle" fill="#333" font-size="9">186</text>
+<text x="125.0" y="306" text-anchor="middle">bus breakdown</text>
+<rect x="203.0" y="235.3" width="32.7" height="54.7" fill="#9aa5b1"/><text x="219.3" y="232.3" text-anchor="middle" fill="#333" font-size="9">212</text>
+<rect x="237.7" y="243.6" width="32.7" height="46.4" fill="#2f6fdd"/><text x="254.0" y="240.6" text-anchor="middle" fill="#333" font-size="9">180</text>
+<rect x="272.3" y="246.2" width="32.7" height="43.8" fill="#16a37b"/><text x="288.7" y="243.2" text-anchor="middle" fill="#333" font-size="9">170</text>
+<text x="255.0" y="306" text-anchor="middle">gps dropout</text>
+<rect x="333.0" y="168.1" width="32.7" height="121.9" fill="#9aa5b1"/><text x="349.3" y="165.1" text-anchor="middle" fill="#333" font-size="9">473</text>
+<rect x="367.7" y="180.2" width="32.7" height="109.8" fill="#2f6fdd"/><text x="384.0" y="177.2" text-anchor="middle" fill="#333" font-size="9">426</text>
+<rect x="402.3" y="178.3" width="32.7" height="111.7" fill="#16a37b"/><text x="418.7" y="175.3" text-anchor="middle" fill="#333" font-size="9">433</text>
+<text x="385.0" y="306" text-anchor="middle">ipl chepauk</text>
+<rect x="463.0" y="90.0" width="32.7" height="200.0" fill="#9aa5b1"/><text x="479.3" y="87.0" text-anchor="middle" fill="#333" font-size="9">776</text>
+<rect x="497.7" y="94.2" width="32.7" height="195.8" fill="#2f6fdd"/><text x="514.0" y="91.2" text-anchor="middle" fill="#333" font-size="9">759</text>
+<rect x="532.3" y="93.8" width="32.7" height="196.2" fill="#16a37b"/><text x="548.7" y="90.8" text-anchor="middle" fill="#333" font-size="9">761</text>
+<text x="515.0" y="306" text-anchor="middle">monsoon evening</text>
+<rect x="593.0" y="235.3" width="32.7" height="54.7" fill="#9aa5b1"/><text x="609.3" y="232.3" text-anchor="middle" fill="#333" font-size="9">212</text>
+<rect x="627.7" y="244.7" width="32.7" height="45.3" fill="#2f6fdd"/><text x="644.0" y="241.7" text-anchor="middle" fill="#333" font-size="9">176</text>
+<rect x="662.3" y="245.2" width="32.7" height="44.8" fill="#16a37b"/><text x="678.7" y="242.2" text-anchor="middle" fill="#333" font-size="9">174</text>
+<text x="645.0" y="306" text-anchor="middle">normal morning peak</text>
+<rect x="723.0" y="251.5" width="32.7" height="38.5" fill="#9aa5b1"/><text x="739.3" y="248.5" text-anchor="middle" fill="#333" font-size="9">149</text>
+<rect x="757.7" y="253.2" width="32.7" height="36.8" fill="#2f6fdd"/><text x="774.0" y="250.2" text-anchor="middle" fill="#333" font-size="9">143</text>
+<rect x="792.3" y="254.3" width="32.7" height="35.7" fill="#16a37b"/><text x="808.7" y="251.3" text-anchor="middle" fill="#333" font-size="9">138</text>
+<text x="775.0" y="306" text-anchor="middle">quiet late evening</text>
+<rect x="60" y="350" width="12" height="12" fill="#9aa5b1"/><text x="76" y="360">No control</text>
+<rect x="160" y="350" width="12" height="12" fill="#2f6fdd"/><text x="176" y="360">Advisor</text>
+<rect x="239" y="350" width="12" height="12" fill="#16a37b"/><text x="255" y="360">Advisor + early warning</text>
+</svg>

@@ -27,6 +27,10 @@ os.environ.setdefault("JWT_SECRET", "unit-test-secret-at-least-16-chars")
 # Our own pub/sub channels: Redis pub/sub ignores database numbers, so without this the tests
 # hear the running dev stack's live frames (app/live/channels.py).
 os.environ["VAZHISYNC_PUBSUB_NAMESPACE"] = "vazhisync-test"
+# Tests never send traces to a real Langfuse (a developer's .env may hold real keys); the
+# tracer is tested against a mock transport instead.
+os.environ["LANGFUSE_PUBLIC_KEY"] = ""
+os.environ["LANGFUSE_SECRET_KEY"] = ""
 
 
 @pytest.fixture(scope="session")

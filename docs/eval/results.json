@@ -1,0 +1,4783 @@
+{
+ "summary": {
+  "scenarios": [
+   "bus_breakdown",
+   "gps_dropout",
+   "ipl_chepauk",
+   "monsoon_evening",
+   "normal_morning_peak",
+   "quiet_late_evening"
+  ],
+  "table": {
+   "bus_breakdown": {
+    "control": {
+     "avg_wait_s": 232.033,
+     "passenger_wait_minutes": 11753.333,
+     "headway_cv": 0.65,
+     "bunching_count": 40.0,
+     "interventions": 0.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor": {
+     "avg_wait_s": 223.533,
+     "passenger_wait_minutes": 11456.833,
+     "headway_cv": 0.544,
+     "bunching_count": 9.667,
+     "interventions": 18.333,
+     "unsafe": 0,
+     "invalid": 7
+    },
+    "advisor_ew": {
+     "avg_wait_s": 185.667,
+     "passenger_wait_minutes": 9705.067,
+     "headway_cv": 0.398,
+     "bunching_count": 7.333,
+     "interventions": 17.0,
+     "unsafe": 0,
+     "invalid": 4
+    }
+   },
+   "gps_dropout": {
+    "control": {
+     "avg_wait_s": 211.933,
+     "passenger_wait_minutes": 10837.0,
+     "headway_cv": 0.62,
+     "bunching_count": 36.0,
+     "interventions": 0.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor": {
+     "avg_wait_s": 179.9,
+     "passenger_wait_minutes": 9391.533,
+     "headway_cv": 0.394,
+     "bunching_count": 6.0,
+     "interventions": 12.333,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor_ew": {
+     "avg_wait_s": 169.833,
+     "passenger_wait_minutes": 8921.367,
+     "headway_cv": 0.346,
+     "bunching_count": 5.667,
+     "interventions": 15.667,
+     "unsafe": 0,
+     "invalid": 0
+    }
+   },
+   "ipl_chepauk": {
+    "control": {
+     "avg_wait_s": 472.7,
+     "passenger_wait_minutes": 28034.8,
+     "headway_cv": 0.549,
+     "bunching_count": 24.667,
+     "interventions": 0.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor": {
+     "avg_wait_s": 425.7,
+     "passenger_wait_minutes": 25981.9,
+     "headway_cv": 0.367,
+     "bunching_count": 7.0,
+     "interventions": 10.333,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor_ew": {
+     "avg_wait_s": 433.2,
+     "passenger_wait_minutes": 26276.967,
+     "headway_cv": 0.329,
+     "bunching_count": 3.667,
+     "interventions": 16.0,
+     "unsafe": 0,
+     "invalid": 0
+    }
+   },
+   "monsoon_evening": {
+    "control": {
+     "avg_wait_s": 775.567,
+     "passenger_wait_minutes": 44774.4,
+     "headway_cv": 0.311,
+     "bunching_count": 0.0,
+     "interventions": 0.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor": {
+     "avg_wait_s": 759.133,
+     "passenger_wait_minutes": 44470.033,
+     "headway_cv": 0.274,
+     "bunching_count": 0.0,
+     "interventions": 5.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor_ew": {
+     "avg_wait_s": 760.767,
+     "passenger_wait_minutes": 44801.733,
+     "headway_cv": 0.34,
+     "bunching_count": 2.333,
+     "interventions": 12.667,
+     "unsafe": 0,
+     "invalid": 0
+    }
+   },
+   "normal_morning_peak": {
+    "control": {
+     "avg_wait_s": 211.933,
+     "passenger_wait_minutes": 10837.0,
+     "headway_cv": 0.62,
+     "bunching_count": 36.0,
+     "interventions": 0.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor": {
+     "avg_wait_s": 175.6,
+     "passenger_wait_minutes": 9170.167,
+     "headway_cv": 0.366,
+     "bunching_count": 4.667,
+     "interventions": 12.333,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor_ew": {
+     "avg_wait_s": 173.767,
+     "passenger_wait_minutes": 9057.3,
+     "headway_cv": 0.359,
+     "bunching_count": 6.333,
+     "interventions": 16.333,
+     "unsafe": 0,
+     "invalid": 0
+    }
+   },
+   "quiet_late_evening": {
+    "control": {
+     "avg_wait_s": 149.2,
+     "passenger_wait_minutes": 1427.9,
+     "headway_cv": 0.41,
+     "bunching_count": 11.333,
+     "interventions": 0.0,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor": {
+     "avg_wait_s": 142.733,
+     "passenger_wait_minutes": 1373.233,
+     "headway_cv": 0.306,
+     "bunching_count": 6.333,
+     "interventions": 4.667,
+     "unsafe": 0,
+     "invalid": 0
+    },
+    "advisor_ew": {
+     "avg_wait_s": 138.3,
+     "passenger_wait_minutes": 1334.3,
+     "headway_cv": 0.249,
+     "bunching_count": 3.667,
+     "interventions": 10.667,
+     "unsafe": 0,
+     "invalid": 0
+    }
+   }
+  },
+  "interventions": 454,
+  "prediction": {
+   "mean_abs_error": 46.6,
+   "predicted_total": 23722.8,
+   "actual_total": 15616.1,
+   "helped": 297
+  }
+ },
+ "runs": [
+  {
+   "scenario": "bus_breakdown",
+   "seed": 6,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 11039.9,
+   "avg_wait_s": 221.9,
+   "headway_cv": 0.611,
+   "bunching_count": 33,
+   "left_behind": 62,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.3,
+   "interventions": []
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 6,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 11972.9,
+   "avg_wait_s": 241.0,
+   "headway_cv": 0.636,
+   "bunching_count": 15,
+   "left_behind": 115,
+   "decisions": 33,
+   "do_nothing": 14,
+   "unsafe": 0,
+   "invalid": 1,
+   "cpu_s": 29.8,
+   "interventions": [
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:180",
+     "predicted_benefit": 20.2,
+     "actual_benefit": -204.4
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-6876",
+     "predicted_benefit": 31.5,
+     "actual_benefit": 1.8
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-01",
+     "action": "hold:32B-01:180",
+     "predicted_benefit": 68.9,
+     "actual_benefit": -64.4
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 31.6,
+     "actual_benefit": 2.6
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 40.5,
+     "actual_benefit": 30.3
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-14",
+     "action": "hold:32B-14:90",
+     "predicted_benefit": 54.2,
+     "actual_benefit": 82.5
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-14",
+     "action": "skip:32B-01:MTC-9488+MTC-9453",
+     "predicted_benefit": 11.9,
+     "actual_benefit": -5.4
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-03",
+     "action": "skip:32B-13:MTC-1091+MTC-9547",
+     "predicted_benefit": 1.5,
+     "actual_benefit": 8.8
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-13",
+     "action": "skip:32B-03:MTC-9453+MTC-10249",
+     "predicted_benefit": 23.8,
+     "actual_benefit": 15.1
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-14",
+     "action": "skip:32B-01:MTC-1090+MTC-124",
+     "predicted_benefit": 15.3,
+     "actual_benefit": 15.6
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-02",
+     "action": "short_turn:32B-02:MTC-9490",
+     "predicted_benefit": 47.4,
+     "actual_benefit": 50.9
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-13",
+     "action": "skip:32B-11:MTC-9449+MTC-9512",
+     "predicted_benefit": 0.9,
+     "actual_benefit": 20.1
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:180",
+     "predicted_benefit": 87.6,
+     "actual_benefit": 127.9
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-03",
+     "action": "short_turn:32B-03:MTC-9512",
+     "predicted_benefit": 43.0,
+     "actual_benefit": 78.2
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-13",
+     "action": "hold:32B-13:90",
+     "predicted_benefit": 37.6,
+     "actual_benefit": 70.9
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-10",
+     "action": "hold:32B-10:90",
+     "predicted_benefit": 14.8,
+     "actual_benefit": 12.3
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-11",
+     "action": "skip:32B-14:MTC-99+MTC-9806",
+     "predicted_benefit": 10.7,
+     "actual_benefit": 8.7
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 95.8,
+     "actual_benefit": 120.4
+    }
+   ]
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 6,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 9400.5,
+   "avg_wait_s": 181.2,
+   "headway_cv": 0.372,
+   "bunching_count": 5,
+   "left_behind": 53,
+   "decisions": 33,
+   "do_nothing": 18,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 41.1,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:30",
+     "predicted_benefit": 6.9,
+     "actual_benefit": 2.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:30",
+     "predicted_benefit": 6.0,
+     "actual_benefit": 3.7
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 9.9,
+     "actual_benefit": 15.4
+    },
+    {
+     "at_min": 12.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 2.5,
+     "actual_benefit": -30.0
+    },
+    {
+     "at_min": 18.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 12.2,
+     "actual_benefit": -5.1
+    },
+    {
+     "at_min": 19.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 66.0,
+     "actual_benefit": 36.2
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 36.2,
+     "actual_benefit": -11.2
+    },
+    {
+     "at_min": 24.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:120",
+     "predicted_benefit": 77.9,
+     "actual_benefit": 132.3
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-14",
+     "action": "hold:32B-14:90",
+     "predicted_benefit": 33.4,
+     "actual_benefit": -47.2
+    },
+    {
+     "at_min": 30.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:30",
+     "predicted_benefit": 29.4,
+     "actual_benefit": 68.6
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-13",
+     "action": "hold:32B-13:90",
+     "predicted_benefit": 53.0,
+     "actual_benefit": -39.9
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-03",
+     "action": "short_turn:32B-03:MTC-1091",
+     "predicted_benefit": 335.0,
+     "actual_benefit": 354.5
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-9453+MTC-10249",
+     "predicted_benefit": 33.3,
+     "actual_benefit": -42.7
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-1090+MTC-124",
+     "predicted_benefit": 14.1,
+     "actual_benefit": 24.2
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9776+MTC-11110",
+     "predicted_benefit": 2.5,
+     "actual_benefit": 8.6
+    }
+   ]
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 1006,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 11379.0,
+   "avg_wait_s": 228.3,
+   "headway_cv": 0.66,
+   "bunching_count": 37,
+   "left_behind": 103,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.2,
+   "interventions": []
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 1006,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 9735.5,
+   "avg_wait_s": 189.8,
+   "headway_cv": 0.381,
+   "bunching_count": 2,
+   "left_behind": 104,
+   "decisions": 18,
+   "do_nothing": 2,
+   "unsafe": 0,
+   "invalid": 2,
+   "cpu_s": 21.0,
+   "interventions": [
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-03",
+     "action": "skip:32B-02:MTC-9488+MTC-9453",
+     "predicted_benefit": 9.8,
+     "actual_benefit": -20.0
+    },
+    {
+     "at_min": 18.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:180",
+     "predicted_benefit": 55.6,
+     "actual_benefit": 51.8
+    },
+    {
+     "at_min": 19.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-01",
+     "action": "hold:32B-01:180",
+     "predicted_benefit": 114.8,
+     "actual_benefit": -52.4
+    },
+    {
+     "at_min": 19.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 56.1,
+     "actual_benefit": -7.9
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:180",
+     "predicted_benefit": 35.6,
+     "actual_benefit": 36.9
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 79.5,
+     "actual_benefit": -77.6
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-03",
+     "action": "skip:32B-14:MTC-9547+MTC-9511",
+     "predicted_benefit": 8.9,
+     "actual_benefit": -22.6
+    },
+    {
+     "at_min": 32.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-13",
+     "action": "hold:32B-13:180",
+     "predicted_benefit": 112.7,
+     "actual_benefit": 4.3
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 20.6,
+     "actual_benefit": 87.4
+    },
+    {
+     "at_min": 42.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-13",
+     "action": "short_turn:32B-13:MTC-9511",
+     "predicted_benefit": 257.5,
+     "actual_benefit": 504.0
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:180",
+     "predicted_benefit": 128.2,
+     "actual_benefit": 126.2
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-13",
+     "action": "skip:32B-02:MTC-99+MTC-10316",
+     "predicted_benefit": 21.0,
+     "actual_benefit": -3.9
+    },
+    {
+     "at_min": 48.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-9453+MTC-10249",
+     "predicted_benefit": 14.9,
+     "actual_benefit": 2.6
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-9488+MTC-10249",
+     "predicted_benefit": 8.2,
+     "actual_benefit": 3.8
+    }
+   ]
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 1006,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 9702.3,
+   "avg_wait_s": 189.2,
+   "headway_cv": 0.474,
+   "bunching_count": 11,
+   "left_behind": 58,
+   "decisions": 48,
+   "do_nothing": 25,
+   "unsafe": 0,
+   "invalid": 3,
+   "cpu_s": 54.1,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 13.3,
+     "actual_benefit": -23.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9453+MTC-10249",
+     "predicted_benefit": 12.9,
+     "actual_benefit": -35.7
+    },
+    {
+     "at_min": 11.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 3.1,
+     "actual_benefit": -28.3
+    },
+    {
+     "at_min": 13.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 1.8,
+     "actual_benefit": 1.8
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 20.4,
+     "actual_benefit": 52.5
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:60",
+     "predicted_benefit": 16.0,
+     "actual_benefit": 20.4
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 31.4,
+     "actual_benefit": -9.0
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:60",
+     "predicted_benefit": 9.9,
+     "actual_benefit": -20.8
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:120",
+     "predicted_benefit": 54.5,
+     "actual_benefit": 106.2
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9488+MTC-9453",
+     "predicted_benefit": 38.7,
+     "actual_benefit": 30.3
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-14",
+     "action": "hold:32B-14:90",
+     "predicted_benefit": 14.0,
+     "actual_benefit": -93.5
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-03",
+     "action": "hold:32B-03:180",
+     "predicted_benefit": 115.6,
+     "actual_benefit": 161.5
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-124+MTC-99",
+     "predicted_benefit": 11.8,
+     "actual_benefit": 32.0
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-14",
+     "action": "short_turn:32B-14:MTC-9488",
+     "predicted_benefit": 24.4,
+     "actual_benefit": 22.7
+    },
+    {
+     "at_min": 45.0,
+     "trigger": "predicted",
+     "pair": "32B-13>32B-03",
+     "action": "short_turn:32B-03:MTC-9488",
+     "predicted_benefit": 131.9,
+     "actual_benefit": 220.6
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-6795+MTC-9888",
+     "predicted_benefit": 35.8,
+     "actual_benefit": 40.1
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-11110+MTC-9890",
+     "predicted_benefit": 11.8,
+     "actual_benefit": -0.2
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-01",
+     "action": "skip:32B-14:MTC-9776+MTC-6791",
+     "predicted_benefit": 19.5,
+     "actual_benefit": 3.8
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-10249",
+     "predicted_benefit": 207.2,
+     "actual_benefit": 268.2
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-11",
+     "action": "skip:32B-13:MTC-1090+MTC-99",
+     "predicted_benefit": 23.3,
+     "actual_benefit": 23.9
+    }
+   ]
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 2006,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 12841.1,
+   "avg_wait_s": 245.9,
+   "headway_cv": 0.678,
+   "bunching_count": 50,
+   "left_behind": 155,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.3,
+   "interventions": []
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 2006,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 12662.1,
+   "avg_wait_s": 239.8,
+   "headway_cv": 0.616,
+   "bunching_count": 12,
+   "left_behind": 193,
+   "decisions": 39,
+   "do_nothing": 12,
+   "unsafe": 0,
+   "invalid": 4,
+   "cpu_s": 36.3,
+   "interventions": [
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-02",
+     "action": "short_turn:32B-02:MTC-100",
+     "predicted_benefit": 32.5,
+     "actual_benefit": -440.0
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 88.4,
+     "actual_benefit": 114.5
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-02",
+     "action": "skip:32B-08:MTC-10340+MTC-9890",
+     "predicted_benefit": 8.5,
+     "actual_benefit": -24.0
+    },
+    {
+     "at_min": 18.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-124+MTC-99",
+     "predicted_benefit": 6.9,
+     "actual_benefit": 35.6
+    },
+    {
+     "at_min": 20.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6914",
+     "predicted_benefit": 40.4,
+     "actual_benefit": 47.5
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-03",
+     "action": "skip:32B-01:MTC-9511+MTC-9488",
+     "predicted_benefit": 26.9,
+     "actual_benefit": -83.6
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:150",
+     "predicted_benefit": 129.2,
+     "actual_benefit": 47.0
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-07",
+     "action": "short_turn:32B-07:MTC-9806",
+     "predicted_benefit": 201.5,
+     "actual_benefit": 36.3
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-03",
+     "action": "skip:32B-14:MTC-100+MTC-125",
+     "predicted_benefit": 17.9,
+     "actual_benefit": 25.9
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:90",
+     "predicted_benefit": 35.5,
+     "actual_benefit": 92.1
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:90",
+     "predicted_benefit": 30.1,
+     "actual_benefit": 47.4
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-02",
+     "action": "hold:32B-02:180",
+     "predicted_benefit": 80.6,
+     "actual_benefit": 195.1
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-07>32B-03",
+     "action": "hold:32B-03:180",
+     "predicted_benefit": 115.9,
+     "actual_benefit": 91.9
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-07",
+     "action": "short_turn:32B-07:MTC-9453",
+     "predicted_benefit": 443.4,
+     "actual_benefit": 390.9
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "short_turn:32B-13:MTC-9453",
+     "predicted_benefit": 443.5,
+     "actual_benefit": 150.7
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-11",
+     "action": "short_turn:32B-11:MTC-83",
+     "predicted_benefit": 432.4,
+     "actual_benefit": 449.5
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-07",
+     "action": "skip:32B-01:MTC-9553+MTC-124",
+     "predicted_benefit": 13.4,
+     "actual_benefit": -0.7
+    },
+    {
+     "at_min": 49.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-12",
+     "action": "hold:32B-12:150",
+     "predicted_benefit": 20.8,
+     "actual_benefit": -11.5
+    },
+    {
+     "at_min": 49.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-6876",
+     "predicted_benefit": 70.0,
+     "actual_benefit": 29.6
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-07",
+     "action": "short_turn:32B-07:MTC-124",
+     "predicted_benefit": 130.5,
+     "actual_benefit": 182.0
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-07",
+     "action": "skip:32B-09:MTC-9511+MTC-10249",
+     "predicted_benefit": 2.6,
+     "actual_benefit": -24.4
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-13",
+     "action": "short_turn:32B-13:MTC-82",
+     "predicted_benefit": 31.7,
+     "actual_benefit": -7.7
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-9453+MTC-10249",
+     "predicted_benefit": 28.5,
+     "actual_benefit": -19.7
+    }
+   ]
+  },
+  {
+   "scenario": "bus_breakdown",
+   "seed": 2006,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 10012.4,
+   "avg_wait_s": 186.6,
+   "headway_cv": 0.348,
+   "bunching_count": 6,
+   "left_behind": 91,
+   "decisions": 35,
+   "do_nothing": 18,
+   "unsafe": 0,
+   "invalid": 1,
+   "cpu_s": 43.5,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 16.6,
+     "actual_benefit": -18.3
+    },
+    {
+     "at_min": 5.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 49.9,
+     "actual_benefit": 129.5
+    },
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 13.3,
+     "actual_benefit": -4.5
+    },
+    {
+     "at_min": 11.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:150",
+     "predicted_benefit": 86.5,
+     "actual_benefit": 113.8
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-03",
+     "action": "skip:32B-02:MTC-9511+MTC-9488",
+     "predicted_benefit": 15.9,
+     "actual_benefit": -34.8
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 26.7,
+     "actual_benefit": 5.8
+    },
+    {
+     "at_min": 17.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-01",
+     "action": "hold:32B-01:90",
+     "predicted_benefit": 57.1,
+     "actual_benefit": -42.8
+    },
+    {
+     "at_min": 17.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:60",
+     "predicted_benefit": 19.0,
+     "actual_benefit": 65.3
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9776+MTC-10340",
+     "predicted_benefit": 7.8,
+     "actual_benefit": 14.1
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-03",
+     "action": "skip:32B-14:MTC-1091+MTC-9547",
+     "predicted_benefit": 11.7,
+     "actual_benefit": 21.0
+    },
+    {
+     "at_min": 30.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6795+MTC-9888",
+     "predicted_benefit": 16.7,
+     "actual_benefit": 30.6
+    },
+    {
+     "at_min": 36.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "short_turn:32B-13:MTC-9547",
+     "predicted_benefit": 318.1,
+     "actual_benefit": 408.2
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-13",
+     "action": "skip:32B-04:MTC-10316+MTC-9806",
+     "predicted_benefit": 4.8,
+     "actual_benefit": -12.6
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-06",
+     "action": "hold:32B-06:180",
+     "predicted_benefit": 57.5,
+     "actual_benefit": 137.1
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-11",
+     "action": "hold:32B-11:180",
+     "predicted_benefit": 44.1,
+     "actual_benefit": 49.0
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-150+MTC-125",
+     "predicted_benefit": 2.0,
+     "actual_benefit": 2.8
+    }
+   ]
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 6,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 10493.6,
+   "avg_wait_s": 210.4,
+   "headway_cv": 0.593,
+   "bunching_count": 27,
+   "left_behind": 64,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.3,
+   "interventions": []
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 6,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 8924.0,
+   "avg_wait_s": 173.3,
+   "headway_cv": 0.337,
+   "bunching_count": 4,
+   "left_behind": 59,
+   "decisions": 12,
+   "do_nothing": 2,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 13.5,
+   "interventions": [
+    {
+     "at_min": 15.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "skip:32B-04:MTC-9453+MTC-10249",
+     "predicted_benefit": 50.2,
+     "actual_benefit": -11.5
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 6.4,
+     "actual_benefit": 29.6
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:90",
+     "predicted_benefit": 23.5,
+     "actual_benefit": -0.8
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 40.4,
+     "actual_benefit": 30.3
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 54.1,
+     "actual_benefit": 61.4
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:90",
+     "predicted_benefit": 55.2,
+     "actual_benefit": 44.3
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-9453+MTC-10249",
+     "predicted_benefit": 23.4,
+     "actual_benefit": 9.4
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-10316+MTC-9776",
+     "predicted_benefit": 11.5,
+     "actual_benefit": -5.2
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "short_turn:32B-04:MTC-10386",
+     "predicted_benefit": 31.5,
+     "actual_benefit": 43.3
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:180",
+     "predicted_benefit": 96.0,
+     "actual_benefit": -15.6
+    }
+   ]
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 6,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 8455.5,
+   "avg_wait_s": 163.6,
+   "headway_cv": 0.302,
+   "bunching_count": 4,
+   "left_behind": 23,
+   "decisions": 33,
+   "do_nothing": 21,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 44.8,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:30",
+     "predicted_benefit": 6.9,
+     "actual_benefit": 2.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:30",
+     "predicted_benefit": 6.0,
+     "actual_benefit": 3.7
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 9.9,
+     "actual_benefit": 9.6
+    },
+    {
+     "at_min": 18.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 8.5,
+     "actual_benefit": -3.2
+    },
+    {
+     "at_min": 19.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 67.9,
+     "actual_benefit": 36.2
+    },
+    {
+     "at_min": 24.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:120",
+     "predicted_benefit": 77.9,
+     "actual_benefit": 132.3
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 8.9,
+     "actual_benefit": 15.8
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "predicted",
+     "pair": "32B-01>32B-14",
+     "action": "hold:32B-14:60",
+     "predicted_benefit": 45.7,
+     "actual_benefit": 7.8
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-100",
+     "predicted_benefit": 253.6,
+     "actual_benefit": 173.8
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-10340",
+     "predicted_benefit": 181.8,
+     "actual_benefit": 162.3
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:180",
+     "predicted_benefit": 80.5,
+     "actual_benefit": 73.1
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-11",
+     "action": "short_turn:32B-11:MTC-11110",
+     "predicted_benefit": 55.5,
+     "actual_benefit": 124.9
+    }
+   ]
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 1006,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 10458.2,
+   "avg_wait_s": 206.7,
+   "headway_cv": 0.618,
+   "bunching_count": 34,
+   "left_behind": 99,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.3,
+   "interventions": []
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 1006,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 9537.6,
+   "avg_wait_s": 186.3,
+   "headway_cv": 0.424,
+   "bunching_count": 6,
+   "left_behind": 78,
+   "decisions": 20,
+   "do_nothing": 5,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 21.8,
+   "interventions": [
+    {
+     "at_min": 19.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 56.2,
+     "actual_benefit": -7.9
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:180",
+     "predicted_benefit": 35.7,
+     "actual_benefit": 36.9
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-124",
+     "predicted_benefit": 48.7,
+     "actual_benefit": -63.2
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 79.5,
+     "actual_benefit": -77.6
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:180",
+     "predicted_benefit": 67.9,
+     "actual_benefit": 116.8
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "short_turn:32B-01:MTC-9453",
+     "predicted_benefit": 8.7,
+     "actual_benefit": -125.5
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 20.2,
+     "actual_benefit": 74.7
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:150",
+     "predicted_benefit": 212.0,
+     "actual_benefit": 147.9
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-01",
+     "action": "skip:32B-04:MTC-10340+MTC-11110",
+     "predicted_benefit": 10.4,
+     "actual_benefit": 19.5
+    },
+    {
+     "at_min": 48.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-9488+MTC-9453",
+     "predicted_benefit": 15.3,
+     "actual_benefit": 2.8
+    },
+    {
+     "at_min": 49.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-01",
+     "action": "hold:32B-01:180",
+     "predicted_benefit": 67.5,
+     "actual_benefit": 20.8
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "skip:32B-04:MTC-10386+MTC-6876",
+     "predicted_benefit": 10.8,
+     "actual_benefit": 5.1
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-01",
+     "action": "skip:32B-03:MTC-10386+MTC-6876",
+     "predicted_benefit": 8.2,
+     "actual_benefit": -15.5
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-1090+MTC-124",
+     "predicted_benefit": 10.6,
+     "actual_benefit": 31.2
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-9488+MTC-10249",
+     "predicted_benefit": 6.0,
+     "actual_benefit": 0.6
+    }
+   ]
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 1006,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 8654.0,
+   "avg_wait_s": 166.4,
+   "headway_cv": 0.334,
+   "bunching_count": 5,
+   "left_behind": 25,
+   "decisions": 37,
+   "do_nothing": 20,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 47.5,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 13.3,
+     "actual_benefit": -23.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9453+MTC-10249",
+     "predicted_benefit": 12.9,
+     "actual_benefit": -35.7
+    },
+    {
+     "at_min": 13.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 1.9,
+     "actual_benefit": 1.8
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 20.5,
+     "actual_benefit": 52.5
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 9.1,
+     "actual_benefit": -17.4
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:60",
+     "predicted_benefit": 16.0,
+     "actual_benefit": 20.4
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:60",
+     "predicted_benefit": 15.3,
+     "actual_benefit": 49.7
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:60",
+     "predicted_benefit": 9.7,
+     "actual_benefit": -20.8
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:120",
+     "predicted_benefit": 54.5,
+     "actual_benefit": 106.2
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 16.0,
+     "actual_benefit": -58.0
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-99",
+     "predicted_benefit": 138.6,
+     "actual_benefit": 75.2
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "short_turn:32B-13:MTC-9453",
+     "predicted_benefit": 53.1,
+     "actual_benefit": 138.7
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-13",
+     "action": "skip:32B-01:MTC-1090+MTC-99",
+     "predicted_benefit": 7.5,
+     "actual_benefit": 3.1
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 13.2,
+     "actual_benefit": 2.5
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-6795+MTC-9888",
+     "predicted_benefit": 35.7,
+     "actual_benefit": 40.1
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-12",
+     "action": "short_turn:32B-12:MTC-9488",
+     "predicted_benefit": 147.9,
+     "actual_benefit": 172.0
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-14",
+     "action": "hold:32B-14:90",
+     "predicted_benefit": 21.9,
+     "actual_benefit": 34.8
+    }
+   ]
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 2006,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 11559.2,
+   "avg_wait_s": 218.7,
+   "headway_cv": 0.65,
+   "bunching_count": 47,
+   "left_behind": 159,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.3,
+   "interventions": []
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 2006,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 9713.0,
+   "avg_wait_s": 180.1,
+   "headway_cv": 0.422,
+   "bunching_count": 8,
+   "left_behind": 96,
+   "decisions": 18,
+   "do_nothing": 6,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 17.9,
+   "interventions": [
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 111.7,
+     "actual_benefit": 131.5
+    },
+    {
+     "at_min": 20.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6914",
+     "predicted_benefit": 40.4,
+     "actual_benefit": 47.5
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:150",
+     "predicted_benefit": 122.5,
+     "actual_benefit": 137.9
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:90",
+     "predicted_benefit": 34.7,
+     "actual_benefit": 54.5
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:90",
+     "predicted_benefit": 28.9,
+     "actual_benefit": -9.7
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6795+MTC-9888",
+     "predicted_benefit": 29.2,
+     "actual_benefit": 16.2
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-6914",
+     "predicted_benefit": 29.1,
+     "actual_benefit": 52.1
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 73.0,
+     "actual_benefit": 61.8
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-10249",
+     "predicted_benefit": 41.3,
+     "actual_benefit": 87.4
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-06",
+     "action": "short_turn:32B-06:MTC-6808",
+     "predicted_benefit": 325.6,
+     "actual_benefit": 331.1
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-9806",
+     "predicted_benefit": 8.0,
+     "actual_benefit": -1.7
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "short_turn:32B-10:MTC-1091",
+     "predicted_benefit": 203.8,
+     "actual_benefit": 267.2
+    }
+   ]
+  },
+  {
+   "scenario": "gps_dropout",
+   "seed": 2006,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 9654.6,
+   "avg_wait_s": 179.5,
+   "headway_cv": 0.401,
+   "bunching_count": 8,
+   "left_behind": 119,
+   "decisions": 34,
+   "do_nothing": 16,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 42.4,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 16.6,
+     "actual_benefit": -18.3
+    },
+    {
+     "at_min": 5.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 49.8,
+     "actual_benefit": 129.5
+    },
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 13.1,
+     "actual_benefit": -10.8
+    },
+    {
+     "at_min": 11.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:150",
+     "predicted_benefit": 86.5,
+     "actual_benefit": 113.8
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 26.7,
+     "actual_benefit": 5.8
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 0.2,
+     "actual_benefit": -2.2
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-124",
+     "predicted_benefit": 71.9,
+     "actual_benefit": -2.3
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "predicted",
+     "pair": "32B-01>32B-05",
+     "action": "skip:32B-01:MTC-9488+MTC-9453",
+     "predicted_benefit": 8.8,
+     "actual_benefit": -32.4
+    },
+    {
+     "at_min": 30.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6795+MTC-9888",
+     "predicted_benefit": 16.5,
+     "actual_benefit": 30.5
+    },
+    {
+     "at_min": 33.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-14",
+     "action": "short_turn:32B-14:MTC-9547",
+     "predicted_benefit": 33.8,
+     "actual_benefit": 32.3
+    },
+    {
+     "at_min": 36.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-14",
+     "action": "skip:32B-03:MTC-1090+MTC-10316",
+     "predicted_benefit": 14.0,
+     "actual_benefit": 18.2
+    },
+    {
+     "at_min": 40.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-150+MTC-1091",
+     "predicted_benefit": 12.8,
+     "actual_benefit": 6.1
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "skip:32B-04:MTC-11110+MTC-9890",
+     "predicted_benefit": 9.3,
+     "actual_benefit": 20.7
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:60",
+     "predicted_benefit": 0.5,
+     "actual_benefit": -3.5
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-14",
+     "action": "short_turn:32B-14:MTC-9776",
+     "predicted_benefit": 125.2,
+     "actual_benefit": 220.2
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-14",
+     "action": "skip:32B-10:MTC-1091+MTC-9547",
+     "predicted_benefit": 12.0,
+     "actual_benefit": -41.3
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-9547+MTC-9511",
+     "predicted_benefit": 14.6,
+     "actual_benefit": -30.0
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-09",
+     "action": "skip:32B-14:MTC-9488+MTC-9453",
+     "predicted_benefit": 18.0,
+     "actual_benefit": 31.8
+    }
+   ]
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 8,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 26229.0,
+   "avg_wait_s": 443.7,
+   "headway_cv": 0.596,
+   "bunching_count": 28,
+   "left_behind": 2647,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.4,
+   "interventions": []
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 8,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 24538.0,
+   "avg_wait_s": 405.8,
+   "headway_cv": 0.421,
+   "bunching_count": 9,
+   "left_behind": 2748,
+   "decisions": 19,
+   "do_nothing": 9,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 21.8,
+   "interventions": [
+    {
+     "at_min": 13.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:150",
+     "predicted_benefit": 106.2,
+     "actual_benefit": -140.2
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-6876",
+     "predicted_benefit": 143.1,
+     "actual_benefit": 115.6
+    },
+    {
+     "at_min": 24.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "short_turn:32B-09:MTC-6876",
+     "predicted_benefit": 98.3,
+     "actual_benefit": 54.4
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 110.0,
+     "actual_benefit": 185.7
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-6914",
+     "predicted_benefit": 64.6,
+     "actual_benefit": 55.4
+    },
+    {
+     "at_min": 40.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:180",
+     "predicted_benefit": 97.8,
+     "actual_benefit": 105.4
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:60",
+     "predicted_benefit": 12.2,
+     "actual_benefit": 4.6
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-12",
+     "action": "hold:32B-12:180",
+     "predicted_benefit": 80.8,
+     "actual_benefit": -36.1
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-52+MTC-150",
+     "predicted_benefit": 22.4,
+     "actual_benefit": 11.5
+    },
+    {
+     "at_min": 52.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-6876",
+     "predicted_benefit": 235.5,
+     "actual_benefit": 198.9
+    }
+   ]
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 8,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 25801.7,
+   "avg_wait_s": 436.0,
+   "headway_cv": 0.335,
+   "bunching_count": 3,
+   "left_behind": 2831,
+   "decisions": 40,
+   "do_nothing": 23,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 54.7,
+   "interventions": [
+    {
+     "at_min": 1.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:30",
+     "predicted_benefit": 6.0,
+     "actual_benefit": 16.1
+    },
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:90",
+     "predicted_benefit": 28.8,
+     "actual_benefit": -41.5
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:90",
+     "predicted_benefit": 43.9,
+     "actual_benefit": 14.0
+    },
+    {
+     "at_min": 8.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:60",
+     "predicted_benefit": 44.1,
+     "actual_benefit": 8.2
+    },
+    {
+     "at_min": 11.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:120",
+     "predicted_benefit": 52.4,
+     "actual_benefit": 87.2
+    },
+    {
+     "at_min": 11.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:60",
+     "predicted_benefit": 50.8,
+     "actual_benefit": 44.8
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:60",
+     "predicted_benefit": 48.0,
+     "actual_benefit": 73.3
+    },
+    {
+     "at_min": 20.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 60.2,
+     "actual_benefit": 85.6
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-6876+MTC-6914",
+     "predicted_benefit": 17.1,
+     "actual_benefit": -73.4
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-100+MTC-125",
+     "predicted_benefit": 18.5,
+     "actual_benefit": 23.2
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-10345+MTC-9807",
+     "predicted_benefit": 17.0,
+     "actual_benefit": 16.6
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-100+MTC-125",
+     "predicted_benefit": 28.7,
+     "actual_benefit": 9.6
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-14",
+     "action": "hold:32B-14:90",
+     "predicted_benefit": 7.3,
+     "actual_benefit": -49.8
+    },
+    {
+     "at_min": 42.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "short_turn:32B-08:MTC-6915",
+     "predicted_benefit": 270.8,
+     "actual_benefit": 70.0
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-6876",
+     "predicted_benefit": 119.6,
+     "actual_benefit": 200.9
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-10249",
+     "predicted_benefit": 18.9,
+     "actual_benefit": 60.4
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-07>32B-08",
+     "action": "skip:32B-07:MTC-150+MTC-100",
+     "predicted_benefit": 12.7,
+     "actual_benefit": -17.3
+    }
+   ]
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 1008,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 28846.0,
+   "avg_wait_s": 479.2,
+   "headway_cv": 0.508,
+   "bunching_count": 11,
+   "left_behind": 3233,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.4,
+   "interventions": []
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 1008,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 26826.7,
+   "avg_wait_s": 431.9,
+   "headway_cv": 0.36,
+   "bunching_count": 5,
+   "left_behind": 3016,
+   "decisions": 18,
+   "do_nothing": 7,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 20.5,
+   "interventions": [
+    {
+     "at_min": 10.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:90",
+     "predicted_benefit": 16.8,
+     "actual_benefit": 83.1
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 11.9,
+     "actual_benefit": -15.6
+    },
+    {
+     "at_min": 22.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "short_turn:32B-08:MTC-10340",
+     "predicted_benefit": 21.4,
+     "actual_benefit": -28.1
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-13",
+     "action": "hold:32B-13:180",
+     "predicted_benefit": 5.5,
+     "actual_benefit": -214.1
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:180",
+     "predicted_benefit": 52.9,
+     "actual_benefit": 73.8
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-13",
+     "action": "skip:32B-08:MTC-9488+MTC-10249",
+     "predicted_benefit": 10.6,
+     "actual_benefit": -5.4
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-6876+MTC-6914",
+     "predicted_benefit": 26.9,
+     "actual_benefit": -23.3
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:180",
+     "predicted_benefit": 50.8,
+     "actual_benefit": 46.0
+    },
+    {
+     "at_min": 52.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-08",
+     "action": "skip:32B-14:MTC-9490+MTC-99",
+     "predicted_benefit": 7.6,
+     "actual_benefit": -2.4
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-13",
+     "action": "skip:32B-08:MTC-9512+MTC-99",
+     "predicted_benefit": 10.1,
+     "actual_benefit": 20.9
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:90",
+     "predicted_benefit": 5.4,
+     "actual_benefit": 5.2
+    }
+   ]
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 1008,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 26452.2,
+   "avg_wait_s": 428.6,
+   "headway_cv": 0.279,
+   "bunching_count": 2,
+   "left_behind": 3120,
+   "decisions": 40,
+   "do_nothing": 24,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 54.5,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 1.4,
+     "actual_benefit": 43.1
+    },
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:60",
+     "predicted_benefit": 26.2,
+     "actual_benefit": 20.0
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 12.5,
+     "actual_benefit": 0.8
+    },
+    {
+     "at_min": 9.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:60",
+     "predicted_benefit": 11.0,
+     "actual_benefit": -13.8
+    },
+    {
+     "at_min": 10.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 1.2,
+     "actual_benefit": -35.8
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:60",
+     "predicted_benefit": 28.1,
+     "actual_benefit": 117.3
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "skip:32B-04:MTC-9453+MTC-10249",
+     "predicted_benefit": 14.5,
+     "actual_benefit": 1.7
+    },
+    {
+     "at_min": 17.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 14.4,
+     "actual_benefit": -26.8
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:60",
+     "predicted_benefit": 0.5,
+     "actual_benefit": 43.9
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 17.6,
+     "actual_benefit": -6.9
+    },
+    {
+     "at_min": 22.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "skip:32B-05:MTC-9490+MTC-99",
+     "predicted_benefit": 7.8,
+     "actual_benefit": -5.9
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 5.8,
+     "actual_benefit": 21.9
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-82",
+     "predicted_benefit": 243.3,
+     "actual_benefit": 281.9
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "skip:32B-03:MTC-9490+MTC-124",
+     "predicted_benefit": 30.8,
+     "actual_benefit": 7.8
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-12",
+     "action": "skip:32B-05:MTC-9453+MTC-10249",
+     "predicted_benefit": 3.1,
+     "actual_benefit": -47.0
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "skip:32B-09:MTC-125+MTC-1091",
+     "predicted_benefit": 24.5,
+     "actual_benefit": 12.4
+    }
+   ]
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 2008,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 29029.4,
+   "avg_wait_s": 495.2,
+   "headway_cv": 0.544,
+   "bunching_count": 35,
+   "left_behind": 3123,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.4,
+   "interventions": []
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 2008,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 26581.0,
+   "avg_wait_s": 439.4,
+   "headway_cv": 0.319,
+   "bunching_count": 7,
+   "left_behind": 2852,
+   "decisions": 19,
+   "do_nothing": 9,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 20.1,
+   "interventions": [
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:180",
+     "predicted_benefit": 76.4,
+     "actual_benefit": 342.3
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-6876",
+     "predicted_benefit": 92.9,
+     "actual_benefit": 19.2
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-02",
+     "action": "short_turn:32B-02:MTC-9547",
+     "predicted_benefit": 138.2,
+     "actual_benefit": 510.7
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-05",
+     "action": "hold:32B-05:90",
+     "predicted_benefit": 12.1,
+     "actual_benefit": -11.8
+    },
+    {
+     "at_min": 32.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 84.2,
+     "actual_benefit": 102.0
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-02",
+     "action": "hold:32B-02:180",
+     "predicted_benefit": 82.7,
+     "actual_benefit": 126.9
+    },
+    {
+     "at_min": 45.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "short_turn:32B-05:MTC-6791",
+     "predicted_benefit": 73.8,
+     "actual_benefit": 115.0
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-05",
+     "action": "skip:32B-09:MTC-52+MTC-150",
+     "predicted_benefit": 22.9,
+     "actual_benefit": 23.6
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 18.9,
+     "actual_benefit": -28.2
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "short_turn:32B-07:MTC-6809",
+     "predicted_benefit": 29.1,
+     "actual_benefit": -100.9
+    }
+   ]
+  },
+  {
+   "scenario": "ipl_chepauk",
+   "seed": 2008,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 26577.0,
+   "avg_wait_s": 435.0,
+   "headway_cv": 0.372,
+   "bunching_count": 6,
+   "left_behind": 2943,
+   "decisions": 44,
+   "do_nothing": 29,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 64.5,
+   "interventions": [
+    {
+     "at_min": 1.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:30",
+     "predicted_benefit": 4.6,
+     "actual_benefit": -17.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:30",
+     "predicted_benefit": 3.0,
+     "actual_benefit": 12.5
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9453+MTC-10249",
+     "predicted_benefit": 1.5,
+     "actual_benefit": -39.7
+    },
+    {
+     "at_min": 5.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:60",
+     "predicted_benefit": 0.5,
+     "actual_benefit": -37.1
+    },
+    {
+     "at_min": 13.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:120",
+     "predicted_benefit": 89.3,
+     "actual_benefit": 344.7
+    },
+    {
+     "at_min": 13.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:120",
+     "predicted_benefit": 26.9,
+     "actual_benefit": 22.4
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 24.3,
+     "actual_benefit": -33.9
+    },
+    {
+     "at_min": 17.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:60",
+     "predicted_benefit": 8.7,
+     "actual_benefit": 56.7
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-100+MTC-125",
+     "predicted_benefit": 10.6,
+     "actual_benefit": 22.5
+    },
+    {
+     "at_min": 24.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-10345+MTC-9807",
+     "predicted_benefit": 11.1,
+     "actual_benefit": 14.1
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "short_turn:32B-07:MTC-9806",
+     "predicted_benefit": 83.2,
+     "actual_benefit": 105.8
+    },
+    {
+     "at_min": 33.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-12",
+     "action": "skip:32B-11:MTC-52+MTC-150",
+     "predicted_benefit": 48.7,
+     "actual_benefit": 14.4
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-52+MTC-100",
+     "predicted_benefit": 13.0,
+     "actual_benefit": 28.6
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-9488+MTC-9453",
+     "predicted_benefit": 4.5,
+     "actual_benefit": 3.9
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-02",
+     "action": "short_turn:32B-02:MTC-9806",
+     "predicted_benefit": 304.1,
+     "actual_benefit": 109.6
+    }
+   ]
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 5,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 43457.6,
+   "avg_wait_s": 755.3,
+   "headway_cv": 0.313,
+   "bunching_count": 0,
+   "left_behind": 3409,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.4,
+   "interventions": []
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 5,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 43053.7,
+   "avg_wait_s": 733.5,
+   "headway_cv": 0.251,
+   "bunching_count": 0,
+   "left_behind": 3389,
+   "decisions": 7,
+   "do_nothing": 4,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 8.6,
+   "interventions": [
+    {
+     "at_min": 13.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-6876+MTC-6914",
+     "predicted_benefit": 74.9,
+     "actual_benefit": -218.3
+    },
+    {
+     "at_min": 40.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "short_turn:32B-08:MTC-6808",
+     "predicted_benefit": 722.1,
+     "actual_benefit": 530.0
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-08",
+     "action": "skip:32B-12:MTC-6795+MTC-9888",
+     "predicted_benefit": 15.7,
+     "actual_benefit": 29.5
+    }
+   ]
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 5,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 43922.5,
+   "avg_wait_s": 763.0,
+   "headway_cv": 0.355,
+   "bunching_count": 1,
+   "left_behind": 3294,
+   "decisions": 30,
+   "do_nothing": 18,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 69.5,
+   "interventions": [
+    {
+     "at_min": 2.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 9.1,
+     "actual_benefit": -6.1
+    },
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 29.5,
+     "actual_benefit": 9.2
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "skip:32B-05:MTC-9453+MTC-10249",
+     "predicted_benefit": 16.0,
+     "actual_benefit": -246.0
+    },
+    {
+     "at_min": 22.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9512+MTC-9553",
+     "predicted_benefit": 28.9,
+     "actual_benefit": 20.0
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:60",
+     "predicted_benefit": 5.5,
+     "actual_benefit": -30.1
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:90",
+     "predicted_benefit": 2.9,
+     "actual_benefit": -40.9
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:60",
+     "predicted_benefit": 12.5,
+     "actual_benefit": -35.0
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:60",
+     "predicted_benefit": 18.6,
+     "actual_benefit": -19.5
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:60",
+     "predicted_benefit": 7.6,
+     "actual_benefit": 78.4
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "predicted",
+     "pair": "32B-01>32B-14",
+     "action": "hold:32B-14:120",
+     "predicted_benefit": 53.6,
+     "actual_benefit": -21.7
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "short_turn:32B-02:MTC-9553",
+     "predicted_benefit": 137.4,
+     "actual_benefit": 397.3
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "short_turn:32B-13:MTC-9453",
+     "predicted_benefit": 246.1,
+     "actual_benefit": 100.2
+    }
+   ]
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 1005,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 47807.7,
+   "avg_wait_s": 833.9,
+   "headway_cv": 0.311,
+   "bunching_count": 0,
+   "left_behind": 3998,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.6,
+   "interventions": []
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 1005,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 46891.2,
+   "avg_wait_s": 797.5,
+   "headway_cv": 0.309,
+   "bunching_count": 0,
+   "left_behind": 3973,
+   "decisions": 9,
+   "do_nothing": 5,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 13.8,
+   "interventions": [
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 21.5,
+     "actual_benefit": 0.1
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "short_turn:32B-07:MTC-9806",
+     "predicted_benefit": 348.9,
+     "actual_benefit": 374.5
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-6914",
+     "predicted_benefit": 59.0,
+     "actual_benefit": -73.7
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:90",
+     "predicted_benefit": 41.8,
+     "actual_benefit": 26.2
+    }
+   ]
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 1005,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 47630.4,
+   "avg_wait_s": 811.2,
+   "headway_cv": 0.294,
+   "bunching_count": 0,
+   "left_behind": 3762,
+   "decisions": 32,
+   "do_nothing": 22,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 78.0,
+   "interventions": [
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:60",
+     "predicted_benefit": 28.3,
+     "actual_benefit": 18.7
+    },
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 8.4,
+     "actual_benefit": -5.3
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "skip:32B-05:MTC-9453+MTC-10249",
+     "predicted_benefit": 32.8,
+     "actual_benefit": -190.5
+    },
+    {
+     "at_min": 22.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-10340+MTC-11110",
+     "predicted_benefit": 6.5,
+     "actual_benefit": -12.8
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9512+MTC-9553",
+     "predicted_benefit": 26.2,
+     "actual_benefit": -3.9
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 0.1,
+     "actual_benefit": -0.4
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "skip:32B-04:MTC-9512+MTC-1090",
+     "predicted_benefit": 11.6,
+     "actual_benefit": 0.5
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "predicted",
+     "pair": "32B-01>32B-14",
+     "action": "hold:32B-14:30",
+     "predicted_benefit": 7.4,
+     "actual_benefit": -21.3
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-124",
+     "predicted_benefit": 627.5,
+     "actual_benefit": 664.2
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:60",
+     "predicted_benefit": 17.1,
+     "actual_benefit": 44.5
+    }
+   ]
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 2005,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 43057.9,
+   "avg_wait_s": 737.5,
+   "headway_cv": 0.31,
+   "bunching_count": 0,
+   "left_behind": 3325,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.6,
+   "interventions": []
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 2005,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 43465.2,
+   "avg_wait_s": 746.4,
+   "headway_cv": 0.263,
+   "bunching_count": 0,
+   "left_behind": 3355,
+   "decisions": 12,
+   "do_nothing": 4,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 23.6,
+   "interventions": [
+    {
+     "at_min": 21.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 37.2,
+     "actual_benefit": -32.8
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-6914",
+     "predicted_benefit": 97.7,
+     "actual_benefit": -6.0
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 0.7,
+     "actual_benefit": -39.4
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-6876+MTC-6914",
+     "predicted_benefit": 21.1,
+     "actual_benefit": -212.4
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 20.7,
+     "actual_benefit": -15.6
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "short_turn:32B-08:MTC-6876",
+     "predicted_benefit": 283.5,
+     "actual_benefit": -111.6
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:180",
+     "predicted_benefit": 33.5,
+     "actual_benefit": -70.3
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:90",
+     "predicted_benefit": 39.2,
+     "actual_benefit": -25.5
+    }
+   ]
+  },
+  {
+   "scenario": "monsoon_evening",
+   "seed": 2005,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 42852.3,
+   "avg_wait_s": 708.1,
+   "headway_cv": 0.371,
+   "bunching_count": 6,
+   "left_behind": 2900,
+   "decisions": 40,
+   "do_nothing": 24,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 77.8,
+   "interventions": [
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 31.2,
+     "actual_benefit": -14.4
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 1.8,
+     "actual_benefit": -27.7
+    },
+    {
+     "at_min": 22.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:60",
+     "predicted_benefit": 7.6,
+     "actual_benefit": -35.8
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:60",
+     "predicted_benefit": 4.3,
+     "actual_benefit": -53.4
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6876+MTC-6914",
+     "predicted_benefit": 46.4,
+     "actual_benefit": -138.4
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:60",
+     "predicted_benefit": 10.0,
+     "actual_benefit": -33.6
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:60",
+     "predicted_benefit": 24.1,
+     "actual_benefit": -34.7
+    },
+    {
+     "at_min": 45.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "short_turn:32B-09:MTC-6876",
+     "predicted_benefit": 331.7,
+     "actual_benefit": 11.4
+    },
+    {
+     "at_min": 45.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "short_turn:32B-08:MTC-10386",
+     "predicted_benefit": 538.6,
+     "actual_benefit": -52.5
+    },
+    {
+     "at_min": 48.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "short_turn:32B-06:MTC-11110",
+     "predicted_benefit": 44.6,
+     "actual_benefit": 243.4
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-12",
+     "action": "short_turn:32B-12:MTC-9888",
+     "predicted_benefit": 370.9,
+     "actual_benefit": 640.8
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-12",
+     "action": "skip:32B-07:MTC-6876+MTC-6914",
+     "predicted_benefit": 26.7,
+     "actual_benefit": -73.0
+    },
+    {
+     "at_min": 52.0,
+     "trigger": "bunched",
+     "pair": "32B-01>32B-14",
+     "action": "hold:32B-14:60",
+     "predicted_benefit": 3.1,
+     "actual_benefit": 0.5
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-06",
+     "action": "skip:32B-11:MTC-9807+MTC-52",
+     "predicted_benefit": 23.5,
+     "actual_benefit": -25.9
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-05",
+     "action": "short_turn:32B-05:MTC-10340",
+     "predicted_benefit": 208.0,
+     "actual_benefit": 294.4
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-09",
+     "action": "skip:32B-08:MTC-9888+MTC-10345",
+     "predicted_benefit": 15.8,
+     "actual_benefit": 52.5
+    }
+   ]
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 6,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 10493.6,
+   "avg_wait_s": 210.4,
+   "headway_cv": 0.593,
+   "bunching_count": 27,
+   "left_behind": 64,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.5,
+   "interventions": []
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 6,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 8985.0,
+   "avg_wait_s": 175.1,
+   "headway_cv": 0.322,
+   "bunching_count": 2,
+   "left_behind": 86,
+   "decisions": 12,
+   "do_nothing": 2,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 21.6,
+   "interventions": [
+    {
+     "at_min": 15.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:150",
+     "predicted_benefit": 56.4,
+     "actual_benefit": 41.0
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-6876",
+     "predicted_benefit": 31.5,
+     "actual_benefit": 1.8
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 33.7,
+     "actual_benefit": -1.2
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 40.4,
+     "actual_benefit": 30.3
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 58.6,
+     "actual_benefit": 17.5
+    },
+    {
+     "at_min": 36.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-11",
+     "action": "skip:32B-13:MTC-9547+MTC-9511",
+     "predicted_benefit": 3.3,
+     "actual_benefit": 8.4
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-12",
+     "action": "hold:32B-12:180",
+     "predicted_benefit": 153.9,
+     "actual_benefit": 145.1
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "skip:32B-05:MTC-6914",
+     "predicted_benefit": 19.9,
+     "actual_benefit": 9.6
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-11",
+     "action": "short_turn:32B-11:MTC-9490",
+     "predicted_benefit": 155.2,
+     "actual_benefit": 60.9
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:180",
+     "predicted_benefit": 104.0,
+     "actual_benefit": 123.0
+    }
+   ]
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 6,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 8455.5,
+   "avg_wait_s": 163.6,
+   "headway_cv": 0.302,
+   "bunching_count": 4,
+   "left_behind": 23,
+   "decisions": 32,
+   "do_nothing": 20,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 68.5,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:30",
+     "predicted_benefit": 6.9,
+     "actual_benefit": 2.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:30",
+     "predicted_benefit": 6.0,
+     "actual_benefit": 3.7
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 9.9,
+     "actual_benefit": 9.6
+    },
+    {
+     "at_min": 18.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 9.2,
+     "actual_benefit": -3.2
+    },
+    {
+     "at_min": 19.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 66.1,
+     "actual_benefit": 36.2
+    },
+    {
+     "at_min": 24.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:120",
+     "predicted_benefit": 77.9,
+     "actual_benefit": 132.3
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "skip:32B-02:MTC-9453+MTC-10249",
+     "predicted_benefit": 8.9,
+     "actual_benefit": 15.8
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "predicted",
+     "pair": "32B-01>32B-14",
+     "action": "hold:32B-14:60",
+     "predicted_benefit": 45.7,
+     "actual_benefit": 7.8
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-100",
+     "predicted_benefit": 253.6,
+     "actual_benefit": 173.8
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-10340",
+     "predicted_benefit": 181.8,
+     "actual_benefit": 162.3
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:180",
+     "predicted_benefit": 80.5,
+     "actual_benefit": 73.1
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-11",
+     "action": "short_turn:32B-11:MTC-11110",
+     "predicted_benefit": 55.5,
+     "actual_benefit": 124.9
+    }
+   ]
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 1006,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 10458.2,
+   "avg_wait_s": 206.7,
+   "headway_cv": 0.618,
+   "bunching_count": 34,
+   "left_behind": 99,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.6,
+   "interventions": []
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 1006,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 8882.6,
+   "avg_wait_s": 174.2,
+   "headway_cv": 0.362,
+   "bunching_count": 5,
+   "left_behind": 48,
+   "decisions": 17,
+   "do_nothing": 3,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 28.8,
+   "interventions": [
+    {
+     "at_min": 18.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:60",
+     "predicted_benefit": 4.6,
+     "actual_benefit": 61.8
+    },
+    {
+     "at_min": 18.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:180",
+     "predicted_benefit": 58.5,
+     "actual_benefit": 52.8
+    },
+    {
+     "at_min": 19.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 56.1,
+     "actual_benefit": -7.9
+    },
+    {
+     "at_min": 23.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:180",
+     "predicted_benefit": 35.7,
+     "actual_benefit": 37.0
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 79.5,
+     "actual_benefit": -77.6
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:150",
+     "predicted_benefit": 20.7,
+     "actual_benefit": -72.2
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:90",
+     "predicted_benefit": 20.2,
+     "actual_benefit": 74.7
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:180",
+     "predicted_benefit": 196.7,
+     "actual_benefit": 148.0
+    },
+    {
+     "at_min": 48.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-9453+MTC-10249",
+     "predicted_benefit": 9.1,
+     "actual_benefit": -16.9
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "short_turn:32B-04:MTC-6876",
+     "predicted_benefit": 87.8,
+     "actual_benefit": -30.2
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-12",
+     "action": "skip:32B-11:MTC-9453+MTC-10249",
+     "predicted_benefit": 55.5,
+     "actual_benefit": -327.3
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-124+MTC-99",
+     "predicted_benefit": 15.2,
+     "actual_benefit": 22.2
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-06",
+     "action": "hold:32B-06:90",
+     "predicted_benefit": 59.4,
+     "actual_benefit": 60.5
+    },
+    {
+     "at_min": 58.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "skip:32B-10:MTC-1091+MTC-9488",
+     "predicted_benefit": 56.7,
+     "actual_benefit": 57.5
+    }
+   ]
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 1006,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 8799.8,
+   "avg_wait_s": 171.9,
+   "headway_cv": 0.371,
+   "bunching_count": 8,
+   "left_behind": 26,
+   "decisions": 38,
+   "do_nothing": 21,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 72.9,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 13.3,
+     "actual_benefit": -23.8
+    },
+    {
+     "at_min": 4.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9453+MTC-10249",
+     "predicted_benefit": 12.9,
+     "actual_benefit": -35.7
+    },
+    {
+     "at_min": 13.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:90",
+     "predicted_benefit": 71.9,
+     "actual_benefit": 67.4
+    },
+    {
+     "at_min": 13.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 1.9,
+     "actual_benefit": 1.8
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:90",
+     "predicted_benefit": 20.5,
+     "actual_benefit": 52.5
+    },
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 8.5,
+     "actual_benefit": -17.4
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:60",
+     "predicted_benefit": 16.0,
+     "actual_benefit": 20.4
+    },
+    {
+     "at_min": 21.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:60",
+     "predicted_benefit": 9.9,
+     "actual_benefit": -20.8
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:120",
+     "predicted_benefit": 54.5,
+     "actual_benefit": 106.2
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:60",
+     "predicted_benefit": 3.8,
+     "actual_benefit": -18.1
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-10249",
+     "predicted_benefit": 35.1,
+     "actual_benefit": 29.5
+    },
+    {
+     "at_min": 45.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-100+MTC-9488",
+     "predicted_benefit": 6.2,
+     "actual_benefit": 7.9
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-9453+MTC-10249",
+     "predicted_benefit": 2.1,
+     "actual_benefit": 13.2
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-6795+MTC-9888",
+     "predicted_benefit": 35.7,
+     "actual_benefit": 40.1
+    },
+    {
+     "at_min": 52.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-14",
+     "action": "skip:32B-13:MTC-9553+MTC-124",
+     "predicted_benefit": 4.2,
+     "actual_benefit": 18.2
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-6791",
+     "predicted_benefit": 40.0,
+     "actual_benefit": 51.8
+    },
+    {
+     "at_min": 55.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-12",
+     "action": "skip:32B-11:MTC-9453+MTC-10249",
+     "predicted_benefit": 74.4,
+     "actual_benefit": -119.1
+    }
+   ]
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 2006,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 11559.2,
+   "avg_wait_s": 218.7,
+   "headway_cv": 0.65,
+   "bunching_count": 47,
+   "left_behind": 159,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.5,
+   "interventions": []
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 2006,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 9642.9,
+   "avg_wait_s": 177.5,
+   "headway_cv": 0.413,
+   "bunching_count": 7,
+   "left_behind": 103,
+   "decisions": 19,
+   "do_nothing": 6,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 29.6,
+   "interventions": [
+    {
+     "at_min": 14.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:180",
+     "predicted_benefit": 88.4,
+     "actual_benefit": 131.5
+    },
+    {
+     "at_min": 20.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6914",
+     "predicted_benefit": 40.4,
+     "actual_benefit": 47.5
+    },
+    {
+     "at_min": 25.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:150",
+     "predicted_benefit": 122.5,
+     "actual_benefit": 137.9
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:180",
+     "predicted_benefit": 25.4,
+     "actual_benefit": 108.3
+    },
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:90",
+     "predicted_benefit": 23.3,
+     "actual_benefit": -6.0
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6795+MTC-9888",
+     "predicted_benefit": 29.1,
+     "actual_benefit": 16.2
+    },
+    {
+     "at_min": 37.0,
+     "trigger": "bunched",
+     "pair": "32B-08>32B-07",
+     "action": "skip:32B-08:MTC-6914",
+     "predicted_benefit": 68.4,
+     "actual_benefit": 52.1
+    },
+    {
+     "at_min": 39.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-10386+MTC-6876",
+     "predicted_benefit": 2.5,
+     "actual_benefit": -39.4
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 73.0,
+     "actual_benefit": 61.8
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-10249",
+     "predicted_benefit": 41.3,
+     "actual_benefit": 87.4
+    },
+    {
+     "at_min": 49.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-6876+MTC-6914",
+     "predicted_benefit": 75.6,
+     "actual_benefit": 29.3
+    },
+    {
+     "at_min": 49.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-9806",
+     "predicted_benefit": 258.7,
+     "actual_benefit": 302.4
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "short_turn:32B-10:MTC-1091",
+     "predicted_benefit": 203.8,
+     "actual_benefit": 267.2
+    }
+   ]
+  },
+  {
+   "scenario": "normal_morning_peak",
+   "seed": 2006,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 9916.6,
+   "avg_wait_s": 185.8,
+   "headway_cv": 0.403,
+   "bunching_count": 7,
+   "left_behind": 75,
+   "decisions": 34,
+   "do_nothing": 14,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 66.4,
+   "interventions": [
+    {
+     "at_min": 3.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:60",
+     "predicted_benefit": 16.6,
+     "actual_benefit": -18.3
+    },
+    {
+     "at_min": 5.0,
+     "trigger": "predicted",
+     "pair": "32B-08>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 49.9,
+     "actual_benefit": 129.5
+    },
+    {
+     "at_min": 6.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 13.3,
+     "actual_benefit": -10.8
+    },
+    {
+     "at_min": 11.0,
+     "trigger": "predicted",
+     "pair": "32B-10>32B-09",
+     "action": "hold:32B-09:150",
+     "predicted_benefit": 86.5,
+     "actual_benefit": 113.8
+    },
+    {
+     "at_min": 15.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:30",
+     "predicted_benefit": 26.7,
+     "actual_benefit": 5.8
+    },
+    {
+     "at_min": 17.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:60",
+     "predicted_benefit": 19.0,
+     "actual_benefit": 65.3
+    },
+    {
+     "at_min": 22.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "skip:32B-03:MTC-10249",
+     "predicted_benefit": 7.9,
+     "actual_benefit": -34.9
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-05",
+     "action": "skip:32B-06:MTC-9776+MTC-10340",
+     "predicted_benefit": 7.9,
+     "actual_benefit": 14.1
+    },
+    {
+     "at_min": 30.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-6795+MTC-9888",
+     "predicted_benefit": 16.7,
+     "actual_benefit": 30.6
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-9488+MTC-9453",
+     "predicted_benefit": 37.3,
+     "actual_benefit": 18.9
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "skip:32B-04:MTC-10316+MTC-9806",
+     "predicted_benefit": 24.4,
+     "actual_benefit": 34.0
+    },
+    {
+     "at_min": 40.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "skip:32B-11:MTC-150+MTC-1091",
+     "predicted_benefit": 13.5,
+     "actual_benefit": 6.1
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-06",
+     "action": "skip:32B-05:MTC-6876+MTC-6914",
+     "predicted_benefit": 49.5,
+     "actual_benefit": 39.2
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:30",
+     "predicted_benefit": 11.7,
+     "actual_benefit": -8.2
+    },
+    {
+     "at_min": 48.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "short_turn:32B-03:MTC-10340",
+     "predicted_benefit": 28.4,
+     "actual_benefit": 63.0
+    },
+    {
+     "at_min": 49.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-14",
+     "action": "hold:32B-14:180",
+     "predicted_benefit": 95.8,
+     "actual_benefit": 134.8
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "short_turn:32B-10:MTC-125",
+     "predicted_benefit": 52.9,
+     "actual_benefit": -37.1
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-03",
+     "action": "skip:32B-09:MTC-150+MTC-100",
+     "predicted_benefit": 13.7,
+     "actual_benefit": 12.3
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "short_turn:32B-13:MTC-10248",
+     "predicted_benefit": 85.5,
+     "actual_benefit": -295.0
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-06",
+     "action": "short_turn:32B-06:MTC-6915",
+     "predicted_benefit": 151.7,
+     "actual_benefit": 220.7
+    }
+   ]
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 4,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 1524.6,
+   "avg_wait_s": 153.2,
+   "headway_cv": 0.419,
+   "bunching_count": 10,
+   "left_behind": 0,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.5,
+   "interventions": []
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 4,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 1437.1,
+   "avg_wait_s": 144.0,
+   "headway_cv": 0.284,
+   "bunching_count": 6,
+   "left_behind": 0,
+   "decisions": 9,
+   "do_nothing": 4,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 15.8,
+   "interventions": [
+    {
+     "at_min": 21.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:90",
+     "predicted_benefit": 19.1,
+     "actual_benefit": 15.8
+    },
+    {
+     "at_min": 31.0,
+     "trigger": "bunched",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:90",
+     "predicted_benefit": 1.4,
+     "actual_benefit": 3.1
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:60",
+     "predicted_benefit": 0.7,
+     "actual_benefit": -3.4
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-12",
+     "action": "skip:32B-13:MTC-9512+MTC-9553",
+     "predicted_benefit": 0.8,
+     "actual_benefit": 4.2
+    },
+    {
+     "at_min": 57.0,
+     "trigger": "bunched",
+     "pair": "32B-06>32B-07",
+     "action": "hold:32B-07:90",
+     "predicted_benefit": 1.9,
+     "actual_benefit": -2.5
+    }
+   ]
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 4,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 1368.2,
+   "avg_wait_s": 136.4,
+   "headway_cv": 0.222,
+   "bunching_count": 3,
+   "left_behind": 0,
+   "decisions": 15,
+   "do_nothing": 5,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 45.6,
+   "interventions": [
+    {
+     "at_min": 18.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:120",
+     "predicted_benefit": 33.4,
+     "actual_benefit": 11.8
+    },
+    {
+     "at_min": 26.0,
+     "trigger": "predicted",
+     "pair": "32B-06>32B-05",
+     "action": "hold:32B-05:90",
+     "predicted_benefit": 12.0,
+     "actual_benefit": 4.3
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "skip:32B-12:MTC-52+MTC-1091",
+     "predicted_benefit": 1.5,
+     "actual_benefit": -10.1
+    },
+    {
+     "at_min": 28.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:60",
+     "predicted_benefit": 8.3,
+     "actual_benefit": -3.5
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "predicted",
+     "pair": "32B-13>32B-12",
+     "action": "skip:32B-13:MTC-9488+MTC-9453",
+     "predicted_benefit": 0.5,
+     "actual_benefit": -0.2
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "skip:32B-03:MTC-10316+MTC-9806",
+     "predicted_benefit": 0.3,
+     "actual_benefit": 2.2
+    },
+    {
+     "at_min": 42.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:120",
+     "predicted_benefit": 20.5,
+     "actual_benefit": 18.2
+    },
+    {
+     "at_min": 46.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-12",
+     "action": "skip:32B-13:MTC-9512+MTC-9553",
+     "predicted_benefit": 1.2,
+     "actual_benefit": 4.6
+    },
+    {
+     "at_min": 52.0,
+     "trigger": "predicted",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:60",
+     "predicted_benefit": 1.1,
+     "actual_benefit": 17.1
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "bunched",
+     "pair": "32B-13>32B-12",
+     "action": "skip:32B-13:MTC-10316+MTC-9806",
+     "predicted_benefit": 2.5,
+     "actual_benefit": -1.5
+    }
+   ]
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 1004,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 1382.1,
+   "avg_wait_s": 144.5,
+   "headway_cv": 0.4,
+   "bunching_count": 17,
+   "left_behind": 0,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.6,
+   "interventions": []
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 1004,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 1346.1,
+   "avg_wait_s": 140.0,
+   "headway_cv": 0.308,
+   "bunching_count": 9,
+   "left_behind": 0,
+   "decisions": 9,
+   "do_nothing": 4,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 17.4,
+   "interventions": [
+    {
+     "at_min": 23.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:90",
+     "predicted_benefit": 20.7,
+     "actual_benefit": 1.9
+    },
+    {
+     "at_min": 33.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:90",
+     "predicted_benefit": 1.0,
+     "actual_benefit": 11.0
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:90",
+     "predicted_benefit": 11.7,
+     "actual_benefit": 14.9
+    },
+    {
+     "at_min": 50.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "short_turn:32B-08:MTC-1091",
+     "predicted_benefit": 13.2,
+     "actual_benefit": 7.9
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:90",
+     "predicted_benefit": 12.3,
+     "actual_benefit": -1.3
+    }
+   ]
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 1004,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 1358.2,
+   "avg_wait_s": 141.5,
+   "headway_cv": 0.281,
+   "bunching_count": 5,
+   "left_behind": 0,
+   "decisions": 17,
+   "do_nothing": 6,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 34.1,
+   "interventions": [
+    {
+     "at_min": 16.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:60",
+     "predicted_benefit": 4.8,
+     "actual_benefit": -6.2
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "predicted",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:30",
+     "predicted_benefit": 0.2,
+     "actual_benefit": 4.3
+    },
+    {
+     "at_min": 27.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:90",
+     "predicted_benefit": 18.2,
+     "actual_benefit": -7.0
+    },
+    {
+     "at_min": 34.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "skip:32B-05:MTC-11110+MTC-9890",
+     "predicted_benefit": 0.3,
+     "actual_benefit": 2.2
+    },
+    {
+     "at_min": 38.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:30",
+     "predicted_benefit": 5.0,
+     "actual_benefit": -2.0
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:90",
+     "predicted_benefit": 12.8,
+     "actual_benefit": 4.6
+    },
+    {
+     "at_min": 44.0,
+     "trigger": "bunched",
+     "pair": "32B-05>32B-04",
+     "action": "hold:32B-04:90",
+     "predicted_benefit": 1.0,
+     "actual_benefit": 6.3
+    },
+    {
+     "at_min": 47.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:60",
+     "predicted_benefit": 2.8,
+     "actual_benefit": -2.9
+    },
+    {
+     "at_min": 52.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-10340+MTC-11110",
+     "predicted_benefit": 5.0,
+     "actual_benefit": 7.2
+    },
+    {
+     "at_min": 53.0,
+     "trigger": "bunched",
+     "pair": "32B-09>32B-08",
+     "action": "skip:32B-09:MTC-9453+MTC-10249",
+     "predicted_benefit": 4.6,
+     "actual_benefit": 0.7
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "short_turn:32B-02:MTC-6876",
+     "predicted_benefit": 39.5,
+     "actual_benefit": -10.1
+    }
+   ]
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 2004,
+   "arm": "control",
+   "minutes": 60,
+   "passenger_wait_minutes": 1377.0,
+   "avg_wait_s": 149.9,
+   "headway_cv": 0.41,
+   "bunching_count": 7,
+   "left_behind": 0,
+   "decisions": 0,
+   "do_nothing": 0,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 0.5,
+   "interventions": []
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 2004,
+   "arm": "advisor",
+   "minutes": 60,
+   "passenger_wait_minutes": 1336.5,
+   "avg_wait_s": 144.2,
+   "headway_cv": 0.325,
+   "bunching_count": 4,
+   "left_behind": 0,
+   "decisions": 5,
+   "do_nothing": 1,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 7.3,
+   "interventions": [
+    {
+     "at_min": 29.0,
+     "trigger": "bunched",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:150",
+     "predicted_benefit": 10.0,
+     "actual_benefit": 7.0
+    },
+    {
+     "at_min": 35.0,
+     "trigger": "bunched",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:90",
+     "predicted_benefit": 5.7,
+     "actual_benefit": 1.4
+    },
+    {
+     "at_min": 41.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:60",
+     "predicted_benefit": 9.1,
+     "actual_benefit": 3.1
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-12>32B-11",
+     "action": "short_turn:32B-11:MTC-9512",
+     "predicted_benefit": 22.7,
+     "actual_benefit": 3.5
+    }
+   ]
+  },
+  {
+   "scenario": "quiet_late_evening",
+   "seed": 2004,
+   "arm": "advisor_ew",
+   "minutes": 60,
+   "passenger_wait_minutes": 1276.5,
+   "avg_wait_s": 137.0,
+   "headway_cv": 0.244,
+   "bunching_count": 3,
+   "left_behind": 0,
+   "decisions": 17,
+   "do_nothing": 6,
+   "unsafe": 0,
+   "invalid": 0,
+   "cpu_s": 28.6,
+   "interventions": [
+    {
+     "at_min": 14.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "hold:32B-13:60",
+     "predicted_benefit": 1.2,
+     "actual_benefit": 1.1
+    },
+    {
+     "at_min": 16.0,
+     "trigger": "predicted",
+     "pair": "32B-03>32B-02",
+     "action": "hold:32B-02:90",
+     "predicted_benefit": 0.6,
+     "actual_benefit": -4.2
+    },
+    {
+     "at_min": 32.0,
+     "trigger": "predicted",
+     "pair": "32B-02>32B-01",
+     "action": "hold:32B-01:180",
+     "predicted_benefit": 8.0,
+     "actual_benefit": 36.4
+    },
+    {
+     "at_min": 33.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "skip:32B-07:MTC-6876+MTC-6914",
+     "predicted_benefit": 2.6,
+     "actual_benefit": -0.9
+    },
+    {
+     "at_min": 42.0,
+     "trigger": "predicted",
+     "pair": "32B-14>32B-13",
+     "action": "skip:32B-14:MTC-9490+MTC-9512",
+     "predicted_benefit": 1.9,
+     "actual_benefit": 0.0
+    },
+    {
+     "at_min": 43.0,
+     "trigger": "predicted",
+     "pair": "32B-07>32B-06",
+     "action": "hold:32B-06:30",
+     "predicted_benefit": 4.4,
+     "actual_benefit": 7.5
+    },
+    {
+     "at_min": 45.0,
+     "trigger": "predicted",
+     "pair": "32B-09>32B-08",
+     "action": "hold:32B-08:60",
+     "predicted_benefit": 9.9,
+     "actual_benefit": 0.6
+    },
+    {
+     "at_min": 51.0,
+     "trigger": "predicted",
+     "pair": "32B-12>32B-11",
+     "action": "hold:32B-11:150",
+     "predicted_benefit": 12.7,
+     "actual_benefit": -16.4
+    },
+    {
+     "at_min": 54.0,
+     "trigger": "bunched",
+     "pair": "32B-11>32B-10",
+     "action": "hold:32B-10:180",
+     "predicted_benefit": 11.7,
+     "actual_benefit": 5.9
+    },
+    {
+     "at_min": 56.0,
+     "trigger": "predicted",
+     "pair": "32B-04>32B-03",
+     "action": "hold:32B-03:30",
+     "predicted_benefit": 1.5,
+     "actual_benefit": 7.8
+    },
+    {
+     "at_min": 59.0,
+     "trigger": "bunched",
+     "pair": "32B-10>32B-09",
+     "action": "short_turn:32B-09:MTC-10248",
+     "predicted_benefit": 19.2,
+     "actual_benefit": -3.5
+    }
+   ]
+  }
+ ]
+}
