@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 import structlog
 from arq import ArqRedis
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import select
@@ -38,6 +38,7 @@ from app.live.channels import SPEED_KEY
 from app.live.hub import LiveHub
 from app.officer import decisions
 from app.officer.decisions import DecisionRefused, OfficerDecisionPayload
+from app.officer.observability import Metrics, metrics
 from app.officer.status import SystemStatus, run_messages, system_status
 from app.runner.world import parse_speed
 
@@ -103,6 +104,17 @@ async def set_world_speed(
         raise _LIVE_UNAVAILABLE from None
     log.info("world_speed_set", speed=body.speed, officer_id=str(officer.id))
     return body
+
+
+@router.get("/metrics", response_model=Metrics)
+async def metrics_view(
+    _: Officer,
+    session: Session,
+    hours: Annotated[float, Query(gt=0, le=24 * 30)] = 24.0,
+) -> Metrics:
+    """Workflow outcomes and durations, tool latency / failures / retries, and tokens and cost
+    per agent, model and run, over the last `hours` (B18)."""
+    return await metrics(session, hours)
 
 
 @router.get("/status", response_model=SystemStatus)

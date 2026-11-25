@@ -165,7 +165,9 @@ One row per failure case. Add rows as each module is built.
 | Officer can't tell the system is degraded (B17) | `workflow_runs.degraded`, runs failed on a tool, recent LLM fallbacks, the active fault plan | Plain messages: `GET /officer/status`, `status_messages` on the recommendation card, the run list and the AG-UI run view (e.g. "Running in degraded mode: demand data unavailable") | `test_reliability.py::test_failure_injection_per_scenario_and_the_status_messages` |
 | Fault plan unreadable or Redis down | Fault source catches the error | No faults injected; logged `faults_unreadable` | `test_reliability.py::test_no_faults_change_nothing_and_the_plan_reads_back_from_redis` |
 | A matrix row without a test, or naming a test that doesn't exist (B17) | `tests/unit/test_failure_matrix.py` parses this file | CI fails | `test_failure_matrix.py::test_every_row_names_an_automated_test`, `test_failure_matrix.py::test_every_named_test_exists` |
-
+| Langfuse unreachable or misconfigured (B18) | Background send fails | Logged once, tracing paused 60 s instead of timing out on every call; `llm_usage` / `agent_steps` / `tool_calls` stay the record | `test_observability.py::test_an_unreachable_langfuse_pauses_instead_of_timing_out_every_call` |
+| A tool call can't be recorded (database blip) (B18) | Telemetry catches the database error | Logged `tool_call_not_recorded`; the call itself succeeds or fails on its own merits | `test_observability.py::test_tool_calls_and_steps_form_one_linked_trace` |
+| A past run can't be reconstructed (B18) | Steps, tool calls (with their step), LLM calls (with their step), decisions and instructions all stored | `GET /officer/runs/{id}/trace` rebuilds it, across resumed segments | `test_observability.py::test_any_past_run_can_be_followed_step_by_step` |
 ## Environment notes (the development machine, not system behaviour)
 
 Kept for whoever runs this locally; they describe the laptop and one-off tools, so they have no

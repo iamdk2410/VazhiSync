@@ -32,6 +32,7 @@ from app.db.models import BunchingEvent, User, Vehicle, WorkflowRun
 from app.db.session import get_session, get_sessionmaker
 from app.officer import decisions
 from app.officer.decisions import DecisionRefused, OfficerDecisionPayload
+from app.officer.observability import RunTrace, run_trace
 from app.officer.status import run_messages
 
 log = structlog.get_logger()
@@ -101,6 +102,18 @@ async def list_runs(
             for run, lead, follow in rows
         ]
     )
+
+
+@router.get(
+    "/{run_id}/trace", response_model=RunTrace, responses={404: {"description": "No such run"}}
+)
+async def run_trace_view(run_id: uuid.UUID, _: Officer, session: Session) -> RunTrace:
+    """Any past (or current) run, step by step (B18): each agent step with the tool calls and
+    LLM calls it made, the officer's decisions, the instruction and the measured outcome."""
+    trace = await run_trace(session, run_id)
+    if trace is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Run not found")
+    return trace
 
 
 @router.get(

@@ -58,7 +58,8 @@ backend/
 │   │               (Groq/OpenRouter), ollama.py (local tier, B5), langfuse.py (best-effort traces)
 │   ├── lab/        Simulation Lab: scenario library (golden sync, route context)
 │   ├── db/         SQLAlchemy models, migrations, seed scripts; vector.py (pgvector column type)
-│   ├── observability/
+│   ├── observability/ logging.py (structlog JSON), tracing.py (B18: current agent step for trace links)
+│   ├── reports/    generate_report.py (B18: token/cost + failure report, Markdown or PDF), pdf.py
 │   ├── runner/     live world sim-runner: world loop, GPS layer, bunching detector, route loader
 │   ├── healthcheck.py  container health-check CLI (http / redis heartbeat)
 │   └── config.py   pydantic-settings
@@ -112,6 +113,8 @@ set their own, because pub/sub is shared across Redis database numbers.
 - Live map (dev): `uv run python -m http.server 5173 --directory devtools`, open
   `http://localhost:5173/live_map.html` and log in (the API must be running)
 - Regenerate the simulator's 32B fixture after a re-import: `uv run python -m app.gtfs.sim_route --route 32B --out tests/fixtures/route_32b.json`
+- Token/cost + failure report (B18): `uv run python -m app.reports.generate_report --hours 24 --out report.md`
+  (or `--out report.pdf`; no `--out`: Markdown to stdout)
 - New migration: `uv run alembic revision --autogenerate --rev-id 000N -m "..."`, review it, then `uv run alembic check`
 
 ## Conventions

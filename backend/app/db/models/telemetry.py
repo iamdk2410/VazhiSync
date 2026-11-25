@@ -1,4 +1,4 @@
-"""Agent step log and LLM usage (rule 9: everything logged with a run_id)."""
+"""Agent step log, tool calls and LLM usage (rule 9: everything logged with a run_id)."""
 
 import uuid
 from datetime import datetime
@@ -49,4 +49,33 @@ class LlmUsage(Base):
     latency_ms: Mapped[int]
     success: Mapped[bool]
     error_kind: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = utc_now_column()
+    step_index: Mapped[int | None]  # the agent step that made the call (B18)
+
+
+class ToolCallRecord(Base):
+    """One harness tool call (B18): latency, outcome and retries, for traces and metrics.
+
+    `run_id` is the workflow run, or an early-warning sweep's own id (no foreign key: sweeps
+    aren't workflow runs). `step_index` links the call to the agent step that made it.
+    """
+
+    __tablename__ = "tool_calls"
+    __table_args__ = (
+        Index("ix_tool_calls_run_created", "run_id", "created_at"),
+        Index("ix_tool_calls_created", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    run_id: Mapped[uuid.UUID]
+    step_index: Mapped[int | None]
+    agent: Mapped[str] = mapped_column(String(64))
+    tool: Mapped[str] = mapped_column(String(64))
+    server: Mapped[str | None] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(
+        String(32)
+    )  # ok | not_allowed | rejected | unavailable | failed | invalid_result | budget
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    attempts: Mapped[int]  # 1 = no retry
+    duration_ms: Mapped[int]
     created_at: Mapped[datetime] = utc_now_column()

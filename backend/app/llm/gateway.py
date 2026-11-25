@@ -32,9 +32,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.config import Settings
 from app.db.models import LlmUsage
 from app.harness.budget import RunBudget
-from app.llm.langfuse import LangfuseTracer
+from app.llm.langfuse import LangfuseTracer, get_tracer
 from app.llm.ollama import LlmError, OllamaClient
 from app.llm.openai_compat import BASE_URLS, OpenAICompatClient
+from app.observability.tracing import current_step
 from scenario_gen.director import LlmReply, Message
 
 log = structlog.get_logger()
@@ -190,7 +191,7 @@ class LlmGateway:
         gateway = cls(
             tiers_from_settings(settings, transport, include_local=include_local),
             sessionmaker=sessionmaker,
-            tracer=LangfuseTracer.from_settings(settings),
+            tracer=get_tracer(),
             max_output_tokens=settings.llm_max_output_tokens,
             rate_limit_cooldown_s=settings.llm_rate_limit_cooldown_seconds,
             time_reserve_s=settings.llm_time_reserve_seconds,
@@ -313,6 +314,7 @@ class LlmGateway:
                 latency_ms=0,
                 success=True,
                 error_kind=reason,
+                step_index=_step_index(run_id),
             )
         )
         return LlmResult(rules(), RULES, "rules", attempts)
@@ -356,6 +358,7 @@ class LlmGateway:
                 latency_ms=latency,
                 success=success,
                 error_kind=error_kind,
+                step_index=_step_index(run_id),
             )
         )
         if self._tracer is not None:
@@ -390,6 +393,11 @@ def _repair_turns(content: str, problems: list[str]) -> list[dict[str, str]]:
             "Reply again with only the corrected JSON object.",
         },
     ]
+
+
+def _step_index(run_id: str | None) -> int | None:
+    step = current_step()
+    return step.index if step is not None and step.run_id == run_id else None
 
 
 def _uuid(run_id: str | None) -> uuid.UUID | None:

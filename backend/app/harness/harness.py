@@ -12,6 +12,7 @@ import asyncio
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -32,6 +33,7 @@ from app.harness.errors import (
 )
 from app.harness.hooks import PostHook, PreHook, SendGuard, ToolCall
 from app.harness.specs import AGENT_TOOLS, TOOLS, ToolSpec
+from app.harness.telemetry import ToolCallEvent, ToolTelemetry
 from mcp_servers.errors import parse_tool_error
 from mcp_servers.schemas import VehiclePositions
 
@@ -72,6 +74,7 @@ class ToolHarness:
         post_hooks: Sequence[PostHook] = (),
         agent_tools: Mapping[str, frozenset[str]] | None = None,
         sleep: Sleep = asyncio.sleep,
+        telemetry: Callable[[ToolCallEvent], Awaitable[None]] | None = None,
     ) -> None:
         self._connector = connector
         self._timeout_s = timeout_s
@@ -83,6 +86,7 @@ class ToolHarness:
             agent_tools if agent_tools is not None else {k: v for k, v in AGENT_TOOLS.items()}
         )
         self._sleep = sleep
+        self._telemetry = telemetry  # B18: one tool_calls row + trace span per call
 
     @classmethod
     def from_settings(
@@ -97,6 +101,7 @@ class ToolHarness:
             timeout_s=settings.tool_timeout_seconds,
             attempts=settings.tool_attempts,
             availability=Availability(settings.tool_unavailable_cooldown_seconds),
+            telemetry=ToolTelemetry(sessionmaker),
         )
         harness.pre_hooks.append(SendGuard(sessionmaker, harness.current_positions))
         return harness
@@ -133,25 +138,47 @@ class ToolHarness:
         with structlog.contextvars.bound_contextvars(
             run_id=str(budget.run_id), agent=agent, tool=tool
         ):
-            if spec is None or tool not in self._agent_tools.get(agent, frozenset()):
-                clog.warning("tool_blocked", reason="not in the agent's allowlist")
-                raise ToolNotAllowed(f"{agent} may not call {tool}", tool=tool, code="not_allowed")
-            budget.charge_tool_call(agent, tool)
-            call = ToolCall(budget.run_id, agent, tool, arguments)
-            started = time.monotonic()
+            started, started_at = time.monotonic(), datetime.now(UTC)
+            stats = {"attempts": 0}
+            outcome: tuple[str, str | None] = ("ok", None)
             try:
+                if spec is None or tool not in self._agent_tools.get(agent, frozenset()):
+                    clog.warning("tool_blocked", reason="not in the agent's allowlist")
+                    raise ToolNotAllowed(
+                        f"{agent} may not call {tool}", tool=tool, code="not_allowed"
+                    )
+                budget.charge_tool_call(agent, tool)
+                call = ToolCall(budget.run_id, agent, tool, arguments)
                 for hook in self.pre_hooks:
                     await hook(call)
                 result = await self._invoke(
-                    spec, arguments, min(self._timeout_s, budget.remaining_s)
+                    spec, arguments, min(self._timeout_s, budget.remaining_s), stats
                 )
                 for post in self.post_hooks:
                     await post(call, result)
             except HarnessError as exc:
+                outcome = (exc.kind, exc.code)
                 event = "tool_rejected" if isinstance(exc, HookRejected) else "tool_call_failed"
                 clog.warning(event, kind=exc.kind, code=exc.code, error=str(exc)[:300])
                 raise
-            clog.info("tool_call", duration_ms=round((time.monotonic() - started) * 1000))
+            finally:
+                duration_ms = round((time.monotonic() - started) * 1000)
+                if self._telemetry is not None:
+                    await self._telemetry(
+                        ToolCallEvent(
+                            run_id=budget.run_id,
+                            agent=agent,
+                            tool=tool,
+                            server=spec.server if spec else None,
+                            status=outcome[0],
+                            error_code=outcome[1],
+                            attempts=stats["attempts"],
+                            duration_ms=duration_ms,
+                            started_at=started_at,
+                            arguments=arguments,
+                        )
+                    )
+            clog.info("tool_call", duration_ms=duration_ms, attempts=stats["attempts"])
             return result
 
     async def call_optional(
@@ -179,7 +206,11 @@ class ToolHarness:
     # ------------------------------------------------------------------ transport
 
     async def _invoke(
-        self, spec: ToolSpec, arguments: dict[str, Any], timeout_s: float
+        self,
+        spec: ToolSpec,
+        arguments: dict[str, Any],
+        timeout_s: float,
+        stats: dict[str, int] | None = None,
     ) -> BaseModel:
         if self.availability.is_open(spec.server):
             raise ToolUnavailable(
@@ -187,6 +218,8 @@ class ToolHarness:
             )
         last: Transient | None = None
         for attempt in range(1, self._attempts + 1):
+            if stats is not None:
+                stats["attempts"] = attempt
             try:
                 raw = await self._connector.call(spec.server, spec.name, arguments, timeout_s)
             except Transient as exc:  # rule 7: only transient errors are retried

@@ -19,6 +19,8 @@ from app.db.models import AgentStep
 from app.harness.budget import RunBudget
 from app.harness.harness import OptionalResult, ToolHarness
 from app.llm.gateway import LlmGateway
+from app.llm.langfuse import get_tracer
+from app.observability.tracing import observation_id, step_scope
 from app.runner.route_loader import WorldRoute
 from simulator import Observations
 
@@ -95,6 +97,18 @@ class WorkflowDeps:
                 )
             )
             await session.commit()
+        tracer = get_tracer()
+        if tracer is not None:
+            tracer.span(
+                run_id=self.run_id,
+                name=node,
+                started=started_at,
+                input=inputs,
+                output=outputs,
+                error=error,
+                observation_id=observation_id(self.run_id, index),
+                metadata={"step": index, "status": status.value, "routing": routing},
+            )
         log.info(
             "agent_step",
             run_id=self.run_id,
@@ -122,7 +136,8 @@ def recorded(
         started_at, t0 = datetime.now(UTC), time.monotonic()
         inputs = summarize_in(state)
         try:
-            out = await fn(state, deps)
+            with step_scope(deps.run_id, index, name):  # B18: tool / LLM calls link to this step
+                out = await fn(state, deps)
         except GraphInterrupt:
             # The graph paused here (officer / driver / outcome); it resumes later from a
             # checkpoint and this node runs again from the top. Recorded as a pause, not an error.

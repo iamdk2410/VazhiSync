@@ -5,7 +5,7 @@ from app.db.models.fleet import DriverAssignment, StopQueue, Vehicle, VehiclePos
 from app.db.models.notifications import Notification
 from app.db.models.routes import Route, RouteDirection, RouteDirectionStop, Stop
 from app.db.models.scenarios import ScenarioRecord
-from app.db.models.telemetry import AgentStep, LlmUsage
+from app.db.models.telemetry import AgentStep, LlmUsage, ToolCallRecord
 from app.db.models.users import FavouriteStop, User
 from app.db.models.workflow import (
     Approval,
@@ -38,6 +38,7 @@ __all__ = [
     "SimulationJob",
     "Stop",
     "StopQueue",
+    "ToolCallRecord",
     "User",
     "Vehicle",
     "VehiclePosition",
